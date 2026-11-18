@@ -1,0 +1,240 @@
+/* Part 2 styles.
+   Every selector starts with .p2- (or [data-part="2"]) and every @keyframes name with p2-,
+   so the three parts cannot collide. Colors, sizes and fonts come from core/tokens.css;
+   no text below var(--fs-0). Motion belongs to the timeline (ctx.step), not to CSS transitions.
+   Each slide draws in a fixed box, 1728 x 632 (the stage under a two-line title), centered
+   in the stage, so that the coordinates in parts/part2.js and the ones below describe the
+   same picture. The picture takes the upper 536px of the box; under it stands the caption. */
+
+/* ------------------------------------------------------------------ shared by the four slides */
+.p2-box { position: absolute; left: 50%; top: 50%; width: 1728px; height: 632px; margin: -316px 0 0 -864px; }
+
+/* The caption (core/kit.js, says): what the step says, two lines at most, under the
+   picture. The kit draws it; the part gives it its place. */
+.p2-box > .dk-says { position: absolute; left: 0; right: 0; bottom: 0; height: 80px; }
+/* A number that counts inside a sentence keeps its width (and adds nothing to its line's height). */
+.p2-box .p2-num { display: inline-block; min-width: 2ch; line-height: 1; font-variant-numeric: tabular-nums; text-align: right; color: var(--c-read); }
+/* The question a slide ends on, which Part 3 answers: in Part 3's color. */
+.p2-ask { font-weight: 600; color: var(--c-open); }
+
+/* ------------------------------------------------------------------ slide 5: prefix, reader, label */
+/* The trace in its terminal and, beside it, the reader's score and the label: 336px high.
+   Until the cards of the three kinds arrive under it, the block stands mid-height, and
+   until the score arrives the terminal stands mid-stage (the timeline moves both). */
+.p2-reader__flow { position: absolute; left: 0; top: 0; width: 1728px; height: 336px; }
+.p2-reader__term { position: absolute; left: 0; top: 0; width: 944px; height: 336px; padding: 18px var(--sp-8) 0; }
+.p2-reader__term .dk-term__label { margin-bottom: var(--sp-2); padding-left: calc(var(--sp-2) + var(--stroke-1)); }
+/* The lens reads downward over the prefix: a scan bar as wide as the lines. */
+.p2-reader__term > .dk-lens { left: var(--sp-4); right: var(--sp-4); top: 0; width: auto; height: 8px; margin-top: -4px; opacity: 0; }
+
+/* From the prefix to its score. */
+.p2-reader__wire { position: absolute; left: 952px; top: 108px; width: 20px; height: var(--stroke-2); background: var(--c-read); }
+.p2-reader__wire::after {
+  content: ""; position: absolute; left: 100%; top: -6px;
+  border-left: 12px solid var(--c-read); border-top: 8px solid transparent; border-bottom: 8px solid transparent;
+}
+.p2-reader__score { position: absolute; left: 1000px; top: 80px; width: 728px; --meter-label: 96px; --meter-value: 150px; }
+/* The label, on the columns of the meter over it: its name, a dotted run to the chip that
+   stands where a full bar would end, and its value. Under it, what the two labels are. */
+.p2-reader__label {
+  position: absolute; left: 1000px; top: 160px; width: 728px;
+  display: grid; grid-template-columns: 96px minmax(0, 1fr) 150px; column-gap: var(--sp-6); align-items: center;
+}
+.p2-reader__label-name { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); }
+.p2-reader__label-run { display: flex; align-items: center; column-gap: var(--sp-3); height: 60px; }
+.p2-reader__label-run i { flex: 1; border-top: var(--stroke-1) dotted var(--c-line); }
+.p2-reader__label-run .dk-flag { background: var(--c-bg); }
+.p2-reader__label-value { font: 600 var(--fs-4)/var(--lh-4) var(--font-mono); text-align: right; color: var(--c-alarm); }
+.p2-reader__label-key { grid-column: 2; justify-self: end; font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); color: var(--c-faint); white-space: nowrap; }
+
+/* The three kinds of reader: a card each, with a dot per reader. The cards are as wide as
+   their sentences need: the open monitors' is the shortest. A card holds its head and three
+   lines at the size of a caption. */
+.p2-reader__kinds {
+  position: absolute; left: 0; top: 348px; width: 1728px; height: 188px;
+  display: grid; grid-template-columns: minmax(0, 14fr) minmax(0, 8fr) minmax(0, 12fr); column-gap: var(--sp-6);
+}
+.p2-reader__kind { padding: var(--sp-3) var(--sp-6); border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-2); background: var(--c-surface); }
+.p2-reader__kind-head { display: flex; align-items: center; column-gap: var(--sp-4); height: var(--lh-1); }
+.p2-reader__kind-name { font: 600 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); white-space: nowrap; }
+.p2-reader__kind-dots { display: flex; column-gap: var(--sp-2); }
+.p2-reader__kind-dots i { width: 20px; height: 20px; border: var(--stroke-1) solid var(--c-read); border-radius: 50%; }
+.p2-reader__kind-dots i.is-fed { background: var(--c-read); }
+.p2-reader__kind-count { margin-left: auto; font: 600 var(--fs-1)/var(--lh-1) var(--font-mono); color: var(--c-faint); white-space: nowrap; }
+.p2-reader__kind-does { margin-top: var(--sp-1); font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); }
+/* What sets a forced reader's name apart in the charts of Part 3, and the two letters by
+   which they name a reader's prompt; each prompt of the frontier card has a line of its own. */
+.p2-reader__kind-does b { font-weight: 600; color: var(--c-text); }
+.p2-reader__prompt { display: block; }
+.p2-reader__kind-does b, .p2-reader__whole { white-space: nowrap; }
+
+/* ------------------------------------------------------------------ slide 6: AUROC, within and pooled */
+/* One pair: the two prefixes of the worked example, each in its terminal with the label it
+   will get in the corner and the reader's meter under it; between them the verdict. */
+.p2-auroc__pair { position: absolute; left: 64px; top: 64px; width: 1600px; height: 408px; }
+.p2-auroc__trace { position: absolute; top: 0; width: 700px; }
+.p2-auroc__trace[data-trace="follower"] { left: 0; }
+.p2-auroc__trace[data-trace="resister"] { left: 900px; }
+.p2-auroc__term { position: relative; height: 336px; padding: 18px 22px 0; }
+.p2-auroc__term .dk-term__label { margin-bottom: var(--sp-2); padding-left: calc(var(--sp-2) + var(--stroke-1)); }
+.p2-auroc__status {
+  position: absolute; top: 14px; right: var(--sp-6); display: flex; align-items: center; column-gap: var(--sp-3);
+  font: 600 var(--fs-0)/var(--lh-1) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-faint);
+}
+.p2-auroc__trace .dk-meter { margin-top: var(--sp-3); --meter-label: 96px; --meter-value: 140px; }
+.p2-auroc__check {
+  position: absolute; left: 764px; top: 132px; width: 72px; height: 72px; background: var(--c-read);
+  clip-path: polygon(0% 55%, 15% 40%, 40% 65%, 85% 12%, 100% 27%, 40% 92%);
+}
+.p2-auroc__gt { position: absolute; left: 700px; top: 348px; width: 200px; font: 600 var(--fs-4)/var(--lh-4) var(--font-mono); text-align: center; color: var(--c-read); }
+
+/* Many pairs: a cell per pair (square, where a dot is a trace), and the share of the cells
+   that are ranked correctly. The block stands mid-stage until the columns arrive. */
+.p2-auroc__many { position: absolute; left: 0; top: 54px; width: 776px; height: 428px; }
+.p2-auroc__grid { position: absolute; left: 0; top: 0; --cell: 32px; --gap: 12px; }
+.p2-auroc__grid .dk-grid i { border-radius: 6px; }
+.p2-auroc__grid .dk-grid i.p2-is-wrong { background: transparent; box-shadow: inset 0 0 0 var(--stroke-2) var(--c-alarm); }
+.p2-auroc__readout { position: absolute; left: 476px; top: 0; width: 300px; height: 428px; display: flex; flex-direction: column; justify-content: center; }
+.p2-auroc__name { font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em; color: var(--c-faint); }
+.p2-auroc__value { font: 600 var(--fs-6)/var(--lh-6) var(--font-mono); color: var(--c-read); transform-origin: 0 50%; }
+/* Under the number: it is not a result (the footer's "Illustrative", in its short form). */
+.p2-auroc__madeup { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-text); white-space: nowrap; }
+.p2-auroc__keys { margin-top: var(--sp-6); display: grid; row-gap: var(--sp-2); }
+.p2-auroc__keys span { display: flex; align-items: center; column-gap: var(--sp-3); font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); white-space: nowrap; }
+.p2-auroc__keys i { flex: none; width: 24px; height: 24px; border-radius: 6px; background: var(--c-read); }
+.p2-auroc__keys i.p2-is-wrong { background: transparent; box-shadow: inset 0 0 0 var(--stroke-2) var(--c-alarm); }
+
+/* Question columns (core/kit.js, cols): the kit draws the columns, the dots and the arcs;
+   the part places the drawing and adds the key of its marks and the line under it. */
+.p2-auroc__cols { position: absolute; left: 856px; top: 28px; width: 872px; height: 480px; }
+.p2-auroc__art { position: absolute; left: 0; top: 0; }
+.p2-auroc__legend { position: absolute; left: 0; top: 384px; display: flex; column-gap: var(--sp-8); font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); white-space: nowrap; }
+.p2-auroc__legend span { display: flex; align-items: center; column-gap: var(--sp-3); }
+.p2-auroc__legend i { width: 24px; height: 24px; border-radius: 50%; background: var(--c-ok); }
+.p2-auroc__legend i.is-follows { background: var(--c-alarm); }
+/* The two kinds of line, in the kit's colors for them (core/kit.css, .dk-cols__arc): a
+   bright arc for a pair within a question, a gray line for a pair across questions. */
+.p2-auroc__legend i.is-arc { box-sizing: border-box; height: 12px; border: 3px solid var(--c-text); border-bottom: 0; border-radius: 12px 12px 0 0; background: none; }
+.p2-auroc__legend i.is-line { height: 3px; border-radius: 0; background: var(--c-faint); }
+/* Two lines: what the sketch is not (it has three questions), and the measured share. */
+.p2-auroc__counter { position: absolute; left: 0; top: 424px; width: 872px; font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); }
+.p2-auroc__counter span { display: block; white-space: nowrap; }
+.p2-auroc__counter b { font-weight: 600; }
+
+/* ------------------------------------------------------------------ slide 7: continuations and K */
+/* The prefix in its terminal, cut off at the bottom: the terminal's lower edge is the cut.
+   From the right end of the cut the endings leave as paths (parts/part2.js, FAN_AT). */
+.p2-fan__term {
+  position: absolute; left: 0; top: 160px; width: 704px; height: 160px; padding: 18px 24px 0;
+  border-bottom: 0; border-radius: var(--radius-2) var(--radius-2) 0 0;
+}
+.p2-fan__term .dk-term__label { margin-bottom: var(--sp-2); padding-left: calc(var(--sp-2) + var(--stroke-1)); }
+.p2-fan__term .dk-cut__rule { position: absolute; left: 0; right: 0; bottom: -16px; }
+.p2-fan__art { position: absolute; left: 0; top: 0; overflow: visible; }
+/* The trace's own ending is a solid line; a continuation, which the model writes again, is
+   dashed, as what lies beyond the cut is on the title slide. The timeline gives the solid
+   line a beat (--p2-own-w) when the last click names it as the label so far, and the
+   continuation that is held out as the second label gets the weight of a label's line and
+   keeps its dashes (is-label). */
+.p2-fan__path { fill: none; stroke: var(--c-hidden); stroke-width: 3; stroke-dasharray: 8 8; }
+.p2-fan__path--own { stroke-width: var(--p2-own-w, 4); stroke-dasharray: none; }
+.p2-fan__path.is-label { stroke-width: 4; }
+.p2-fan__dot { fill: var(--c-alarm); }
+.p2-fan__dot.is-resist { fill: var(--c-ok); }
+.p2-fan__brace { fill: none; stroke: var(--c-line); stroke-width: 2; }
+/* An ending named beside its dot: a chip (follows, resists) and what it is. */
+.p2-fan__end { position: absolute; left: 1200px; height: 44px; display: flex; align-items: center; column-gap: var(--sp-3); white-space: nowrap; }
+.p2-fan__end .dk-flag { background: var(--c-bg); transform-origin: 0 50%; }
+.p2-fan__tag { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); }
+
+/* Under the prefix, at the last click: the two kinds of ending, as a key of the fan's two
+   strokes (parts/part2.js, ORIGINS). A row is a sample of the stroke and where that kind of
+   ending comes from. */
+.p2-origins { position: absolute; left: 24px; top: 356px; display: grid; row-gap: var(--sp-2); }
+.p2-origins__row { display: flex; align-items: center; column-gap: var(--sp-4); font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-text); white-space: nowrap; }
+.p2-origins__row svg { flex: none; overflow: visible; }
+
+/* The readout beside the endings: K, the share, and the share as a bar of one cell per
+   continuation, named "this prefix"; under it the shares of other prefixes as thinner bars,
+   and the line that says what the reference is. The question the slide ends on takes
+   their place at the last click. */
+.p2-fan__readout { position: absolute; left: 1220px; top: 0; width: 508px; height: 536px; }
+.p2-fan__k { position: absolute; left: 0; top: 150px; font: 600 var(--fs-1)/var(--lh-1) var(--font-mono); color: var(--c-hidden); white-space: nowrap; transform-origin: 0 50%; }
+/* Why K is what it is, beside it. */
+.p2-fan__why { margin-left: var(--sp-4); font: 400 var(--fs-0)/var(--lh-1) var(--font-sans); color: var(--c-dim); }
+.p2-fan__share {
+  position: absolute; left: 0; top: 194px; height: 52px; display: flex; align-items: baseline; column-gap: var(--sp-3);
+  font: 400 var(--fs-1)/52px var(--font-mono); color: var(--c-dim); white-space: nowrap;
+}
+.p2-fan__share b { font: 600 var(--fs-3)/52px var(--font-mono); color: var(--c-text); }
+.p2-fan__share b[data-fan="share"] { color: var(--c-hidden); }
+.p2-fan__ref {
+  position: absolute; left: 0; top: 254px; width: 474px; height: var(--lh-0); display: flex; align-items: flex-end; column-gap: var(--sp-3);
+  font: 600 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-hidden);
+}
+.p2-fan__ref::before, .p2-fan__ref::after { content: ""; flex: 1; height: 12px; border-top: var(--stroke-1) solid var(--c-hidden); }
+.p2-fan__ref::before { border-left: var(--stroke-1) solid var(--c-hidden); }
+.p2-fan__ref::after { border-right: var(--stroke-1) solid var(--c-hidden); }
+.p2-fan__cells { position: absolute; left: 0; top: 290px; width: 474px; height: 40px; display: flex; column-gap: 6px; }
+.p2-fan__cells i { flex: 1; border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-1); background: var(--c-surface-2); }
+.p2-fan__cells i.is-on { border-color: var(--c-hidden); background: var(--c-hidden); }
+.p2-fan__others { position: absolute; left: 0; top: 344px; width: 474px; display: grid; row-gap: var(--sp-2); }
+.p2-fan__row { height: 12px; display: flex; column-gap: 6px; }
+.p2-fan__row i { flex: 1; border-radius: var(--radius-1); background: var(--c-surface-2); }
+.p2-fan__row i.is-on { background: color-mix(in srgb, var(--c-hidden) 60%, var(--c-bg)); }
+.p2-fan__others span { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); white-space: nowrap; }
+/* One line in the deck's own face, two in a wider one. */
+.p2-fan__auroc { position: absolute; left: 0; top: 444px; width: 508px; font: 600 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-hidden); }
+.p2-fan__ask { position: absolute; left: 0; top: 352px; width: 474px; font-size: var(--fs-1); line-height: var(--lh-1); }
+/* An ending on its way from the fan into the bar. */
+.p2-fan__ghost { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: var(--c-alarm); opacity: 0; }
+.p2-fan__ghost.is-resist { background: var(--c-ok); }
+
+/* ------------------------------------------------------------------ slide 8: the bootstrap interval */
+/* One score and where it comes from: the questions as tiles (a tile holds its traces as
+   dots), under each the copies of it that a draw holds, and under those the axis on which
+   the recomputed scores pile up. The block stands mid-stage until the difference arrives. */
+.p2-boot__one { position: absolute; left: 0; top: 0; width: 876px; height: 536px; }
+.p2-boot__rowname { position: absolute; top: 0; font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-faint); white-space: nowrap; }
+.p2-boot__rowname[data-row="have"] { left: 0; }
+.p2-boot__rowname[data-row="draw"] { right: 0; color: var(--c-dim); }
+.p2-boot__tile {
+  position: absolute; width: 40px; height: 44px; padding: 8px 4px;
+  display: grid; grid-template-columns: repeat(3, 8px); gap: 4px; justify-content: center; align-content: center;
+  border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-1); background: var(--c-surface);
+}
+.p2-boot__tile i { width: 8px; height: 8px; border-radius: 50%; background: var(--c-ok); }
+.p2-boot__tile i.is-follows { background: var(--c-alarm); }
+/* A question that a draw left out (the tile's own opacity belongs to the timeline). */
+.p2-boot__tile.is-out { border-color: var(--c-surface-2); }
+.p2-boot__tile.is-out i { opacity: .25; }
+.p2-boot__copy { border-color: var(--c-dim); }
+.p2-boot__art { position: absolute; left: 0; top: 0; overflow: visible; }
+.p2-boot__axis { stroke: var(--c-dim); stroke-width: 2; }
+.p2-boot__from { stroke: var(--c-line); stroke-width: 2; stroke-dasharray: 4 8; }
+.p2-boot__guide { stroke: var(--c-read); stroke-width: 2; stroke-dasharray: 4 8; }
+.p2-boot__draw { fill: var(--c-read); }
+.p2-boot__score { fill: var(--c-read); stroke: var(--c-bg); stroke-width: 4; }
+.p2-boot__span { fill: var(--c-read); }
+.p2-boot__zero { stroke: var(--c-dim); stroke-width: 2; }
+.p2-boot__bell { fill: color-mix(in srgb, var(--c-read) 28%, transparent); stroke: var(--c-read); stroke-width: 2; }
+.p2-boot__bell--other { fill: color-mix(in srgb, var(--c-dim) 20%, transparent); stroke: var(--c-dim); }
+/* Whose score it is, under the number. */
+.p2-boot__what { position: absolute; left: 0; top: 504px; width: 876px; font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); text-align: center; color: var(--c-dim); white-space: nowrap; }
+/* A number under the axis, centered on its place. */
+.p2-boot__num { position: absolute; top: 460px; width: 140px; margin-left: -70px; font: 600 var(--fs-1)/var(--lh-1) var(--font-mono); text-align: center; color: var(--c-read); white-space: nowrap; }
+.p2-boot__num--main { top: 454px; font: 600 var(--fs-3)/var(--lh-3) var(--font-mono); }
+.p2-boot__num--zero { top: 204px; color: var(--c-dim); }
+
+/* The difference between two readers, drawn the same way around a zero line. */
+.p2-boot__diff { position: absolute; left: 944px; top: 0; width: 784px; height: 536px; }
+/* The two readers, each over the bell of its own recomputed scores, and the word between. */
+.p2-boot__names { position: absolute; left: 0; top: 0; width: 784px; height: var(--lh-1); }
+.p2-boot__names span { position: absolute; top: 0; width: 320px; margin-left: -160px; font: 600 var(--fs-1)/var(--lh-1) var(--font-sans); text-align: center; color: var(--c-text); white-space: nowrap; }
+.p2-boot__names [data-name="minus"] { font-weight: 400; color: var(--c-dim); }
+/* What the two bells are, under them: one line for both. */
+.p2-boot__piles { position: absolute; left: 0; top: 152px; width: 784px; height: var(--lh-0); font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); text-align: center; color: var(--c-dim); white-space: nowrap; }
+/* Under the difference: it is not the difference of the two scores as printed. */
+.p2-boot__unrounded { position: absolute; top: 504px; width: 400px; margin-left: -200px; font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); text-align: center; color: var(--c-dim); white-space: nowrap; }
+.p2-boot__verdict { position: absolute; right: 0; top: 200px; }
+.p2-boot__verdict .dk-flag { transform-origin: 100% 50%; }

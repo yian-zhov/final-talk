@@ -1,0 +1,234 @@
+/* Shared visual building blocks (markup from core/kit.js). Tone = a color role name. */
+
+[data-tone="read"] { --tone: var(--c-read); }
+[data-tone="hidden"] { --tone: var(--c-hidden); }
+[data-tone="alarm"] { --tone: var(--c-alarm); }
+[data-tone="ok"] { --tone: var(--c-ok); }
+[data-tone="open"] { --tone: var(--c-open); }
+[data-tone="dim"] { --tone: var(--c-dim); }
+
+/* Trace terminal: what the model writes while it thinks. */
+.dk-term {
+  padding: var(--sp-8) var(--sp-12); border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-2);
+  background: var(--c-surface);
+}
+.dk-term__label {
+  margin-bottom: var(--sp-4); font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--c-faint);
+}
+.dk-term__line { min-height: var(--lh-2); font: 400 var(--fs-2)/var(--lh-2) var(--font-mono); color: var(--c-text); white-space: pre-wrap; }
+.dk-term__line.is-hot { color: var(--c-alarm); font-weight: 600; }
+.dk-term__line.is-quiet { color: var(--c-dim); }
+/* A second example, set off from the lines above it. */
+.dk-term__line.is-apart { margin-top: var(--sp-6); }
+
+/* A note about a box's content, set on its bottom border (core/kit.js, legend): outside the
+   content, in the face of a label and not of the trace. The box must be positioned. */
+.dk-legend {
+  position: absolute; right: var(--sp-8); bottom: calc(var(--lh-0) / -2); padding: 0 var(--sp-3); background: var(--c-bg);
+  font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-faint); white-space: nowrap;
+}
+.dk-legend:empty { display: none; }
+/* On a trace the note stays readable above whatever a slide lays over the terminal. */
+.dk-trace > .dk-legend { z-index: 1; }
+
+/* A trace that a monitor reads (core/kit.js, trace): the terminal, the verdict in its top
+   right corner, the lens as a scan bar that travels down the lines, and a mark in the gutter
+   of a line the lens has passed (--dk-mark, 0 to 1): a check, or a pointer on a flagged line. */
+.dk-trace { position: relative; }
+.dk-trace__status {
+  position: absolute; top: var(--sp-6); right: var(--sp-8);
+  display: flex; align-items: center; gap: var(--sp-3);
+}
+.dk-trace__who {
+  font: 600 var(--fs-0)/var(--lh-1) var(--font-mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--c-read);
+}
+.dk-trace__status .dk-flag { background: var(--c-surface); transform-origin: 100% 50%; }
+.dk-trace > .dk-lens { left: var(--sp-4); top: 0; width: calc(100% - 2 * var(--sp-4)); height: 8px; margin-top: -4px; opacity: 0; }
+.dk-trace .dk-term__line { position: relative; white-space: pre; }
+.dk-trace .dk-term__line::before {
+  content: ""; position: absolute; left: calc(-1 * var(--sp-8)); top: 12px; width: 20px; height: 20px;
+  background: var(--c-read); opacity: var(--dk-mark, 0);
+  clip-path: polygon(0% 55%, 15% 40%, 40% 65%, 85% 12%, 100% 27%, 40% 92%);
+}
+.dk-trace .dk-term__line.is-flag::before { background: var(--c-alarm); clip-path: polygon(0% 0%, 100% 50%, 0% 100%); }
+.dk-trace.is-alarm .dk-term { border-color: var(--c-alarm); }
+
+/* A line that decays into dots (core/kit.js, decay): a letter and its dot share one cell. */
+.dk-decay { font: 400 var(--fs-3)/var(--lh-3) var(--font-mono); color: var(--c-read); white-space: pre; }
+.dk-decay__cell { position: relative; display: inline-block; }
+.dk-decay__glyph { display: inline-block; }
+.dk-decay__dot {
+  position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px;
+  border-radius: 50%; background: var(--c-hidden);
+}
+
+/* Meter: a labeled bar with a number. Fill width is the custom property --v. */
+.dk-meter {
+  display: grid; align-items: center; gap: var(--sp-6);
+  grid-template-columns: var(--meter-label, 420px) minmax(0, 1fr) var(--meter-value, 200px);
+}
+.dk-meter__label { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); }
+.dk-meter__track {
+  height: 40px; border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-1);
+  background: var(--c-surface-2); overflow: hidden;
+}
+.dk-meter__fill { display: block; height: 100%; width: var(--v, 0%); background: var(--tone, var(--c-read)); }
+.dk-meter__value { font: 600 var(--fs-4)/var(--lh-4) var(--font-mono); text-align: right; color: var(--tone, var(--c-text)); }
+
+/* Unit grid: one cell per case; a cell switches on with the class is-on. */
+.dk-grid { display: grid; grid-template-columns: repeat(var(--cols, 10), var(--cell, 32px)); gap: var(--gap, 12px); }
+.dk-grid i { width: var(--cell, 32px); height: var(--cell, 32px); border-radius: 50%; background: var(--c-line); }
+.dk-grid i.is-on { background: var(--tone, var(--c-read)); }
+
+/* Verdict chip. */
+.dk-flag {
+  display: inline-block; padding: 0 var(--sp-4); border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-1);
+  font: 600 var(--fs-0)/var(--lh-1) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-dim);
+}
+.dk-flag.is-flagged { border-color: var(--c-alarm); color: var(--c-alarm); }
+.dk-flag.is-clean { border-color: var(--c-ok); color: var(--c-ok); }
+
+/* Monitor lens: a scan bar. */
+.dk-lens {
+  position: absolute; display: block; width: 8px; border-radius: 4px; background: var(--c-read);
+  box-shadow: 0 0 24px var(--c-read);
+}
+
+/* Lattice: token columns, layer rows and the text row (core/kit.js, lattice). */
+.dk-lattice { display: block; overflow: visible; }
+.dk-lattice__link { stroke: var(--c-line); stroke-width: 2; }
+.dk-lattice__link.is-lit { stroke: var(--c-hidden); stroke-width: 4; }
+.dk-lattice__node { fill: var(--c-surface-2); stroke: var(--c-line); stroke-width: 2; }
+.dk-lattice__node.is-lit { fill: var(--c-hidden); stroke: var(--c-hidden); }
+.dk-lattice__token rect { fill: var(--c-surface); stroke: var(--c-line); stroke-width: 2; }
+.dk-lattice__token text { fill: var(--c-text); font: 400 28px var(--font-mono); text-anchor: middle; }
+.dk-lattice__token.is-read rect { stroke: var(--c-read); stroke-width: 4; }
+.dk-lattice__token.is-read text { fill: var(--c-read); }
+.dk-lattice__token.is-dot text { fill: var(--c-hidden); }
+
+/* Generic pieces. */
+.dk-card { padding: var(--sp-8); border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-2); background: var(--c-surface); }
+.dk-chip {
+  display: inline-block; padding: 0 var(--sp-4); border: var(--stroke-1) solid var(--tone, var(--c-line)); border-radius: 999px;
+  font: 600 var(--fs-0)/var(--lh-1) var(--font-mono); color: var(--tone, var(--c-dim));
+}
+.dk-num { font: 600 var(--fs-6)/var(--lh-6) var(--font-mono); color: var(--tone, var(--c-text)); }
+.dk-lead { font: 400 var(--fs-3)/var(--lh-3) var(--font-sans); color: var(--c-text); }
+.dk-body { font: 400 var(--fs-2)/var(--lh-2) var(--font-sans); color: var(--c-dim); }
+.dk-label { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); }
+.dk-quote { font: italic 400 var(--fs-3)/var(--lh-3) var(--font-serif); color: var(--c-text); }
+
+/* ---------- the cut trace (core/kit.js, cutTrace) ---------- */
+/* The talk's motif: the paragraphs of a trace, a cut, and what lies beyond it. A paragraph
+   (.dk-cut__piece) is a line of text or a bar, and has the same states in both: is-prefix
+   and is-read in teal (what a reader is shown), is-open as a dashed amber outline (not
+   written yet; --dk-dash, 0 to 1, is its strength), is-beyond in amber (written beyond the
+   cut). --dk-cut-fs and --dk-cut-lh are the size of the text (kit.cutTrace sets them);
+   --dk-cut-inset is how far a line's text stands inside its outline. */
+.dk-cut { display: grid; row-gap: var(--sp-2); }
+.dk-cut__piece.is-open {
+  border-style: dashed; border-color: color-mix(in srgb, var(--c-hidden) calc(var(--dk-dash, 1) * 100%), transparent);
+}
+/* As lines. Every paragraph starts at the same place: a seen one is set in by as much as
+   the outline of an unseen one takes. */
+.dk-cut__line {
+  min-height: calc(var(--dk-cut-lh) + 2 * var(--stroke-1)); padding: 0 var(--dk-cut-inset, var(--sp-2));
+  border: var(--stroke-1) solid transparent; border-radius: var(--radius-1);
+  font: 400 var(--dk-cut-fs)/var(--dk-cut-lh) var(--font-mono); color: var(--c-text); white-space: nowrap;
+}
+.dk-cut__line.is-prefix { color: var(--c-read); }
+.dk-cut__line.is-open, .dk-cut__line.is-beyond { color: var(--c-hidden); }
+.dk-cut__line.is-short { width: 80%; }
+/* The cut: a rule with its name in the middle. A cut without a name is one unbroken rule. */
+.dk-cut__rule {
+  display: flex; align-items: center; column-gap: var(--sp-4); height: var(--lh-0); overflow: hidden;
+  font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-faint); white-space: nowrap;
+}
+.dk-cut__rule::before, .dk-cut__rule::after { content: ""; flex: 1; height: var(--stroke-2); background: var(--c-hidden); }
+.dk-cut__rule:empty { column-gap: 0; }
+/* The position is a variable's name: it keeps its case. */
+.dk-cut__r { text-transform: none; }
+.dk-cut__end {
+  justify-self: start; padding: 0 var(--sp-4); border: var(--stroke-1) solid var(--c-hidden); border-radius: var(--radius-1);
+  font: 600 var(--fs-0)/var(--dk-cut-lh) var(--font-mono); color: var(--c-hidden); white-space: nowrap;
+}
+.dk-cut__end.is-follows { border-color: var(--c-alarm); color: var(--c-alarm); }
+/* As bars, a row in time from left to right: the slide places the row and gives it its
+   height; the kit places the bars and the cut in it. A bar holds lines of writing as
+   strokes, drawn from left to right (--dk-ink, 0% to 100%). */
+.dk-cut--bars { display: block; position: absolute; }
+.dk-cut__bar {
+  position: absolute; top: 0; height: 100%; border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-2);
+  background: var(--c-surface);
+}
+.dk-cut__ink {
+  position: absolute; inset: 0; padding: 26px var(--sp-6); display: grid; align-content: space-between;
+  color: var(--c-dim); clip-path: inset(0 calc(100% - var(--dk-ink, 100%)) 0 0);
+}
+.dk-cut__ink i { display: block; height: 12px; border-radius: 6px; background: currentColor; }
+.dk-cut__ink i:last-child { width: 60%; }
+.dk-cut__bar.is-prefix, .dk-cut__bar.is-read { border-color: var(--c-read); }
+.dk-cut__bar.is-read .dk-cut__ink { color: var(--c-read); }
+.dk-cut__bar.is-open { background: transparent; }
+.dk-cut__bar.is-beyond { border-color: var(--c-hidden); }
+.dk-cut__bar.is-beyond .dk-cut__ink { color: var(--c-hidden); }
+/* The answer's bar: one stroke; while the answer is open, a question mark in its place. */
+.dk-cut__bar[data-end] .dk-cut__ink { padding: 0 var(--sp-8); align-content: center; color: var(--c-text); }
+.dk-cut__bar[data-end] .dk-cut__ink i { width: 100%; height: 20px; border-radius: 10px; }
+.dk-cut__q {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font: 600 var(--fs-4)/var(--lh-4) var(--font-mono); color: var(--c-hidden);
+}
+/* The cut of a row of bars: a line down through the row (the slide sets how far it reaches). */
+.dk-cut--bars > .dk-cut__rule {
+  display: block; position: absolute; top: calc(-1 * var(--sp-2)); width: var(--stroke-2); margin-left: calc(var(--stroke-2) / -2);
+  height: calc(100% + 2 * var(--sp-2)); border-radius: 2px; background: var(--c-hidden); overflow: visible;
+}
+.dk-cut--bars > .dk-cut__rule::before, .dk-cut--bars > .dk-cut__rule::after { content: none; }
+
+/* ---------- question columns (core/kit.js, cols) ---------- */
+/* One column per question, its traces as dots: red for a trace that follows the hint, green
+   for one that resists. An arc joins a follower and a resister: one pair. A faint arc is a
+   pair that the step on screen does not count. */
+.dk-cols { display: block; flex: none; overflow: visible; }
+.dk-cols .dk-cols__col { fill: var(--c-surface); stroke: var(--c-line); stroke-width: 2; }
+.dk-cols .dk-cols__label { fill: var(--c-faint); font: 600 var(--fs-0) var(--font-mono); letter-spacing: .08em; text-anchor: middle; text-transform: uppercase; }
+.dk-cols .dk-cols__dot { fill: var(--c-ok); }
+.dk-cols .dk-cols__dot.is-follows { fill: var(--c-alarm); }
+.dk-cols .dk-cols__arc { fill: none; stroke: var(--c-text); stroke-width: 3; }
+.dk-cols .dk-cols__arc.is-faint { stroke: var(--c-faint); stroke-width: 2; opacity: .7; }
+.dk-cols .dk-cols__legend text, .dk-cols .dk-cols__key text { font: 400 var(--fs-0) var(--font-sans); fill: var(--c-dim); }
+
+/* ---------- the caption of a step (core/kit.js, says) ---------- */
+/* What the step on screen says: one block per step, all in the same place; the timeline
+   shows the current one. The rule at the left belongs to each line, so it is as tall as the
+   lines that are shown. Text color, apart from the cue row under it (dim, with bullets). */
+.dk-says { position: relative; }
+.dk-says__block { position: absolute; left: 0; right: 0; top: 0; }
+.dk-says__block p {
+  padding-left: calc(var(--sp-6) - var(--stroke-2)); border-left: var(--stroke-2) solid var(--tone, var(--c-line));
+  font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); text-wrap: balance;
+}
+.dk-says__block b { font-weight: 600; }
+
+/* ---------- the scope line in its frame (core/kit.js, scope) ---------- */
+.dk-scope {
+  padding: var(--sp-4) var(--sp-8); border: var(--stroke-1) solid var(--c-text); border-radius: var(--radius-2);
+  background: var(--c-surface); font: 600 var(--fs-3)/var(--lh-3) var(--font-serif); color: var(--c-text);
+}
+.dk-scope[data-size="2"] { padding: var(--sp-2) var(--sp-8); font-size: var(--fs-2); line-height: var(--lh-2); }
+.dk-scope.is-stacked .dk-scope__line { display: block; }
+
+/* ---------- a result's head and its recommendation (core/kit.js, resultHead, rec) ---------- */
+/* The head: which result it is, the question it answers, and a tag that says how its
+   analyses stand. The recommendation, in Part 3's violet: its tag and the line. */
+.dk-result { display: flex; align-items: center; column-gap: var(--sp-6); white-space: nowrap; }
+.dk-result__n { font: 600 var(--fs-0)/var(--lh-1) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-open); }
+.dk-result__ask { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); }
+.dk-result__standing { line-height: var(--lh-0); white-space: nowrap; }
+.dk-result > .dk-result__standing { margin-left: auto; }
+.dk-rec { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--sp-6); color: var(--c-open); }
+.dk-rec__tag { font: 600 var(--fs-0)/var(--lh-2) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.dk-rec__move { font: 600 var(--fs-2)/var(--lh-2) var(--font-sans); }

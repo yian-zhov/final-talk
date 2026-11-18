@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Not to Score a Chain-of-Thought Prefix Monitor</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%235ee6d0'/%3E%3C/svg%3E">
+<!-- Shared: tokens, frame, building blocks. No network: system fonts, relative paths only. -->
+<link rel="stylesheet" href="core/tokens.css">
+<link rel="stylesheet" href="core/deck.css">
+<link rel="stylesheet" href="core/kit.css">
+<!-- One stylesheet per part. Each part edits only its own pair of files. -->
+<link rel="stylesheet" href="parts/part1.css">
+<link rel="stylesheet" href="parts/part2.css">
+<link rel="stylesheet" href="parts/part3.css">
+<link rel="stylesheet" href="parts/sample.css">
+</head>
+<body>
+<div id="dk-root" class="dk-root">
+  <div id="dk-slides"></div>
+  <div class="dk-chrome">
+    <span class="dk-dots" id="dk-dots"></span>
+    <span class="dk-page" id="dk-page"></span>
+  </div>
+  <div class="dk-progress" id="dk-progress"></div>
+</div>
+<pre id="dk-errors" class="dk-errors" hidden></pre>
+
+<!-- Plain scripts in load order (no modules, no fetch, so file:// works). -->
+<script src="core/timeline.js"></script>
+<script src="core/deck.js"></script>
+<script src="core/kit.js"></script>
+<script src="shared/meta.js"></script>
+<script src="shared/sources.js"></script>
+<script src="shared/facts.js"></script>
+<script src="shared/motifs.js"></script>
+<!-- Slides register in this order: part 1, part 2, part 3, then the generated sources slide. -->
+<script src="parts/part1.js"></script>
+<script src="parts/part2.js"></script>
+<script src="parts/part3.js"></script>
+<script src="parts/sample.js"></script>
+<script src="parts/kit-sheet.js"></script>
+<script src="core/outro.js"></script>
+<script src="core/lint.js"></script>
+<script src="core/nav.js"></script>
+</body>
+</html>

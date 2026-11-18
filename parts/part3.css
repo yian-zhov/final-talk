@@ -1,0 +1,219 @@
+/* Part 3 styles.
+   Every selector starts with .p3- (or [data-part="3"]) and every @keyframes name with p3-,
+   so the three parts cannot collide. Colors, sizes and fonts come from core/tokens.css;
+   no text below var(--fs-0). Motion belongs to the timeline (ctx.step), not to CSS transitions. */
+
+/* ---------- slides 9 to 11: one frame ---------- */
+/* Three rows that keep their place through every step: the result's head (core/kit.js,
+   resultHead), the picture, and the caption of the step (kit.says), two lines at most. On
+   the last click the caption's place holds the recommendation (kit.rec) and its limits. */
+.p3-res { position: absolute; inset: 0; display: grid; grid-template-rows: var(--lh-1) minmax(0, 1fr) 120px; row-gap: var(--sp-3); }
+.p3-res__picture { position: relative; min-height: 0; display: flex; align-items: flex-start; justify-content: space-between; }
+.p3-res__limit { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-text); }
+
+/* A row of chips over a drawing: the label it is scored against, and how it stands. */
+.p3-tags { display: flex; align-items: flex-start; column-gap: var(--sp-3); }
+.p3-tags .dk-chip { line-height: var(--lh-0); white-space: nowrap; }
+
+/* Drawings in stage pixels: an svg is as large as its viewBox, so its text keeps its size. */
+.p3-svg { display: block; flex: none; overflow: visible; }
+.p3-svg text { font: 400 var(--fs-0) var(--font-sans); fill: var(--c-dim); }
+.p3-svg .p3-num { font-family: var(--font-mono); }
+.p3-svg .p3-end { text-anchor: end; }
+.p3-svg .p3-mid { text-anchor: middle; }
+.p3-svg .p3-pop { transform-box: fill-box; transform-origin: center; }
+.p3-svg .p3-axis { stroke: var(--c-line); stroke-width: 2; }
+.p3-svg .p3-grid { stroke: var(--c-line); stroke-width: 1; opacity: .6; }
+
+/* ---------- slide 9, p3-pooled ---------- */
+/* The title's answer in red, the role "alarm": 0.62 is what a reader scores that reads
+   nothing, the least expected number of the talk, and not a way of scoring to prefer. It
+   lands from a larger size (the timeline scales it, so it is a box of its own) with a glow
+   that fades (--p3-glow, 1 to 0), as the second half of slide 4's title does. */
+[data-slide="p3-pooled"] .dk-title em {
+  display: inline-block; transform-origin: 0 60%; color: var(--c-alarm);
+  text-shadow: 0 0 calc(var(--p3-glow, 0) * 40px) var(--c-alarm);
+}
+.p3-pool__left { flex: none; width: 660px; display: grid; grid-template-rows: 48px 392px; row-gap: var(--sp-2); }
+.p3-pool__reader { display: flex; align-items: center; column-gap: var(--sp-4); white-space: nowrap; }
+.p3-pool__who { font: 600 var(--fs-0)/var(--lh-1) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-dim); }
+/* The reader's lens (kit.lens) with a cap over it, and in words what the cap means. */
+.p3-pool__lens { position: relative; flex: none; width: 104px; height: 24px; }
+.p3-pool__lens .dk-lens { left: 0; top: 8px; width: 104px; height: 8px; }
+.p3-pool__cap {
+  position: absolute; left: var(--sp-4); right: var(--sp-4); top: 0; height: 24px;
+  border: var(--stroke-1) solid var(--c-dim); border-radius: var(--sp-3); background: var(--c-surface-2);
+}
+.p3-pool__capnote { font: 400 var(--fs-0)/var(--lh-1) var(--font-sans); color: var(--c-text); }
+/* What the reader writes on a column: one score for every trace of the question. */
+.p3-svg .p3-pool__stamp { font: 600 var(--fs-3) var(--font-mono); fill: var(--c-text); text-anchor: middle; }
+/* The web of pairs across columns, faint, as slide 6 left it. A pair inside a column is a
+   tie (gray); a pair across columns is ranked correctly (teal) or wrongly (red). */
+.p3-svg .p3-pool__web { fill: none; stroke: var(--c-faint); stroke-width: 2; opacity: .45; }
+.p3-svg .p3-pool__tie { fill: none; stroke: var(--c-dim); stroke-width: 3; stroke-dasharray: 1; }
+.p3-svg .p3-pool__equal circle { fill: var(--c-surface-2); stroke: var(--c-dim); stroke-width: 2; }
+.p3-svg .p3-pool__equal text { font: 600 var(--fs-0) var(--font-mono); fill: var(--c-text); text-anchor: middle; }
+.p3-svg .p3-pool__cross { fill: none; stroke: var(--c-read); stroke-width: 3; }
+.p3-svg path.p3-pool__cross { stroke-dasharray: 1; }
+.p3-svg .p3-pool__cross.is-wrong { stroke: var(--c-alarm); }
+.p3-svg .p3-pool__gt { font: 600 var(--fs-3) var(--font-mono); fill: var(--c-read); text-anchor: middle; }
+
+.p3-pool__right { position: relative; flex: none; width: 1040px; }
+/* The names of the readers are read from the back of the room: one size up, in text color. */
+.p3-svg .p3-pool__name { text-anchor: end; font-size: var(--fs-1); fill: var(--c-text); }
+/* The nine readers in teal; the prompt-only reader, which reads nothing, in gray. */
+.p3-svg .p3-pool__within, .p3-svg .p3-pool__pooled { fill: var(--c-read); }
+.p3-svg .p3-pool__rise { stroke: var(--c-read); stroke-width: 3; }
+.p3-svg .p3-pool__within.is-hero, .p3-svg .p3-pool__pooled.is-hero { fill: var(--c-dim); }
+.p3-svg .p3-pool__rise.is-hero { stroke: var(--c-dim); stroke-width: 4; }
+/* The legend over the rows: a dot is within question, a square is pooled, on every row. One
+   size up, like the names: it is what the chart is read with. */
+.p3-svg .p3-pool__legend circle, .p3-svg .p3-pool__legend rect { fill: var(--c-text); }
+.p3-svg .p3-pool__legend text { font-size: var(--fs-1); fill: var(--c-text); }
+/* The star on the three forced readers, and what it stands for. */
+.p3-svg .p3-pool__star { fill: var(--c-dim); }
+.p3-svg .p3-pool__aside text { fill: var(--c-dim); }
+/* The prompt-only reader's two values, over its dot and over where its square lands. */
+.p3-svg .p3-pool__value { font-size: var(--fs-3); font-weight: 600; fill: var(--c-text); }
+
+/* ---------- slide 10, p3-curve ---------- */
+/* The curve is the reference, built from continuations: amber. Its chart stands in the
+   middle of the row until the gauge arrives (the timeline moves it). Its tags stand over
+   the plot, from the axis on. */
+.p3-curve__left { position: relative; flex: none; width: 720px; }
+.p3-curve__tags { position: absolute; left: 112px; top: 0; }
+/* Each half in a frame under its label's chip, from the click that brings the gauge: gray
+   for the trace's own ending, amber for the held-out continuation. The two halves are
+   scored against two labels, and the frames keep their numbers apart. */
+.p3-curve__frame { position: absolute; inset: 40px 0 -4px 0; border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-2); pointer-events: none; }
+.p3-curve__left > .p3-curve__frame { right: -12px; }
+.p3-gauge > .p3-curve__frame { border-color: var(--c-hidden); }
+.p3-svg .p3-kc__line { fill: none; stroke: var(--c-hidden); stroke-width: 4; stroke-linejoin: round; stroke-dasharray: 1; }
+.p3-svg .p3-kc__point { fill: var(--c-hidden); }
+.p3-svg .p3-kc__value { fill: var(--c-hidden); font-weight: 600; }
+.p3-svg .p3-kc__level { stroke: var(--c-dim); stroke-width: 2; stroke-dasharray: 6 6; }
+.p3-svg .p3-kc__gain { stroke: var(--c-text); stroke-width: 4; }
+.p3-svg .p3-kc__step text { fill: var(--c-text); }
+.p3-svg .p3-kc__step tspan { font-weight: 600; }
+
+/* The gauge: a ruler from guessing up to the reference (amber), the reader's level on it
+   (teal). Over it its tags; at its right each level's AUROC, then the reading. As wide as
+   the row allows beside the chart's frame (32px between the two frames): the column at the
+   right then holds the count of points in the lines it has, in the wider faces too. */
+.p3-gauge { position: relative; box-sizing: border-box; flex: none; width: 964px; padding: 0 var(--sp-3); display: grid; grid-template-columns: 520px minmax(0, 1fr); grid-template-rows: 40px 408px; column-gap: var(--sp-4); }
+.p3-gauge__tags { grid-column: 1 / -1; }
+/* Before the chips, what the right half is: the rise of the curve at its left, with the
+   other label. As tall as a chip, so that the words stand on the chips' line. */
+.p3-gauge__same { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-text); white-space: nowrap; padding: var(--stroke-1) 0; }
+.p3-svg .p3-gauge__ruler { fill: var(--c-surface); stroke: var(--c-hidden); stroke-width: 2; }
+.p3-svg .p3-gauge__tick { stroke: var(--c-hidden); stroke-width: 2; }
+.p3-svg .p3-gauge__top { stroke: var(--c-hidden); stroke-width: 6; }
+.p3-svg .p3-gauge__ghost { stroke: var(--c-hidden); stroke-width: 2; stroke-dasharray: 6 6; }
+.p3-svg .p3-gauge__base { stroke: var(--c-dim); stroke-width: 4; }
+.p3-svg .p3-gauge__fill { fill: color-mix(in srgb, var(--c-read) 30%, transparent); }
+.p3-svg .p3-gauge__mark { stroke: var(--c-read); stroke-width: 6; }
+.p3-svg .p3-gauge__ref, .p3-svg .p3-gauge__quarter { fill: var(--c-hidden); }
+.p3-svg .p3-gauge__who { fill: var(--c-read); }
+.p3-svg .p3-gauge__ref tspan, .p3-svg .p3-gauge__who tspan { font-weight: 600; }
+/* The reading written out: the reader's AUROC (teal) and the reference (amber), each minus
+   guessing, one over the other; once for each of the two references. */
+.p3-svg .p3-gauge__how text { fill: var(--c-text); }
+.p3-svg .p3-gauge__how .p3-gauge__how-reader { fill: var(--c-read); font-weight: 600; }
+.p3-svg .p3-gauge__how .p3-gauge__how-ref { fill: var(--c-hidden); font-weight: 600; }
+.p3-svg .p3-gauge__how .p3-gauge__how-is { fill: var(--c-read); font-weight: 600; }
+.p3-svg .p3-gauge__how-bar { stroke: var(--c-text); stroke-width: 2; }
+.p3-gauge__side { display: grid; align-content: start; row-gap: var(--sp-3); }
+.p3-gauge__reading { display: flex; align-items: baseline; column-gap: var(--sp-4); white-space: nowrap; }
+.p3-gauge__share { font: 600 var(--fs-6)/var(--lh-6) var(--font-mono); color: var(--c-read); }
+.p3-gauge__reading span { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); }
+.p3-gauge__punch { font: 600 var(--fs-1)/var(--lh-1) var(--font-serif); color: var(--c-text); transform-origin: 0 50%; }
+/* One cell per point, a reader in a model; a point above the reference is lit, and left as
+   a ring once the reference has passed it. Under the cells their key: a cell in each of
+   the two states, and what the state means. */
+.p3-gauge__points { --cell: 12px; --gap: 4px; margin-top: var(--sp-2); }
+.p3-gauge__points .dk-grid i.is-was, .p3-gauge__key i.is-was { background: none; box-shadow: inset 0 0 0 var(--stroke-1) var(--c-read); }
+.p3-gauge__key { margin-top: var(--sp-1); display: flex; column-gap: var(--sp-6); font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); white-space: nowrap; }
+.p3-gauge__key span { display: flex; align-items: center; column-gap: var(--sp-2); }
+.p3-gauge__key i { flex: none; width: var(--cell); height: var(--cell); border-radius: 50%; }
+.p3-gauge__key i.is-on { background: var(--c-read); }
+.p3-gauge__count { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-text); }
+
+/* ---------- slide 11, p3-resolve ---------- */
+/* Nine readers, of which the three forced readers step back: gray, a ring for a dot. The
+   names of the six that stay are in text color, to be read from the back of the room. */
+.p3-svg .p3-rd__row text { fill: var(--c-text); }
+.p3-svg .p3-rd__row.is-aside text { fill: var(--c-dim); }
+.p3-svg .p3-rd__row circle, .p3-svg .p3-rd__glyph { fill: var(--c-read); stroke: var(--c-read); stroke-width: 2; }
+.p3-svg .p3-rd__row.is-aside circle, .p3-svg .p3-rd__glyph.is-forced { fill: none; stroke: var(--c-dim); }
+.p3-svg .p3-rd__kept text { fill: var(--c-text); }
+.p3-svg .p3-rd__range { font-size: var(--fs-1); font-weight: 600; }
+
+/* A caption's second line, in small print: on the entrance, what setting the three readers
+   aside costs, under the sentence that says when and why. */
+.p3-resolve .dk-says__block p + p { font-size: var(--fs-0); line-height: var(--lh-0); }
+
+.p3-resolve__mid { flex: none; width: 720px; display: grid; grid-template-rows: 72px 376px; }
+.p3-resolve__counts { display: grid; grid-template-rows: repeat(2, 36px); }
+.p3-resolve__count { display: flex; align-items: center; column-gap: var(--sp-4); white-space: nowrap; transform-origin: 0 50%; }
+.p3-resolve__count .dk-chip { line-height: 28px; }
+.p3-resolve__count b { font: 600 var(--fs-1)/var(--lh-0) var(--font-sans); color: var(--c-text); }
+/* An interval as the results file has it (the bar), and tested jointly (the thin line). */
+.p3-svg .p3-fx__zero { stroke: var(--c-dim); stroke-width: 2; }
+.p3-svg .p3-fx__bar { fill: var(--c-read); }
+.p3-svg .p3-fx__point { fill: var(--c-bg); }
+.p3-svg .p3-fx__joint, .p3-svg .p3-fx__cap { stroke: var(--c-read); stroke-width: 2; }
+/* The rows against the held-out label: in that label's amber, like its chip. */
+.p3-svg .p3-fx__bars.is-held .p3-fx__bar { fill: var(--c-hidden); }
+.p3-svg .p3-fx__bars.is-held .p3-fx__joint, .p3-svg .p3-fx__bars.is-held .p3-fx__cap { stroke: var(--c-hidden); }
+/* A row that the held-out label resolves: a pointer at its left, in that label's amber. */
+.p3-svg .p3-fx__held { fill: var(--c-hidden); }
+/* The other reader's name at the left of each row with Qwen3-8B, in text color like the
+   names of the dot chart: they are what the rows are read with. Their heading and the
+   label of the other ten rows keep the gray of a chart's labels. */
+.p3-svg .p3-fx__name { fill: var(--c-text); }
+/* The key of a row's two marks, in the color of neither label. */
+.p3-svg .p3-fx__key rect { fill: var(--c-text); }
+.p3-svg .p3-fx__key path { fill: none; stroke: var(--c-text); stroke-width: 2; }
+.p3-svg .p3-fx__key text { fill: var(--c-text); }
+.p3-svg .p3-fx__ruler text { fill: var(--c-text); }
+.p3-svg .p3-fx__ruler rect { fill: var(--c-text); }
+.p3-svg .p3-fx__ruler[data-ruler="0"] rect { fill: var(--c-read); }
+
+/* The questions there were and the questions it would take: one tile each. */
+.p3-need { flex: none; width: 456px; display: grid; grid-template-columns: repeat(2, 196px); justify-content: space-between; align-content: start; row-gap: var(--sp-2); }
+.p3-need__head { grid-column: 1 / -1; font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); }
+.p3-need__stack { display: grid; align-content: start; }
+.p3-need__n { display: flex; align-items: baseline; column-gap: var(--sp-2); white-space: nowrap; }
+.p3-need__n b { font: 600 var(--fs-4)/var(--lh-4) var(--font-mono); color: var(--c-text); }
+.p3-need__n span, .p3-need__what { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); }
+.p3-need__tiles { margin-top: var(--sp-2); display: grid; grid-template-columns: repeat(10, 16px); gap: var(--sp-1); }
+.p3-need__tiles i { width: 16px; height: 16px; border-radius: var(--sp-1); background: var(--c-text); }
+.p3-need__stack[data-stack="needed"] .p3-need__tiles i { background: none; border: var(--stroke-1) solid var(--c-dim); }
+
+/* ---------- slide 12, p3-close ---------- */
+/* The course block stands in the top left corner; the rest is centered under its row. */
+.p3-close { position: absolute; inset: 0; padding-top: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; row-gap: var(--sp-6); text-align: center; }
+.p3-close__kicker { position: absolute; left: 0; top: 0; }
+.p3-close__body { width: 100%; display: flex; flex-direction: column; align-items: center; row-gap: var(--sp-6); }
+.p3-close__head { display: grid; justify-items: center; row-gap: var(--sp-6); }
+.p3-close__say { max-width: 1560px; font: 600 var(--fs-4)/var(--lh-4) var(--font-serif); letter-spacing: -.01em; color: var(--c-text); text-wrap: balance; }
+/* Under the statement: the scope line of the motivation slide (core/kit.js, scope), one size
+   smaller there so that the statement over it stays the larger of the two. */
+/* The three recommendations share one left edge, so the three tags stand in a column. */
+.p3-close__recs { display: grid; row-gap: var(--sp-1); text-align: left; }
+.p3-close__tag { font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+/* The limits, quiet: three short ones in a row, and under them the fourth, which is a
+   sentence (the second task's result with its limit) and gets the width of the three. */
+.p3-close__limits {
+  width: 100%; display: grid; grid-template-columns: auto repeat(3, auto) 1fr; column-gap: var(--sp-6); row-gap: var(--sp-1); align-items: start;
+  text-align: left; color: var(--c-dim);
+}
+.p3-close__limit:last-child { grid-column: 2 / -1; }
+.p3-close__limits .p3-close__tag { color: var(--c-faint); }
+.p3-close__limit { padding-left: var(--sp-4); border-left: var(--stroke-2) solid var(--c-line); font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); }
+.p3-close__open { display: grid; justify-items: center; row-gap: var(--sp-2); }
+.p3-close__ask { display: grid; justify-items: center; color: var(--c-open); }
+.p3-close__asks { max-width: 1560px; font: 600 var(--fs-3)/var(--lh-3) var(--font-serif); text-wrap: balance; }
+.p3-close__pilot { max-width: 1560px; font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); }
+/* The pilot's strip: one cell for each trace that followed the hint; lit, it never mentioned it. */
+.p3-close__strip { --cell: 8px; --gap: 4px; margin-top: var(--sp-2); }
