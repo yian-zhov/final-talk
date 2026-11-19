@@ -136,7 +136,8 @@
       value: 1.960, text: '1.960', src: 'paper', where: 'Table 3; App. J',
       file: 'results/revision_round8/mdd.txt:2 (z: unadjusted 1.960, z36 3.197)',
     },
-    // Slide 12, what "at most 4" depends on: the joint test of the count (Bonferroni)
+    // Slide 12, what the held-out label's 4 is the largest of ("at most 4" in the paper and
+    // in the text of 'test.resolved_held_max'): the joint test of the count (Bonferroni)
     // resolves 4; it is anti-conservative for this label, and a critical value calibrated
     // for it (c* = 3.370) resolves 3 or 4, by bootstrap run; keeping only pairs of traces
     // within 25% in length, the joint test resolves none.
@@ -1173,11 +1174,13 @@
     // key; what the joint test does about it, and what the 36 are, stands in the key.
     joint: `Checked one by one, ${t('p3.chance_resolved')} of ${t('test.pairs_all')} differences would look resolved even if the readers were equal.`,
     // Which four ('p3.resolved_held_pairs') is on the picture: the rows with a mark carry
-    // their readers' names. The count beside the chip is "at most 4": two stricter checks
-    // give fewer, the critical value calibrated for this label ('p3.resolved_held_stricter':
-    // 3 or 4, by bootstrap run) and the control for prefix length ('p3.resolved_held_matched':
-    // 0). They are not on screen (the sixth cold read could not retell "one stricter check
-    // resolves 3 or 4, another 0"); the setup still checks that 4 is the largest of the three.
+    // their readers' names. The count beside the chip is "4 of 15", the joint test's count
+    // and the title's 4; the paper says "at most 4", since two stricter checks give fewer,
+    // the critical value calibrated for this label ('p3.resolved_held_stricter': 3 or 4, by
+    // bootstrap run) and the control for prefix length ('p3.resolved_held_matched': 0). They
+    // are not on screen (the sixth cold read could not retell "one stricter check resolves 3
+    // or 4, another 0"), and neither is "at most", which nothing on screen would explain;
+    // the setup still checks that 4 is the largest of the three.
     held: `Held-out label: ${v('test.resolved_held_max')} joint intervals exclude zero.`,
     // What the ruler's word "detectable" means; its value stands on the ruler over the caption.
     power: `Detectable (own-ending label): smallest difference this design would catch ${timesIn(v('test.power'))}.`,
@@ -1194,8 +1197,10 @@
     // The count of each label, the labels first: 'test.resolved_own' against the trace's own
     // ending, and against a held-out continuation's the joint test's count, the value of
     // 'test.resolved_held_max' (paper/tmlr/sections/10_conclusion.tex:4-5). That fact's text
-    // is "at most 4" (two stricter checks give fewer) and stands on the chip of click 2; in
-    // the title "at most" had nothing on screen to explain it. The setup checks both counts.
+    // is "at most 4" (two stricter checks give fewer); "at most" has nothing on screen to
+    // explain it, so the title and the chip of click 2 print the value alone, the same 4
+    // (the chip said "at most 4 of 15" until SPEC.md, section 7.12). The setup checks both
+    // counts.
     title: `By either label, only ${t('test.resolved_own')} or ${v('test.resolved_held_max')} of ${t('test.pairs_kept')} reader differences are resolved, <em>and that does not make them equal</em>`,
     cues: [
       // A no-break space keeps the cue's last two words on one line.
@@ -1211,7 +1216,7 @@
           <div class="p3-resolve__mid">
             <div class="p3-resolve__counts">
               <p class="p3-resolve__count" data-count="own">${labelChip('own')}<b>${t('test.resolved_own')} of ${t('test.pairs_kept')} resolved</b></p>
-              <p class="p3-resolve__count" data-count="held">${labelChip('held')}<b>${t('test.resolved_held_max')} of ${t('test.pairs_kept')}</b></p>
+              <p class="p3-resolve__count" data-count="held">${labelChip('held')}<b>${v('test.resolved_held_max')} of ${t('test.pairs_kept')}</b></p>
             </div>
             ${forest()}
           </div>
@@ -1248,11 +1253,16 @@
       const heldJoint = HELD.map((pair, i) => (excludesZero(pair.wide) ? i : -1)).filter((i) => i >= 0);
       if (heldJoint.join() !== HELD_ROWS.join()) throw new Error('the joint intervals against the held-out label no longer exclude zero on the four marked rows only');
       if (HELD.filter(excludesZero).length !== fact('p3.pairs_held').alone) throw new Error('one by one, the held-out intervals no longer exclude zero as often as the results file counts');
-      if (!fact('p3.resolved_held_stricter').value.includes(fact('test.resolved_held_max').value) || fact('p3.resolved_held_matched').value >= fact('test.resolved_held_max').value) throw new Error('"at most" on slide 12 is no longer the largest of the held-out label\'s counts (the joint test, the calibrated one, the one matched by length)');
-      // The title gives the count of each label, "0 or 4", the own ending's first: the
-      // held-out label's has to be the largest of its counts, its fact's "at most", and the
-      // own ending's has to be below it.
+      if (!fact('p3.resolved_held_stricter').value.includes(fact('test.resolved_held_max').value) || fact('p3.resolved_held_matched').value >= fact('test.resolved_held_max').value) throw new Error('the held-out label\'s count on slide 12 is no longer the largest of its counts (the joint test, the calibrated one, the one matched by length)');
+      // The title gives the count of each label, "0 or 4", the own ending's first, and the
+      // chip of click 2 the same 4: the held-out label's has to be the largest of its counts,
+      // its fact's "at most" (the paper's wording, printed nowhere), and the own ending's has
+      // to be below it.
       if (fact('test.resolved_held_max').text !== `at most ${fact('test.resolved_held_max').value}` || fact('test.resolved_own').value >= fact('test.resolved_held_max').value) throw new Error('the two counts in the title of slide 12 are no longer the own ending\'s and, above it, the held-out label\'s largest');
+      // The chip of click 2 and the title print one count for the held-out label, the fact's
+      // value without its "at most" (SPEC.md, section 7.12).
+      const heldCount = `${fact('test.resolved_held_max').value} of ${fact('test.pairs_kept').text}`;
+      if (ctx.q('.p3-resolve__count[data-count="held"] b').textContent !== heldCount || !ctx.q('.dk-title').textContent.includes(` or ${heldCount} `)) throw new Error('the chip of click 2 and the title of slide 12 no longer print the same count for the held-out label');
       // The first group of bars is named row by row, under "each minus Qwen3-8B AP"; the
       // second by its size ("the other ten pairs"). The marked rows are among the named ones.
       if (PAIRS.some((pair, i) => (pair.a === 'qwen8') !== (i < FX_NAMED)) || PAIRS.length - FX_NAMED !== 10) throw new Error('the bars are no longer the pairs with Qwen3-8B, then ten others');
