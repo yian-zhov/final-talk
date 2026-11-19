@@ -3,7 +3,7 @@
    so the three parts cannot collide. Colors, sizes and fonts come from core/tokens.css;
    no text below var(--fs-0). Motion belongs to the timeline (ctx.step), not to CSS transitions. */
 
-/* ---------- slides 9 to 11: one frame ---------- */
+/* ---------- slides 10 to 12: one frame ---------- */
 /* Three rows that keep their place through every step: the result's head (core/kit.js,
    resultHead), the picture, and the caption of the step (kit.says), two lines at most. On
    the last click the caption's place holds the recommendation (kit.rec) and its limits. */
@@ -25,7 +25,7 @@
 .p3-svg .p3-axis { stroke: var(--c-line); stroke-width: 2; }
 .p3-svg .p3-grid { stroke: var(--c-line); stroke-width: 1; opacity: .6; }
 
-/* ---------- slide 9, p3-pooled ---------- */
+/* ---------- slide 10, p3-pooled ---------- */
 /* The title's answer in red, the role "alarm": 0.62 is what a reader scores that reads
    nothing, the least expected number of the talk, and not a way of scoring to prefer. It
    lands from a larger size (the timeline scales it, so it is a box of its own) with a glow
@@ -47,7 +47,7 @@
 .p3-pool__capnote { font: 400 var(--fs-0)/var(--lh-1) var(--font-sans); color: var(--c-text); }
 /* What the reader writes on a column: one score for every trace of the question. */
 .p3-svg .p3-pool__stamp { font: 600 var(--fs-3) var(--font-mono); fill: var(--c-text); text-anchor: middle; }
-/* The web of pairs across columns, faint, as slide 6 left it. A pair inside a column is a
+/* The web of pairs across columns, faint, as slide 7 left it. A pair inside a column is a
    tie (gray); a pair across columns is ranked correctly (teal) or wrongly (red). */
 .p3-svg .p3-pool__web { fill: none; stroke: var(--c-faint); stroke-width: 2; opacity: .45; }
 .p3-svg .p3-pool__tie { fill: none; stroke: var(--c-dim); stroke-width: 3; stroke-dasharray: 1; }
@@ -76,7 +76,7 @@
 /* The prompt-only reader's two values, over its dot and over where its square lands. */
 .p3-svg .p3-pool__value { font-size: var(--fs-3); font-weight: 600; fill: var(--c-text); }
 
-/* ---------- slide 10, p3-curve ---------- */
+/* ---------- slide 11, p3-curve ---------- */
 /* The curve is the reference, built from continuations: amber. Its chart stands in the
    middle of the row until the gauge arrives (the timeline moves it). Its tags stand over
    the plot, from the axis on. */
@@ -138,7 +138,7 @@
 .p3-gauge__key i.is-on { background: var(--c-read); }
 .p3-gauge__count { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-text); }
 
-/* ---------- slide 11, p3-resolve ---------- */
+/* ---------- slide 12, p3-resolve ---------- */
 /* Nine readers, of which the three forced readers step back: gray, a ring for a dot. The
    names of the six that stay are in text color, to be read from the back of the room. */
 .p3-svg .p3-rd__row text { fill: var(--c-text); }
@@ -190,11 +190,15 @@
 .p3-need__tiles i { width: 16px; height: 16px; border-radius: var(--sp-1); background: var(--c-text); }
 .p3-need__stack[data-stack="needed"] .p3-need__tiles i { background: none; border: var(--stroke-1) solid var(--c-dim); }
 
-/* ---------- slide 12, p3-close ---------- */
-/* The course block stands in the top left corner; the rest is centered under its row. */
-.p3-close { position: absolute; inset: 0; padding-top: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; row-gap: var(--sp-6); text-align: center; }
+/* ---------- slide 13, p3-close ---------- */
+/* The course block stands in the top left corner; the rest is centered under its row. The
+   blocks stand 16px apart (the statement and the scope line under it 24px): the last state
+   holds the statement, three recommendations, the sentence on re-scored conclusions, the
+   limits and the open question, and in the wider faces the third recommendation takes a
+   second line. */
+.p3-close { position: absolute; inset: 0; padding-top: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; row-gap: var(--sp-4); text-align: center; }
 .p3-close__kicker { position: absolute; left: 0; top: 0; }
-.p3-close__body { width: 100%; display: flex; flex-direction: column; align-items: center; row-gap: var(--sp-6); }
+.p3-close__body { width: 100%; display: flex; flex-direction: column; align-items: center; row-gap: var(--sp-4); }
 .p3-close__head { display: grid; justify-items: center; row-gap: var(--sp-6); }
 .p3-close__say { max-width: 1560px; font: 600 var(--fs-4)/var(--lh-4) var(--font-serif); letter-spacing: -.01em; color: var(--c-text); text-wrap: balance; }
 /* Under the statement: the scope line of the motivation slide (core/kit.js, scope), one size
@@ -203,11 +207,14 @@
 .p3-close__recs { display: grid; row-gap: var(--sp-1); text-align: left; }
 .p3-close__tag { font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
 /* The limits, quiet: three short ones in a row, and under them the fourth, which is a
-   sentence (the second task's result with its limit) and gets the width of the three. */
+   sentence (the second task's result with its limit) and gets the width of the three. Over
+   them, across the whole width, the sentence on the published conclusions that were
+   re-scored: a result, so in text color, and a little apart from the limits. */
 .p3-close__limits {
   width: 100%; display: grid; grid-template-columns: auto repeat(3, auto) 1fr; column-gap: var(--sp-6); row-gap: var(--sp-1); align-items: start;
   text-align: left; color: var(--c-dim);
 }
+.p3-close__rescored { grid-column: 1 / -1; margin-bottom: var(--sp-1); font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-text); }
 .p3-close__limit:last-child { grid-column: 2 / -1; }
 .p3-close__limits .p3-close__tag { color: var(--c-faint); }
 .p3-close__limit { padding-left: var(--sp-4); border-left: var(--stroke-2) solid var(--c-line); font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); }

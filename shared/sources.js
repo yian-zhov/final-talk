@@ -33,8 +33,11 @@ Deck.addSources({
     title: 'The Window Is in the Reasoning: When LLM Agents Decide to Follow Prompt Injections',
     ref: 'arXiv:2610.24048',
   },
+  // The paper's reference list has three entries of this author and year and prints this
+  // one as "Young (2026c)" (read in paper.pdf on 2026-11-18); Part 3 registers the one it
+  // prints as "Young (2026b)" (young2026divergence, parts/part3.js).
   young2026lie: {
-    short: 'Young 2026',
+    short: 'Young 2026c',
     authors: 'Young',
     title: 'Lie to Me: How Faithful Is Chain-of-Thought Reasoning in Open-Weight Reasoning Models?',
     ref: 'arXiv:2603.22582',

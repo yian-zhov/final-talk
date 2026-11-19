@@ -17,7 +17,7 @@
 
   // The worked example of the talk: one question, one hint, two traces. It is ours
   // (illustrative): the question and its options are those of the special topic talk's hint
-  // slide, so the room has seen them; the hint is this project's, the template of Young 2026
+  // slide, so the room has seen them; the hint is this project's, the template of Young 2026c
   // ('task.hint_template') with the subject and the option filled in. `target` is the option
   // the hint names, a wrong one. Each trace has four paragraphs and restates the hint in its
   // first one, as nearly every trace of the data does ('task.restate_rule_b'); `cut` is the

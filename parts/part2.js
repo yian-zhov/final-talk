@@ -1,4 +1,4 @@
-// Part 2: How a prefix monitor is scored. Slides 5-8 (Methods).
+// Part 2: How a prefix monitor is scored. Slides 6-9 (Methods).
 // SPEC.md section 4 describes each slide; parts/sample.js shows the registration API.
 // Every number and quote is read from the fact table (shared/facts.js and the facts below).
 // Each slide draws its picture in the upper part of a fixed box (parts/part2.css) and, under
@@ -26,7 +26,7 @@
   const paper = (where, file, rest) => Object.freeze({ src: 'paper', where, file, ...rest });
   const TEX = 'paper/tmlr/sections';
 
-  // Slide 5: what a reader and a label are, and the nine readers in three kinds (where the
+  // Slide 6: what a reader and a label are, and the nine readers in three kinds (where the
   // prefix is cut is the shared fact 'task.cut_r'). The counts 3, 2 and 4 are the paper's readers (1) to (3), (4, 5) and
   // (6) to (9); the names are printed as the paper prints them. Who is made to answer in
   // each forced reader, and what the two prompts of the frontier readers ask (AP, IN), are
@@ -57,7 +57,7 @@
       text: 'the open monitors with the answer-prediction prompt, scored by the letter probability of X',
     }),
   });
-  // Slide 6: an AUROC as a share of pairs, within question or pooled.
+  // Slide 7: an AUROC as a share of pairs, within question or pooled.
   Deck.addFacts({
     'p2.auroc_pairs': paper('Sec. 2, Table 1', `${TEX}/02_definitions.tex:20-21`, {
       text: 'Share of (positive, negative) pairs from the same cluster in which the positive scores higher',
@@ -68,7 +68,7 @@
       text: 'within-question AUROC measures what a reader learns from the reasoning beyond the prompt',
     }),
   });
-  // Slide 7: a continuation and who writes it, K, the share and its AUROC, what the
+  // Slide 8: a continuation and who writes it, K, the share and its AUROC, what the
   // reference is for, the small K of the first resampling, and the label from a held-out
   // continuation (the share then comes from the other 15), with what sets its ending apart
   // from the trace's own: it is a draw of the sampler that drew the others, the kind of
@@ -111,7 +111,7 @@
       text: 'Let p(x) be the probability that a continuation from prefix x reaches the outcome. Given the prefixes, the outcome of one held-out continuation is Bernoulli(p(x)), so M holds for it by construction.',
     }),
   });
-  // Slide 8: what is resampled (whole questions, the paper's clusters).
+  // Slide 9: what is resampled (whole questions, the paper's clusters).
   // Read on 2026-11-18: the two readers of a difference are recomputed on the same draws of
   // the questions, and the difference is taken draw by draw; and the two scores of the
   // slide's difference before rounding, which give the +0.026 that the results file prints
@@ -151,7 +151,7 @@
   // example (parts/part1.js): the one that follows is "one run", the other "another run".
   const RUN_NAME = Object.freeze({ follows: 'One run', resists: 'Another run' });
 
-  // ---------------------------------------------------------------- slide 5: prefix, reader, label
+  // ---------------------------------------------------------------- slide 6: prefix, reader, label
   // The nine readers in three kinds, each reader of the motif in exactly one of them. The
   // dots of a card stand in the motif's order. The sentences are ours, after the paper's
   // list of readers (1) to (9) ('readers.kinds'), and short: a card holds three lines at the
@@ -163,7 +163,9 @@
   // that its two monitors answer AP ('p2.open_prompt'). What the score is, the probability
   // of the hinted answer, is said in the caption under the cards, and there for a forced
   // answer too: the probability that the model made to answer gives the hinted option
-  // ('p2.forced_subject').
+  // ('p2.forced_subject'). The cards leave at the last click; what the two letters ask stays
+  // on screen as the third cue, in the card's words (ASKS), since the charts of Part 3 name
+  // six of their readers by them. How many readers a kind holds is its dots.
   const KIND_OF = Object.freeze({
     forced: ['forced_nohint', 'forced', 'qwen32_forced'],
     open: ['qwen32', 'qwen8'],
@@ -177,14 +179,18 @@
   };
   // A model's name is not broken at its hyphen.
   const whole = (names) => names.split(' ').map((word) => (word.includes('-') ? `<span class="p2-reader__whole">${word}</span>` : word)).join(' ');
-  const prompt = (letters, asks) => `<span class="p2-reader__prompt"><b>${letters}</b> ${asks}</span>`;
+  // What each of the two prompts asks, by the letters of the readers' names: one wording for
+  // the frontier card and for the cue that keeps it. The facts name the prompts by these letters.
+  const ASKS = Object.freeze({ AP: 'predict the answer', IN: 'will it be the hinted one?' });
+  if (!t('p2.prompt_ap').startsWith('AP') || !t('p2.prompt_in').startsWith('IN')) throw Deck.fail('part 2: the facts of the two prompts no longer name them AP and IN');
+  const prompt = (letters) => `<span class="p2-reader__prompt"><b>${letters}</b> ${ASKS[letters]}</span>`;
   const KINDS = Object.freeze([
     { key: 'forced', name: 'Forced answer', count: 'p2.kind_forced',
       does: `Made to answer at the cut: the trace’s model (${variant('forced')}, ${variant('forced_nohint')}) or another (${variant('qwen32_forced')}).` },
     { key: 'open', name: 'Open monitors', count: 'p2.kind_open',
       does: `${whole(t('p2.open_names'))} predict the answer (<b>AP</b>).` },
     { key: 'frontier', name: 'Frontier monitors', count: 'p2.kind_frontier',
-      does: `${whole(t('p2.frontier_names'))}:${prompt('AP', 'predict the answer')}${prompt('IN', 'will it be the hinted one?')}` },
+      does: `${whole(t('p2.frontier_names'))}:${prompt('AP')}${prompt('IN')}` },
   ].map((kind) => Object.freeze({ ...kind, readers: READER_KEYS.filter((key) => KIND_OF[kind.key].includes(key)) })));
   (() => {
     const placed = KINDS.flatMap((kind) => kind.readers);
@@ -210,7 +216,6 @@
       <div class="p2-reader__kind-head">
         <span class="p2-reader__kind-name">${kind.name}</span>
         <span class="p2-reader__kind-dots">${kind.readers.map((key) => `<i data-reader="${key}"></i>`).join('')}</span>
-        <span class="p2-reader__kind-count">${t(kind.count)}</span>
       </div>
       <p class="p2-reader__kind-does">${kind.does}</p>
     </div>`;
@@ -223,7 +228,8 @@
     cues: [
       { text: 'Reader: prefix in, score out. A monitor is one kind', step: 1 },
       { text: 'Nine readers of three kinds read the same prefixes', step: 2 },
-      { text: 'Label: the outcome that a score is checked against', step: 3 },
+      // The cards of click 2 leave at click 3; what AP and IN ask stays, in the cards' words.
+      { text: `<b>AP:</b> ${ASKS.AP} · <b>IN:</b> ${ASKS.IN}`, step: 3 },
     ],
     cite: [{ src: 'paper', where: 'Sec. 1, 3.1-3.2' }],
     figure: ['schematic', 'illustrative'],
@@ -352,7 +358,7 @@
     },
   });
 
-  // ---------------------------------------------------------------- slide 6: AUROC, within and pooled
+  // ---------------------------------------------------------------- slide 7: AUROC, within and pooled
   // The grid of 100 pairs explains what an AUROC is and names no reader: at that click
   // neither kind of pair has been defined, so the slide prints no measured AUROC. How many
   // of the 100 are ranked correctly is made up, and the readout says so under the number
@@ -532,7 +538,7 @@
     },
   });
 
-  // ---------------------------------------------------------------- slide 7: continuations and K
+  // ---------------------------------------------------------------- slide 8: continuations and K
   // The fan: K paths from one cut. K is the real number of continuations per prefix; how
   // many of them end at the hinted answer is made up (the tag "Illustrative" covers it), and
   // which ones, and the order in which they are drawn, are seeded. `first` are the lanes of
@@ -871,7 +877,7 @@
     },
   });
 
-  // ---------------------------------------------------------------- slide 8: the bootstrap interval
+  // ---------------------------------------------------------------- slide 9: the bootstrap interval
   // The score of the slide is one reader's within-question AUROC, and is printed with that
   // reader's name as the charts of Part 3 print it ('reader.opus_ap.name'): the frontier
   // model gives two readers, one per prompt, and this is the one under AP.

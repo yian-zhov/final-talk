@@ -211,8 +211,8 @@
 .p1-data { position: absolute; inset: 0; }
 .p1-data b { font-weight: 600; }
 /* The second half of the title waits for the count of click 3; it lands with a glow
-   (--p1-glow, 1 to 0). */
-.p1-data__held { text-shadow: 0 0 calc(var(--p1-glow, 0) * 32px) var(--c-read); }
+   (--p1-glow, 1 to 0). Slide 5 holds the second half of its title back the same way. */
+.p1-data__held, .p1-ran__held { text-shadow: 0 0 calc(var(--p1-glow, 0) * 32px) var(--c-read); }
 
 /* The example: the prompt, then two runs of it. The prompt is the question card of the
    earlier talk's hint slide (a name on its top border, the question, the options in one
@@ -330,3 +330,38 @@
 .p1-data__state i { width: 64px; height: 20px; border-radius: 6px; background: var(--tone); }
 .p1-data__second-says p { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); }
 .p1-data__second-says b { color: var(--c-text); }
+
+/* ---------- slide 5: what we ran: three counts, their bars on one scale, and the dial each one serves ---------- */
+.p1-ran { position: absolute; inset: 0; }
+.p1-ran b { font-weight: 600; }
+/* A row: at the left what we did and, under it, the count with what is counted (the count
+   in the color of its thing: plain for traces, amber for continuations, teal for readers);
+   in the middle its bar and two lines about it; at the right, from the last click on, the
+   dial of the scoring choice that the count serves. Rows are placed in stage pixels
+   (parts/part1.js, RAN). */
+.p1-ran__row { position: absolute; left: 0; right: 0; height: 136px; }
+.p1-ran__verb { position: absolute; left: 0; top: 0; font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); white-space: nowrap; }
+.p1-ran__count { position: absolute; left: 0; top: 40px; display: flex; align-items: baseline; column-gap: var(--sp-4); white-space: nowrap; }
+.p1-ran__n { display: inline-block; font: 600 var(--fs-6)/var(--lh-6) var(--font-mono); color: var(--tone, var(--c-text)); text-align: right; }
+.p1-ran__noun { font: 600 var(--fs-2)/var(--lh-2) var(--font-sans); color: var(--c-text); }
+/* The bar and its lines. The three bars start at one place and share one scale, so their
+   lengths compare; a segment is placed and sized in stage pixels. The traces without the
+   hint are an outline that grows from the left (--p1-grow, 0% to 100%). */
+.p1-ran__detail { position: absolute; left: 660px; top: 12px; }
+.p1-ran__bar { position: relative; height: 20px; margin-bottom: var(--sp-1); }
+.p1-ran__bar i { position: absolute; top: 0; height: 100%; border-radius: 4px; background: var(--tone); }
+.p1-ran__bar i[data-seg="unhinted"] {
+  background: none; border: var(--stroke-1) solid var(--c-faint);
+  clip-path: inset(0 calc(100% - var(--p1-grow, 100%)) 0 0);
+}
+.p1-ran__parts, .p1-ran__line { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); white-space: nowrap; }
+.p1-ran__parts b, .p1-ran__line b { color: var(--c-text); }
+/* Under the first bar, each part's count under the place where the part starts. */
+.p1-ran__parts { position: relative; height: var(--lh-1); }
+.p1-ran__parts span { position: absolute; top: 0; }
+/* The dials of slide 3 (.p1-stk__dial), one at the end of each row, and over them what a dial is. */
+.p1-ran__dial { position: absolute; right: 0; top: 20px; }
+.p1-ran__head {
+  position: absolute; right: 0; top: 0; font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--c-faint); white-space: nowrap;
+}

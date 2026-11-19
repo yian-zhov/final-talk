@@ -17,7 +17,7 @@
 /* The question a slide ends on, which Part 3 answers: in Part 3's color. */
 .p2-ask { font-weight: 600; color: var(--c-open); }
 
-/* ------------------------------------------------------------------ slide 5: prefix, reader, label */
+/* ------------------------------------------------------------------ slide 6: prefix, reader, label */
 /* The trace in its terminal and, beside it, the reader's score and the label: 336px high.
    Until the cards of the three kinds arrive under it, the block stands mid-height, and
    until the score arrives the terminal stands mid-stage (the timeline moves both). */
@@ -47,9 +47,9 @@
 .p2-reader__label-value { font: 600 var(--fs-4)/var(--lh-4) var(--font-mono); text-align: right; color: var(--c-alarm); }
 .p2-reader__label-key { grid-column: 2; justify-self: end; font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); color: var(--c-faint); white-space: nowrap; }
 
-/* The three kinds of reader: a card each, with a dot per reader. The cards are as wide as
-   their sentences need: the open monitors' is the shortest. A card holds its head and three
-   lines at the size of a caption. */
+/* The three kinds of reader: a card each, with a dot per reader (the dots are its count).
+   The cards are as wide as their sentences need: the open monitors' is the shortest. A card
+   holds its head and three lines at the size of a caption. */
 .p2-reader__kinds {
   position: absolute; left: 0; top: 348px; width: 1728px; height: 188px;
   display: grid; grid-template-columns: minmax(0, 14fr) minmax(0, 8fr) minmax(0, 12fr); column-gap: var(--sp-6);
@@ -60,7 +60,6 @@
 .p2-reader__kind-dots { display: flex; column-gap: var(--sp-2); }
 .p2-reader__kind-dots i { width: 20px; height: 20px; border: var(--stroke-1) solid var(--c-read); border-radius: 50%; }
 .p2-reader__kind-dots i.is-fed { background: var(--c-read); }
-.p2-reader__kind-count { margin-left: auto; font: 600 var(--fs-1)/var(--lh-1) var(--font-mono); color: var(--c-faint); white-space: nowrap; }
 .p2-reader__kind-does { margin-top: var(--sp-1); font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); }
 /* What sets a forced reader's name apart in the charts of Part 3, and the two letters by
    which they name a reader's prompt; each prompt of the frontier card has a line of its own. */
@@ -68,7 +67,7 @@
 .p2-reader__prompt { display: block; }
 .p2-reader__kind-does b, .p2-reader__whole { white-space: nowrap; }
 
-/* ------------------------------------------------------------------ slide 6: AUROC, within and pooled */
+/* ------------------------------------------------------------------ slide 7: AUROC, within and pooled */
 /* One pair: the two prefixes of the worked example, each in its terminal with the label it
    will get in the corner and the reader's meter under it; between them the verdict. */
 .p2-auroc__pair { position: absolute; left: 64px; top: 64px; width: 1600px; height: 408px; }
@@ -121,7 +120,7 @@
 .p2-auroc__counter span { display: block; white-space: nowrap; }
 .p2-auroc__counter b { font-weight: 600; }
 
-/* ------------------------------------------------------------------ slide 7: continuations and K */
+/* ------------------------------------------------------------------ slide 8: continuations and K */
 /* The prefix in its terminal, cut off at the bottom: the terminal's lower edge is the cut.
    From the right end of the cut the endings leave as paths (parts/part2.js, FAN_AT). */
 .p2-fan__term {
@@ -190,7 +189,7 @@
 .p2-fan__ghost { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: var(--c-alarm); opacity: 0; }
 .p2-fan__ghost.is-resist { background: var(--c-ok); }
 
-/* ------------------------------------------------------------------ slide 8: the bootstrap interval */
+/* ------------------------------------------------------------------ slide 9: the bootstrap interval */
 /* One score and where it comes from: the questions as tiles (a tile holds its traces as
    dots), under each the copies of it that a draw holds, and under those the axis on which
    the recomputed scores pile up. The block stands mid-stage until the difference arrives. */

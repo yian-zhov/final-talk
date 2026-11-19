@@ -175,7 +175,7 @@
 
   // ---------------------------------------------------------------- the cut trace
   // The talk's motif (SPEC.md section 2, "Motifs"): the paragraphs of one trace, a cut, and
-  // what lies beyond the cut. Slides 1, 5, 6 and 7 draw it as lines of text, slide 2 as a
+  // what lies beyond the cut. Slides 1, 6, 7 and 8 draw it as lines of text, slide 2 as a
   // row of bars in time; both are this block, and a paragraph (.dk-cut__piece) has the same
   // states in both:
   //   (none)      plain: written, and nothing said about who reads it
@@ -236,7 +236,7 @@
 
   // ---------------------------------------------------------------- question columns
   // One column per question, its traces as dots, the followers on top: red for a trace that
-  // follows the hint, green for one that resists (slides 6 and 9). `x` are the columns'
+  // follows the hint, green for one that resists (slides 7 and 10). `x` are the columns'
   // middles, `box` the column's box ({ w, top, h, r }), `dotTop` and `pitch` place the dots
   // of radius `r`; `questions` is [{ label, follows, traces }]. The slots take a slide's own
   // marks: `back` lies under the boxes, `under` over the boxes and under the dots, `over`
