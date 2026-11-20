@@ -11,7 +11,6 @@
     page: byId('dk-page'), dots: byId('dk-dots'), progress: byId('dk-progress'),
   });
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  const plain = (html) => String(html).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
   let mounted = [];
   let pos = Object.freeze({ index: 0, step: 0 });
@@ -163,7 +162,7 @@
 
   // `tags` is what the registration asks the footer to carry, in order (Deck.tagsOf).
   const info = () => mounted.map((m, i) => ({
-    index: i, id: m.def.id, part: m.def.part, title: plain(m.def.title), total: m.total,
+    index: i, id: m.def.id, part: m.def.part, title: D.plain(m.def.title), total: m.total,
     tags: D.tagsOf(m.def).map((t) => t.tag),
     steps: m.steps.map((s) => ({ label: s.label, start: s.start, dur: s.dur })),
   }));

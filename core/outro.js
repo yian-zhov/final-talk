@@ -28,19 +28,22 @@
   // raise the question of where that tag is.
   const tags = D.tagLegend(D.slides);
 
-  // The one tag of the talk that no footer carries: the chip "exploratory", which Part 3
-  // sets beside a result. The first legend (slide 2) explains it in a row of its own under
-  // the footer tags; this one does too, in the same words ('p1.exploratory'), so that the
-  // legend which stays up during questions holds every tag the room has seen. The row is
-  // outside the list: the list is the footer tags in use and no other (tools/selftest.mjs).
-  // Like a footer tag, it is listed only if a slide shows it: a slide whose markup holds the
-  // chip and no legend of its own (the first legend shows the chip to explain it).
-  const MARK = Object.freeze({ tag: 'exploratory', fact: 'p1.exploratory' });
-  const asChip = new RegExp(`class="dk-chip[^"]*">${MARK.tag}<`);
-  const marked = D.slides.some((slide) => asChip.test(slide.html) && !/dk-tags__list/.test(slide.html));
-  const mark = marked
-    ? `<p class="dk-tags__mark"><span class="dk-chip">${MARK.tag}</span><span class="dk-tags__means">beside a result: ${D.fact(MARK.fact).text}</span></p>`
-    : '';
+  // The tags of the talk that no footer carries: the chips that Part 3 sets beside a result
+  // to say how its analysis stands (motifs.standings: "exploratory" and the two of slide
+  // 11). The first legend (slide 2) explains each in a row of its own under the footer tags;
+  // this one does too, in the same words, so that the legend which stays up during
+  // questions holds every tag the room has seen. The rows are outside the list: the list
+  // is the footer tags in use and no other (tools/selftest.mjs). Like a footer tag, each is
+  // listed only if a slide shows it: a slide whose markup holds the chip and no legend of
+  // its own (the first legend shows the chips to explain them).
+  const shown = (tag) => {
+    const asChip = new RegExp(`class="dk-chip[^"]*">${tag}<`);
+    return D.slides.some((slide) => asChip.test(slide.html) && !/dk-tags__list/.test(slide.html));
+  };
+  const marks = D.motifs.standings.filter(({ tag }) => shown(tag))
+    .map(({ tag, means }) => `<p class="dk-tags__mark"><span class="dk-chip">${tag}</span><span class="dk-tags__means">beside a result: ${D.fact(means).text}</span></p>`)
+    .join('');
+  const mark = marks ? `<div class="dk-tags__marks">${marks}</div>` : '';
 
   D.register({
     id: 'sources',

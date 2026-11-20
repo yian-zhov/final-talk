@@ -315,12 +315,13 @@
   };
 
   // ---------------------------------------------------------------- a result and its recommendation
-  // The three scoring choices (motifs.choices). A result slide opens on its question, in the
-  // words of the motivation slide, with a tag that says how its analyses stand, and ends on
-  // its recommendation; the closing slide shows the three recommendations again.
+  // The three questions of the talk (motifs.choices) and the four practices it recommends
+  // (motifs.recs). A result slide opens on its question, in the words of the motivation
+  // slide, with a tag that says how its analyses stand, and ends on a recommendation; the
+  // closing slide shows the four recommendations again.
   const choice = (n) => {
     const found = D.motifs.choices[n - 1];
-    if (!found) throw D.fail(`kit: there is no scoring choice ${n} (motifs.choices has ${D.motifs.choices.length})`);
+    if (!found) throw D.fail(`kit: there is no question ${n} (motifs.choices has ${D.motifs.choices.length})`);
     return found;
   };
   const standing = (text) => `<span class="dk-chip dk-result__standing">${text}</span>`;
@@ -330,11 +331,17 @@
       <span class="dk-result__ask">${choice(n).ask}</span>
       ${stands ? standing(stands) : ''}
     </div>`;
-  const rec = (n) => `
+  // `short`: the tag is the number alone, for a list that stands under a tag of its own (the
+  // closing slide).
+  const rec = (n, { short = false } = {}) => {
+    const found = D.motifs.recs[n - 1];
+    if (!found) throw D.fail(`kit: there is no recommendation ${n} (motifs.recs has ${D.motifs.recs.length})`);
+    return `
     <p class="dk-rec" data-rec="${n}">
-      <span class="dk-rec__tag">Recommendation ${n} of ${D.motifs.choices.length}</span>
-      <span class="dk-rec__move">${choice(n).rec}.</span>
+      <span class="dk-rec__tag">${short ? n : `Recommendation ${n} of ${D.motifs.recs.length}`}</span>
+      <span class="dk-rec__move">${found.rec}.</span>
     </p>`;
+  };
   // How a count, a tag or a short line arrives: a small overshoot inside its own row. A line
   // as wide as the stage does not arrive this way: enlarged, it would reach past the stage.
   const POP = Object.freeze({ opacity: [0, 1], scale: [1.15, 1] });

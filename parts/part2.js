@@ -15,114 +15,110 @@
   const v = (key) => Deck.fact(key).value;
   const KICK = kicker(PART, 'Methods');
   const two = (n) => n.toFixed(2);
-  const signed = (n) => `${n < 0 ? '−' : '+'}${Math.abs(n).toFixed(3)}`;
+  // A reader's score for one prefix is a probability and is printed as a percentage; an
+  // AUROC keeps its decimals. So the made-up score of one prefix (0.81) cannot be taken for
+  // one of the measured AUROCs, which lie near it (0.803 to 0.844).
+  const percent = (n) => `${Math.round(n * 100)}%`;
 
   // ---------------------------------------------------------------- facts of this part
-  // Facts that only Part 2 needs. Each was read on 2026-11-17 in the paper's source text
-  // (final-project/paper/tmlr/sections; `file` is relative to final-project/, as in
-  // shared/facts.js, and `where` is the place as numbered in paper.pdf). A `text` is the
-  // paper's wording with its symbols and markup left out; the slides say it in the deck's
-  // words and print only the numbers and the names.
-  const paper = (where, file, rest) => Object.freeze({ src: 'paper', where, file, ...rest });
-  const TEX = 'paper/tmlr/sections';
+  // Facts that only Part 2 needs, each with the page and the words of the paper's v2 draft
+  // it was read in (sources/paper-v2-draft.pdf; the form of `file` is that of
+  // shared/facts.js, and tools/selftest.mjs looks every quotation up on its page). A `text`
+  // is the paper's wording with its symbols left out; the slides say it in the deck's words
+  // and print only the numbers and the names.
+  const PDF = 'sources/paper-v2-draft.pdf';
+  const at = (page, quote) => `p.${page}: "${quote}"`;
+  const paper = (where, cites, rest) => Object.freeze({ src: 'paper', where, file: `${PDF}, ${[].concat(cites).join('; ')}`, ...rest });
 
-  // Slide 6: what a reader and a label are, and the nine readers in three kinds (where the
-  // prefix is cut is the shared fact 'task.cut_r'). The counts 3, 2 and 4 are the paper's readers (1) to (3), (4, 5) and
-  // (6) to (9); the names are printed as the paper prints them. Who is made to answer in
-  // each forced reader, and what the two prompts of the frontier readers ask (AP, IN), are
-  // facts of the same reading.
+  // Slide 6: what a reader is, the two labels and what each asks, and the nine readers in
+  // three kinds (where the prefix is cut is the shared fact 'task.cut_r'). The counts 3, 2
+  // and 4 are the paper's readers (1) to (3), (4, 5) and (6) to (9); the names are printed
+  // as the paper prints them. Who is made to answer in each forced reader, and what the two
+  // prompts of the frontier readers ask (AP, IN), are facts of the same reading.
   Deck.addFacts({
-    'p2.reader_def': paper('Sec. 1', `${TEX}/01_intro.tex:19`, { text: 'A reader maps a prefix to a continuous score or a binary verdict' }),
-    'p2.label_def': paper('Sec. 1', `${TEX}/01_intro.tex:15-16`, { text: 'a trace follows the hint if it ends at that answer and resists it otherwise' }),
-    'p2.same_prefixes': paper('Sec. 3.2', `${TEX}/03_tasks.tex:31`, { text: 'All readers read the same prefixes' }),
-    'p2.kind_forced': paper('Sec. 3.2, readers (1) to (3)', `${TEX}/03_tasks.tex:32-35`, { value: 3, text: '3' }),
-    'p2.kind_open': paper('Sec. 3.2, readers (4, 5)', `${TEX}/03_tasks.tex:36-38`, { value: 2, text: '2' }),
-    'p2.kind_frontier': paper('Sec. 3.2, readers (6) to (9)', `${TEX}/03_tasks.tex:39-42`, { value: 4, text: '4' }),
-    'p2.open_names': paper('Sec. 3.2', `${TEX}/03_tasks.tex:36`, { text: 'Qwen3-8B and Qwen3-32B' }),
-    'p2.frontier_names': paper('Sec. 3.2', `${TEX}/03_tasks.tex:39`, { text: 'Claude Opus 5.5 and GPT-6 Astra' }),
-    'p2.frontier_prompts': paper('Sec. 3.2', `${TEX}/03_tasks.tex:40`, { value: 2, text: 'two prompts' }),
-    'p2.forced_subject': paper('Sec. 3.2, reader (1)', `${TEX}/03_tasks.tex:32-33`, {
+    'p2.reader_def': paper('Sec. 1', at(2, 'A reader maps a prefix to a continuous score or a binary verdict.'), { text: 'A reader maps a prefix to a continuous score or a binary verdict' }),
+    'p2.label_def': paper('Sec. 1', at(2, 'a trace follows the hint if it ends at that answer and resists it otherwise'), { text: 'a trace follows the hint if it ends at that answer and resists it otherwise' }),
+    'p2.two_labels': paper('Sec. 3', at(5, 'We use two labels, and they answer two different questions.'), { value: 2, text: 'We use two labels, and they answer two different questions.' }),
+    'p2.label_own': paper('Sec. 3', at(5, 'The first label is the trace’s own outcome: does this trace end at the hinted answer? A monitor scored against it predicts the fate of one run.'), {
+      text: 'The first label is the trace’s own outcome: does this trace end at the hinted answer? A monitor scored against it predicts the fate of one run.',
+    }),
+    'p2.label_held': paper('Sec. 3', at(5, 'The second label is the outcome L of a held-out continuation drawn from the same prefix: has the model committed by this prefix?'), {
+      text: 'The second label is the outcome of a held-out continuation drawn from the same prefix: has the model committed by this prefix?',
+    }),
+    'p2.label_held_asks': paper('Sec. 3', at(5, 'scored against it predicts what the model tends to do from here, not what this particular run did'), {
+      text: 'predicts what the model tends to do from here, not what this particular run did',
+    }),
+    'p2.same_prefixes': paper('Sec. 2.2', at(3, 'All readers read the same prefixes'), { text: 'All readers read the same prefixes' }),
+    'p2.kind_forced': paper('Sec. 2.2, readers (1) to (3)', [at(3, '(1) the forced answer'), at(3, '(3) Qwen3-32B forced to answer on the subject’s prefix')], { value: 3, text: '3' }),
+    'p2.kind_open': paper('Sec. 2.2, readers (4, 5)', at(3, '(4, 5) the open monitors Qwen3-8B and Qwen3-32B'), { value: 2, text: '2' }),
+    'p2.kind_frontier': paper('Sec. 2.2, readers (6) to (9)', at(3, '(6–9) Claude Opus 5.5 and GPT-6 Astra'), { value: 4, text: '4' }),
+    'p2.open_names': paper('Sec. 2.2', at(3, 'the open monitors Qwen3-8B and Qwen3-32B'), { text: 'Qwen3-8B and Qwen3-32B' }),
+    'p2.frontier_names': paper('Sec. 2.2', at(3, '(6–9) Claude Opus 5.5 and GPT-6 Astra'), { text: 'Claude Opus 5.5 and GPT-6 Astra' }),
+    'p2.frontier_prompts': paper('Sec. 2.2', at(3, 'each asked for a number under two prompts'), { value: 2, text: 'two prompts' }),
+    'p2.forced_subject': paper('Sec. 2.2, reader (1)', at(3, 'the forced answer: the subject model gets its prompt, the prefix, its end-of-thinking marker and an answer stub, and the score is its probability of X over the four letters'), {
       text: 'the forced answer: the subject model gets its prompt, the prefix, its end-of-thinking marker and an answer stub, and the score is its probability of X over the four letters',
     }),
-    'p2.forced_nohint': paper('Sec. 3.2, reader (2)', `${TEX}/03_tasks.tex:34`, { text: 'the forced answer with the hint removed from the prompt' }),
-    'p2.forced_other': paper('Sec. 3.2, reader (3)', `${TEX}/03_tasks.tex:35`, { text: 'Qwen3-32B forced to answer on the subject’s prefix' }),
-    'p2.prompt_ap': paper('Sec. 3.2', `${TEX}/03_tasks.tex:40-41`, {
+    'p2.forced_nohint': paper('Sec. 2.2, reader (2)', at(3, 'answer with the hint removed from the prompt'), { text: 'the forced answer with the hint removed from the prompt' }),
+    'p2.forced_other': paper('Sec. 2.2, reader (3)', at(3, 'Qwen3-32B forced to answer on the subject’s prefix'), { text: 'Qwen3-32B forced to answer on the subject’s prefix' }),
+    'p2.prompt_ap': paper('Sec. 2.2', at(3, 'AP-num, a probability for each option under the answer-prediction prompt, scored by X’s'), {
       text: 'AP-num, a probability for each option under the answer-prediction prompt, scored by X’s',
     }),
-    'p2.prompt_in': paper('Sec. 3.2', `${TEX}/03_tasks.tex:41-42`, {
+    'p2.prompt_in': paper('Sec. 2.2', at(3, 'IN-num, the probability that the final answer will be the hint’s, under the influence prompt'), {
       text: 'IN-num, the probability that the final answer will be the hint’s, under the influence prompt',
     }),
-    // Read on 2026-11-18: the open monitors answer the same prompt as the frontier readers' AP.
-    'p2.open_prompt': paper('Sec. 3.2, readers (4, 5)', `${TEX}/03_tasks.tex:36-38`, {
+    // The open monitors answer the same prompt as the frontier readers' AP.
+    'p2.open_prompt': paper('Sec. 2.2, readers (4, 5)', [at(3, 'with the answer-prediction prompt of Boppana et al.'), at(3, 'scored by the letter probability of X')], {
       text: 'the open monitors with the answer-prediction prompt, scored by the letter probability of X',
     }),
   });
   // Slide 7: an AUROC as a share of pairs, within question or pooled.
   Deck.addFacts({
-    'p2.auroc_pairs': paper('Sec. 2, Table 1', `${TEX}/02_definitions.tex:20-21`, {
+    'p2.auroc_pairs': paper('Table 1', at(4, 'Share of (positive, negative) pairs from the same cluster in which the positive scores higher'), {
       text: 'Share of (positive, negative) pairs from the same cluster in which the positive scores higher',
     }),
-    'p2.pooled_pairs': paper('Sec. 2, Table 1', `${TEX}/02_definitions.tex:21`, { text: 'Pooled: over all pairs.' }),
-    'p2.within_prompt': paper('Sec. 1', `${TEX}/01_intro.tex:21-22`, { text: 'A within-prompt (within-question, within-state) AUROC compares only traces of the same prompt.' }),
-    'p2.within_meaning': paper('Sec. 4', `${TEX}/04_readers.tex:141-142`, {
+    'p2.pooled_pairs': paper('Table 1', at(4, 'Pooled: over all pairs.'), { text: 'Pooled: over all pairs.' }),
+    'p2.within_prompt': paper('Sec. 3', at(5, 'A within-prompt AUROC compares only traces of the same prompt; a pooled AUROC compares all pairs.'), {
+      text: 'A within-prompt AUROC compares only traces of the same prompt; a pooled AUROC compares all pairs.',
+    }),
+    'p2.within_meaning': paper('Sec. 3', at(5, 'within-question AUROC measures what a reader learns from the reasoning beyond the prompt'), {
       text: 'within-question AUROC measures what a reader learns from the reasoning beyond the prompt',
     }),
+    // What a reader shown the prompt alone can and cannot do: the paper's example for pooling.
+    'p2.prompt_only': paper('Sec. 3', at(5, 'a reader that sees only the prompt, and never the reasoning, cannot rank two traces of the same question'), {
+      text: 'a reader that sees only the prompt, and never the reasoning, cannot rank two traces of the same question',
+    }),
   });
-  // Slide 8: a continuation and who writes it, K, the share and its AUROC, what the
-  // reference is for, the small K of the first resampling, and the label from a held-out
-  // continuation (the share then comes from the other 15), with what sets its ending apart
-  // from the trace's own: it is a draw of the sampler that drew the others, the kind of
-  // ending that the shares count.
+  // Slide 8: a continuation and who writes it, K, the share and its AUROC, how recent work
+  // reads that AUROC (as a ceiling), the small K of the first resampling, and the label from
+  // a held-out continuation (the share then comes from the other 15).
   Deck.addFacts({
-    'p2.continuation_def': paper('Sec. 1', `${TEX}/01_intro.tex:20-21`, {
+    'p2.continuation_def': paper('Sec. 1', at(2, 'A continuation is a fresh sample of the model’s reasoning from a prefix to its end, and K is the number drawn per prefix.'), {
       text: 'A continuation is a fresh sample of the model’s reasoning from a prefix to its end, and K is the number drawn per prefix.',
     }),
-    'p2.resampling_auroc': paper('Sec. 2, Table 1', `${TEX}/02_definitions.tex:23-24`, {
+    'p2.resampling_auroc': paper('Table 1', [at(4, 'the share of K continuations that reach the outcome'), at(4, 'its within-cluster AUROC')], {
       text: 'the share of K continuations that reach the outcome; its within-cluster AUROC, the resampling AUROC',
     }),
-    'p2.reference_use': paper('Sec. 5', `${TEX}/05_ceiling.tex:4-5`, {
+    'p2.ceiling_use': paper('Sec. 4', at(6, 'To judge how much of what a prefix reveals a reader captures, compare it with the best AUROC any reader of the prefix could reach. Resampling estimates it'), {
       text: 'To judge how much of what a prefix reveals a reader captures, compare it with the best AUROC any reader of the prefix could reach. Resampling estimates it',
     }),
-    'p2.k_small': paper('Sec. 3.1', `${TEX}/03_tasks.tex:21-22`, { value: 2, text: '2' }),
-    'p2.heldout_label': paper('Sec. 5.1', `${TEX}/05_ceiling.tex:71`, { text: 'the outcome of one held-out continuation' }),
-    'p2.heldout_others': paper('Sec. 5.1', `${TEX}/05_ceiling.tex:75`, { value: 15, text: '15' }),
-    'p2.own_not_a_draw': paper('Sec. 1, contribution (i); Sec. 5.1', `${TEX}/01_intro.tex:53-54 (${TEX}/05_ceiling.tex:61-62)`, {
-      text: 'If the trace’s own remainder is one more draw from the continuation sampler (assumption M), the limit bounds every reader in expectation; our prefix cut violates M.',
+    'p2.ceiling_name': paper('Sec. 1', at(1, 'They call the resulting within-state AUROC a decision ceiling and read every monitor against it.'), {
+      text: 'They call the resulting within-state AUROC a decision ceiling and read every monitor against it.',
     }),
-    'p2.heldout_is_a_draw': paper('Sec. 1, contribution (i); Sec. 5.1', `${TEX}/01_intro.tex:54-55 (${TEX}/05_ceiling.tex:71-73)`, {
-      text: 'With a held-out continuation’s outcome as the label, M holds by construction.',
-    }),
-    // Read on 2026-11-18: why the trace's own ending is not such a draw. The cut is placed at
-    // a share of the trace's own reasoning, so where it falls depends on how long the trace's
-    // own remainder is; a continuation is drawn after the cut is fixed.
-    'p2.cut_looks_ahead': paper('Sec. 3.1; App. E, S2a', `${TEX}/03_tasks.tex:20-21 (paper/tmlr/appendix/e_ceiling.tex:27-28)`, {
-      text: 'A prefix at position r ends at the last paragraph boundary at or before a share r of the trace’s own thinking tokens. The cut at a share of the trace’s own thinking makes the prefix a function of the remainder’s length, so M can fail.',
-    }),
-    // Read on 2026-11-18 (third cold read): the continuations start from a cut that is
-    // already fixed, so no continuation's length enters where the cut falls.
-    'p2.continuations_from_cut': paper('Sec. 3.1', `${TEX}/03_tasks.tex:24-25`, {
+    'p2.noisy': paper('Sec. 4', at(6, 'is a noisy reading of the continuation probability'), { text: 'a noisy reading of the continuation probability' }),
+    'p2.k_small': paper('Sec. 2.1', at(3, 'trace was resampled with K = 2 continuations at r = 0.1, 0.25, 0.4, 0.55, 0.7 and 0.85'), { value: 2, text: '2' }),
+    'p2.heldout_label': paper('Sec. 4.3', at(7, 'the outcome L of one held-out continuation'), { text: 'the outcome of one held-out continuation' }),
+    'p2.heldout_others': paper('Sec. 4.3', at(7, 'the AUROC against L of the share of m of the other 15'), { value: 15, text: '15' }),
+    // The continuations start from a cut that is already fixed, where the readers read.
+    'p2.continuations_from_cut': paper('Sec. 2.1', at(3, 'each of the 1,226 drawn hinted traces was resampled again with K = 16 continuations from the exact cut its readers read at r = 0.5'), {
       text: 'each of the 1,226 drawn hinted traces was resampled again with K = 16 continuations from the exact cut its readers read at r = 0.5',
-    }),
-    // Read on 2026-11-18 (fourth cold read): why a held-out continuation's ending is the same
-    // kind of thing as what the reference is built from. A share estimates the probability
-    // that a continuation from the prefix reaches the outcome, and the held-out
-    // continuation's outcome is one draw at that very probability.
-    'p2.heldout_same_kind': paper('Sec. 5.1', `${TEX}/05_ceiling.tex:55, 71-72`, {
-      text: 'Let p(x) be the probability that a continuation from prefix x reaches the outcome. Given the prefixes, the outcome of one held-out continuation is Bernoulli(p(x)), so M holds for it by construction.',
     }),
   });
   // Slide 9: what is resampled (whole questions, the paper's clusters).
-  // Read on 2026-11-18: the two readers of a difference are recomputed on the same draws of
-  // the questions, and the difference is taken draw by draw; and the two scores of the
-  // slide's difference before rounding, which give the +0.026 that the results file prints
-  // (the scores as printed, 0.828 and 0.803, are 0.025 apart).
   Deck.addFacts({
-    'p2.question_clusters': paper('Table 2, caption', `${TEX}/04_readers.tex:12`, { text: 'question-cluster percentile interval' }),
-    'p2.diff_same_draws': paper('App. J', 'paper/tmlr/appendix/k_inference.tex:6-12 (configs/revision/inference_frozen.md:43-44, 59-60)', {
-      text: 'each model’s 20 questions are its clusters, with the paper’s 2,000 question-cluster replicates; the statistic is averaged replicate by replicate, and a pair’s difference is that of the two readers’ over-model means',
-    }),
-    'p2.unrounded_opus_ap': paper('Table 2', 'results/prompt_only_pooled/prompt_only_pooled.json (over_models, claude-opus-5-5|p1, within, mean, point)', { value: 0.8282736683368286, text: '0.8283' }),
-    'p2.unrounded_qwen8': paper('Table 2', 'results/prompt_only_pooled/prompt_only_pooled.json (over_models, qwen3-8b|score, within, mean, point)', { value: 0.8027275220771053, text: '0.8027' }),
+    'p2.question_clusters': paper('Table 4, caption', at(11, 'nominal 95% question-cluster percentile interval'), { text: 'question-cluster percentile interval' }),
+    // What "resolved" stands for in the paper's table of differences: an interval that
+    // excludes zero.
+    'p2.excluding_zero': paper('Table 5; abstract', [at(11, 'Excluding 0, simultaneous'), at(1, 'simultaneous 95% intervals resolve no reader difference')], { text: 'Excluding 0' }),
   });
 
   // ---------------------------------------------------------------- shared by the four slides
@@ -160,12 +156,19 @@
   // apart in the charts of Part 3 ('reader.<key>.name' without the word they share, which
   // is the card's own); the frontier card gives the two prompts a line each, by the letters
   // those charts use, AP and IN ('p2.prompt_ap', 'p2.prompt_in'), and the open card says
-  // that its two monitors answer AP ('p2.open_prompt'). What the score is, the probability
-  // of the hinted answer, is said in the caption under the cards, and there for a forced
-  // answer too: the probability that the model made to answer gives the hinted option
-  // ('p2.forced_subject'). The cards leave at the last click; what the two letters ask stays
-  // on screen as the third cue, in the card's words (ASKS), since the charts of Part 3 name
-  // six of their readers by them. How many readers a kind holds is its dots.
+  // that its two monitors answer AP ('p2.open_prompt'). What the score is, for every reader,
+  // the caption of the reader's step says ("The score: how likely this trace is to end at
+  // the hinted answer."); for a forced answer the forced card says it again in its own last
+  // sentence, "Score: its probability of the hinted answer." ('p2.forced_subject'). The
+  // cards stay to the end of the slide, under the trace and its labels: the charts of
+  // Part 3 name six of their readers by the two letters, and a card that left after one click was not read. How many
+  // readers a kind holds is its dots, one dot per reader, which the second cue says. The two
+  // kinds whose names say "monitors" are the monitors of the talk, six of the nine (the
+  // second cue counts them); a forced answer is a reader and not a monitor. Qwen3-32B is in
+  // two kinds, and the cards say what differs: as a forced reader it is made to answer, as
+  // an open monitor it is asked to predict the trace's answer (the paper's readers (3) and
+  // (5): "(3) has the weights of (5) but is elicited as a forced answer"). "Hint removed"
+  // says where the hint is removed from, the prompt ('p2.forced_nohint').
   const KIND_OF = Object.freeze({
     forced: ['forced_nohint', 'forced', 'qwen32_forced'],
     open: ['qwen32', 'qwen8'],
@@ -179,16 +182,19 @@
   };
   // A model's name is not broken at its hyphen.
   const whole = (names) => names.split(' ').map((word) => (word.includes('-') ? `<span class="p2-reader__whole">${word}</span>` : word)).join(' ');
-  // What each of the two prompts asks, by the letters of the readers' names: one wording for
-  // the frontier card and for the cue that keeps it. The facts name the prompts by these letters.
-  const ASKS = Object.freeze({ AP: 'predict the answer', IN: 'will it be the hinted one?' });
-  if (!t('p2.prompt_ap').startsWith('AP') || !t('p2.prompt_in').startsWith('IN')) throw Deck.fail('part 2: the facts of the two prompts no longer name them AP and IN');
-  const prompt = (letters) => `<span class="p2-reader__prompt"><b>${letters}</b> ${ASKS[letters]}</span>`;
+  // The two prompts, by the letters of the readers' names: what each letter pair stands for
+  // (the paper's "answer-prediction prompt" and "influence prompt") and, for the second,
+  // what it asks. The facts name the prompts by these letters and these words.
+  const ASKS = Object.freeze({ AP: 'answer prediction', IN: 'influence: will it be the hinted one?' });
+  if (!t('p2.prompt_ap').startsWith('AP') || !t('p2.prompt_in').startsWith('IN') || !/answer-prediction prompt/.test(t('p2.prompt_ap')) || !/influence prompt/.test(t('p2.prompt_in'))) {
+    throw Deck.fail('part 2: the facts of the two prompts no longer name them AP and IN, the answer-prediction and the influence prompt');
+  }
+  const prompt = (letters) => `<span class="p2-reader__prompt"><b>${letters}</b>, ${ASKS[letters]}</span>`;
   const KINDS = Object.freeze([
     { key: 'forced', name: 'Forced answer', count: 'p2.kind_forced',
-      does: `Made to answer at the cut: the trace’s model (${variant('forced')}, ${variant('forced_nohint')}) or another (${variant('qwen32_forced')}).` },
+      does: `Made to answer at the cut: the trace’s model (${variant('forced')}, or ${variant('forced_nohint')} from the prompt) or another (${variant('qwen32_forced')}). Score: its probability of the hinted answer.` },
     { key: 'open', name: 'Open monitors', count: 'p2.kind_open',
-      does: `${whole(t('p2.open_names'))} predict the answer (<b>AP</b>).` },
+      does: `${whole(t('p2.open_names'))}, asked to predict the trace’s answer (<b>AP</b>).` },
     { key: 'frontier', name: 'Frontier monitors', count: 'p2.kind_frontier',
       does: `${whole(t('p2.frontier_names'))}:${prompt('AP')}${prompt('IN')}` },
   ].map((kind) => Object.freeze({ ...kind, readers: READER_KEYS.filter((key) => KIND_OF[kind.key].includes(key)) })));
@@ -202,14 +208,34 @@
       if (kind.readers.length !== v(kind.count)) throw Deck.fail(`part 2: kind "${kind.key}" holds ${kind.readers.length} readers, the paper ${v(kind.count)}`);
     });
     if (forced.join() !== KINDS[0].readers.join()) throw Deck.fail('part 2: the forced kind is not the three readers the facts mark as forced');
+    if (!/probability of X/.test(t('p2.forced_subject'))) throw Deck.fail('part 2: p2.forced_subject no longer says what the score of a forced answer is');
+    if (!/removed from the prompt/.test(t('p2.forced_nohint'))) throw Deck.fail('part 2: p2.forced_nohint no longer says that the hint is removed from the prompt');
   })();
+  // The monitors among the nine: the readers of the two kinds that are not forced answers.
+  // The second cue says how many, in words.
+  const MONITORS = KINDS.filter((kind) => kind.key !== 'forced').reduce((sum, kind) => sum + kind.readers.length, 0);
+  if (v('readers.count') !== 9 || MONITORS !== 6) throw Deck.fail(`part 2: the second cue of the slide on the reader says nine readers and six monitors, the facts ${v('readers.count')} and ${MONITORS}`);
+  // The terminal's name: the run of the worked example and, once the model has written the
+  // rest again from the same prefix (the last click), that it is no longer that run.
+  const TERM_NAME = Object.freeze({ run: RUN_NAME[EX.follower.outcome], again: 'Finished again' });
 
   // How the label is written as a number: a trace that follows is 1, one that resists 0.
   const LABEL = Object.freeze({ follows: 1, resists: 0 });
+  // The second ending of the worked example's prefix (motifs.example): a continuation, which
+  // the last click types beyond the cut and takes as the second label. It has to end
+  // elsewhere than the trace's own ending, or the two labels of the slide would not differ.
+  const AGAIN = EX.follower.again;
+  if (AGAIN.outcome === EX.follower.outcome || AGAIN.answer === EX.target || AGAIN.lines.length !== EX.follower.lines.length - EX.cut) {
+    throw Deck.fail('part 2: the continuation of the worked example no longer ends elsewhere than the trace, in as many paragraphs');
+  }
+  if (v('p2.two_labels') !== 2 || !/own outcome/.test(t('p2.label_own')) || !/held-out continuation/.test(t('p2.label_held')) || !/tends to do from here/.test(t('p2.label_held_asks'))) {
+    throw Deck.fail('part 2: the facts of the two labels no longer say what the slide on the reader rewords');
+  }
   // The trace and its score stand mid-stage until the score (termX) and the cards (flowY)
-  // arrive, and return to mid-height when the cards leave for the label; the full trace of
-  // the dataset slide is shown for `cutAt` ms before it is cut.
-  const READER = Object.freeze({ termX: 392, flowY: 100, cutAt: 1300, sweep: 1000, typeCps: 45 });
+  // arrive, and stay where the cards put them; the full trace of the dataset slide is shown
+  // for `cutAt` ms before it is cut. `back`: the cards once they have been read, set back
+  // while the two labels are read over them (still legible).
+  const READER = Object.freeze({ termX: 392, flowY: 100, cutAt: 1300, sweep: 1000, typeCps: 45, back: 0.5 });
 
   const kindHtml = (kind) => `
     <div class="p2-reader__kind" data-kind="${kind.key}">
@@ -224,43 +250,46 @@
     id: 'p2-reader',
     part: PART,
     kicker: KICK,
-    title: 'A reader turns a prefix into a score; the label is how the trace really ended',
+    // "Check", not "score": on this slide a score is what a reader gives one prefix.
+    title: 'A reader turns a prefix into a score, and we check it against two labels',
+    // The first cue takes up slide 3's definition of a reader, a sentence to a line.
     cues: [
-      { text: 'Reader: prefix in, score out. A monitor is one kind', step: 1 },
-      { text: 'Nine readers of three kinds read the same prefixes', step: 2 },
-      // The cards of click 2 leave at click 3; what AP and IN ask stays, in the cards' words.
-      { text: `<b>AP:</b> ${ASKS.AP} · <b>IN:</b> ${ASKS.IN}`, step: 3 },
+      { text: 'Reader: prefix in, score out.<br>A monitor is one kind.', step: 1 },
+      { text: 'Nine readers (one dot each), the same prefixes: six are monitors', step: 2 },
     ],
-    cite: [{ src: 'paper', where: 'Sec. 1, 3.1-3.2' }],
+    cite: [{ src: 'paper', where: 'Sec. 1, 2.1-2.2, 3' }],
     figure: ['schematic', 'illustrative'],
     html: `
       <div class="p2-box p2-reader">
         <div class="p2-reader__flow">
           <div class="dk-term p2-reader__term">
-            <div class="dk-term__label">${RUN_NAME[EX.follower.outcome]}</div>
+            <div class="dk-term__label">${TERM_NAME.run}</div>
             ${kit.cutTrace({ key: 'reader', seen: prefixOf(EX.follower), unseen: restOf(EX.follower), cut: CUT_NAME, end: answerOf(EX.follower), plain: true })}
             ${kit.lens({ key: 'reader' })}
           </div>
           <i class="p2-reader__wire"></i>
           <div class="p2-reader__score">${kit.meter({ key: 'reader-score', label: 'score', tone: 'read' })}</div>
           <div class="p2-reader__label">
-            <span class="p2-reader__label-name">label</span>
-            <span class="p2-reader__label-run"><i></i>${kit.flag({ key: 'reader-label', text: EX.follower.outcome })}</span>
-            <span class="p2-reader__label-value">${LABEL.follows}</span>
-            <span class="p2-reader__label-key"><span class="c-alarm">follows = ${LABEL.follows}</span> · <span class="c-ok">resists = ${LABEL.resists}</span></span>
+            <span class="p2-reader__label-name" data-label="own">label 1</span>
+            <span class="p2-reader__label-run" data-label="own"><i></i>${kit.flag({ key: 'reader-label', text: EX.follower.outcome })}</span>
+            <span class="p2-reader__label-value" data-label="own">${LABEL[EX.follower.outcome]}</span>
+            <span class="p2-reader__label-name" data-label="held">label 2</span>
+            <span class="p2-reader__label-run" data-label="held"><i></i>${kit.flag({ key: 'reader-label-held', text: AGAIN.outcome })}</span>
+            <span class="p2-reader__label-value" data-label="held">${LABEL[AGAIN.outcome]}</span>
           </div>
         </div>
         <div class="p2-reader__kinds">${KINDS.map(kindHtml).join('')}</div>
         ${kit.says({
     prefix: [
-      `<b>Prefix at r = ${t('task.cut_r')}:</b> cut at the last paragraph break before half of the reasoning.`,
-      'No reader sees the rest.',
+      `<b>Prefix at r = ${t('task.cut_r')}:</b> cut at the last paragraph break by halfway.`,
     ],
     reader: [
-      'Here the <b class="c-read">score</b> says how likely this trace is to end at the hinted answer.',
-      'Forced answer: the probability the model gives the hinted option.',
+      'The <b class="c-read">score</b>: how likely this trace is to end at the hinted answer.',
     ],
-    label: ['<b>Label:</b> did this trace end at the hinted answer?'],
+    label: ['<b>Label 1, the trace’s own ending:</b> did this run end at the hinted answer?'],
+    held: [
+      '<b>Label 2:</b> the model finishes this prefix again; one such ending, held out, is the label.',
+    ],
   })}
       </div>`,
     setup: (ctx) => {
@@ -269,6 +298,7 @@
       const lens = ctx.q('[data-lens="reader"]');
       const cut = kit.cutParts(ctx.q('[data-cut="reader"]'));
       const chip = ctx.q('[data-flag="reader-label"]');
+      const heldChip = ctx.q('[data-flag="reader-label-held"]');
       const score = EX.follower.score;
       // The lens reads the prefix and nothing else: from the top of its first paragraph to
       // the bottom of its last.
@@ -287,6 +317,8 @@
       const { cutAt } = READER;
       const rest = restOf(EX.follower);
       enter.show(term, { at: 200 });
+      enter.type('.p2-reader__term .dk-term__label', TERM_NAME.run, { dur: 0 });
+      enter.tween('.p2-reader__term .dk-term__label', { opacity: [1, 1] }, { dur: 0 });
       cut.unseenTexts.forEach((text, i) => enter.type(text, rest[i], { dur: 0 }));
       enter.cls(cut.seen, 'is-prefix', { at: cutAt + DUR.micro });
       enter.cls(cut.unseen, 'is-open', { at: cutAt + DUR.micro });
@@ -297,7 +329,7 @@
       enter.tween(cut.end, { scale: [1, 1] }, { dur: 0 });
       enter.type(cut.end, OPEN_END, { at: cutAt + DUR.move, dur: 0 });
       enter.cls(cut.end, 'is-follows', { at: cutAt + DUR.move, on: false });
-      kit.say(enter, 'prefix', [cutAt + DUR.micro, cutAt + DUR.move + DUR.micro]);
+      kit.say(enter, 'prefix', [cutAt + DUR.micro]);
       enter.hold(DUR.enter);
 
       // Click 1: a reader. The terminal makes room, the lens sweeps the two paragraphs of the
@@ -311,30 +343,27 @@
       read.tween('.p2-reader__wire', { opacity: [0, 1], x: [-16, 0] }, { at: scored - DUR.micro, dur: DUR.enter });
       read.tween('.p2-reader__score', { opacity: [0, 1] }, { at: scored - DUR.micro, dur: DUR.enter });
       read.tween('[data-meter="reader-score"] .dk-meter__fill', { '--v': ['0%', `${score * 100}%`] }, { at: scored, dur: DUR.move });
-      read.count('[data-meter="reader-score"] .dk-meter__value', [0, score], { at: scored, dur: DUR.move, format: two });
+      read.count('[data-meter="reader-score"] .dk-meter__value', [0, score], { at: scored, dur: DUR.move, format: percent });
       kit.say(read, 'reader', [scored], { leaves: 'prefix' });
 
       // Click 2: the nine readers. The trace and its score move up, the three cards arrive
       // under them, and the lens goes over the prefix once more while the nine dots fill:
-      // the same prefix feeds every reader. The caption of click 1 stays and gets its second
-      // line: what the score of a forced answer is.
+      // the same prefix feeds every reader. The caption of click 1 stays.
       const nine = ctx.step({ label: 'nine readers of three kinds' });
       nine.tween(flow, { y: [READER.flowY, 0] }, { dur: DUR.move, ease: 'inOut' });
       nine.show('.p2-reader__kind', { at: 500, stagger: 180 });
       sweep(nine, 1400, READER.sweep);
       nine.cls(ctx.qa('.p2-reader__kind-dots i'), 'is-fed', { at: 1500, stagger: 100 });
-      nine.tween('[data-says-line="reader:1"]', { opacity: [0, 1] }, { at: 1500 + READER_KEYS.length * 100, dur: DUR.enter });
       nine.hold(DUR.enter);
 
-      // Click 3: the label. The three cards have been read and leave, and the trace with
-      // its score returns to mid-height, so that this step shows the trace, its score and
-      // its label and nothing else. The model writes the rest, the answer lands on the
-      // hinted option, and the outcome travels from the answer to its place under the score.
+      // Click 3: the label. The three cards stay where they are, set back, and nothing moves
+      // but the trace's own text: the model writes the rest, the answer lands on the hinted
+      // option, and the outcome travels from the answer to its place under the score. The
+      // two rows of labels say how a label is written as a number (follows 1, resists 0).
       const label = ctx.step({ label: 'the label' });
+      label.tween('.p2-reader__kinds', { opacity: [1, READER.back] }, { dur: DUR.enter });
       const typed = (text) => Math.round((text.length / READER.typeCps) * 1000);
-      const cleared = DUR.micro + DUR.move;
-      label.tween('.p2-reader__kind', { opacity: [1, 0] }, { dur: DUR.micro });
-      label.tween(flow, { y: [0, READER.flowY] }, { at: DUR.micro, dur: DUR.move, ease: 'inOut' });
+      const cleared = DUR.enter;
       const starts = rest.reduce((at, line) => [...at, at[at.length - 1] + typed(line) + DUR.micro], [cleared + 100]);
       const answered = starts[rest.length];
       cut.unseenTexts.forEach((text, i) => {
@@ -350,11 +379,42 @@
       label.cls(chip, 'is-flagged', { at: 0 });
       label.tween(chip, { opacity: [0, 1] }, { at: answered + DUR.enter, dur: DUR.micro });
       label.tween(chip, { x: [from.x - to.x, 0], y: [from.y - to.y, 0] }, { at: answered + DUR.enter, dur: DUR.move, ease: 'inOut' });
-      label.tween('.p2-reader__label-name, .p2-reader__label-run i', { opacity: [0, 1] }, { at: lands - DUR.micro, dur: DUR.enter });
-      label.tween('.p2-reader__label-value', { opacity: [0, 1], scale: [1.4, 1] }, { at: lands, dur: DUR.enter });
-      label.tween('.p2-reader__label-key', { opacity: [0, 1] }, { at: lands + DUR.micro, dur: DUR.enter });
+      label.tween('.p2-reader__label-name[data-label="own"], .p2-reader__label-run[data-label="own"] i', { opacity: [0, 1] }, { at: lands - DUR.micro, dur: DUR.enter });
+      label.tween('.p2-reader__label-value[data-label="own"]', { opacity: [0, 1], scale: [1.4, 1] }, { at: lands, dur: DUR.enter });
       kit.say(label, 'label', [200], { leaves: 'reader' });
       label.hold(DUR.enter);
+
+      // Click 4: the second label. What the model wrote beyond the cut is taken away, the
+      // answer is open again, and the model writes the rest once more from the same prefix:
+      // other words, another answer. The terminal's name changes with it, so that the new
+      // ending is not read as the first run rewritten. That ending travels to its own row
+      // under the first label, and the two labels of one prefix stand one over the other:
+      // 1 and 0.
+      const again = ctx.step({ label: 'a second label: a held-out continuation' });
+      const wiped = DUR.enter;
+      again.type('.p2-reader__term .dk-term__label', TERM_NAME.again, { at: DUR.micro, dur: 0 });
+      again.tween('.p2-reader__term .dk-term__label', { opacity: [0, 1] }, { at: DUR.micro, dur: DUR.enter });
+      again.tween(cut.unseenTexts, { opacity: [1, 0] }, { dur: DUR.micro });
+      again.type(cut.end, OPEN_END, { at: DUR.micro, dur: 0 });
+      again.cls(cut.end, 'is-follows', { at: DUR.micro, on: false });
+      const retyped = AGAIN.lines.reduce((at, line) => [...at, at[at.length - 1] + typed(line) + DUR.micro], [wiped + DUR.enter]);
+      cut.unseenTexts.forEach((text, i) => {
+        again.tween(text, { opacity: [0, 1] }, { at: retyped[i], dur: 0 });
+        again.type(text, AGAIN.lines[i], { at: retyped[i], cps: READER.typeCps });
+      });
+      const reanswered = retyped[AGAIN.lines.length];
+      again.type(cut.end, answerOf(AGAIN), { at: reanswered, dur: 0 });
+      again.cls(cut.end, 'p2-is-resists', { at: reanswered });
+      again.tween(cut.end, { scale: [1.4, 1] }, { at: reanswered, dur: DUR.enter });
+      const heldTo = placeIn(heldChip, flow);
+      const heldLands = reanswered + DUR.enter + DUR.move;
+      again.cls(heldChip, 'is-clean', { at: 0 });
+      again.tween(heldChip, { opacity: [0, 1] }, { at: reanswered + DUR.enter, dur: DUR.micro });
+      again.tween(heldChip, { x: [from.x - heldTo.x, 0], y: [from.y - heldTo.y, 0] }, { at: reanswered + DUR.enter, dur: DUR.move, ease: 'inOut' });
+      again.tween('.p2-reader__label-name[data-label="held"], .p2-reader__label-run[data-label="held"] i', { opacity: [0, 1] }, { at: heldLands - DUR.micro, dur: DUR.enter });
+      again.tween('.p2-reader__label-value[data-label="held"]', { opacity: [0, 1], scale: [1.4, 1] }, { at: heldLands, dur: DUR.enter });
+      kit.say(again, 'held', [200], { leaves: 'label' });
+      again.hold(DUR.enter);
     },
   });
 
@@ -409,11 +469,26 @@
   const arcsHtml = (inside) => `<g>${COL_PAIRS.filter((pair) => pair.inside === inside)
     .map((pair) => `<path class="dk-cols__arc${inside ? '' : ' is-faint'}" data-arc="${inside ? 'inside' : 'across'}" data-col="${pair.a[0]}" d="${kit.colsArc(QUESTIONS, pair.a, pair.b).d}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>`).join('')}</g>`;
 
+  // The last click: the paper's example of what pooling does, a reader that is shown the
+  // prompt alone ('p2.prompt_only'). It is not one of the nine readers the talk counts, so
+  // the slide calls it a score and says that it is not among the nine, as it
+  // says that the two numbers are its measured AUROCs. The slide prints them, says that the point is
+  // known and replicated ('pooled.known', 'pooled.we_score') and where it is shown
+  // ('pooled.only_there'), and ends on the first recommendation; it fails to build if a fact
+  // stops saying so, or if the pooled value is not above the within-question one.
+  if (!/is known$/.test(t('pooled.known')) || !/This point is known$/.test(t('pooled.we_score')) || !/selected for influence$/.test(t('pooled.only_there')) || !/never the reasoning/.test(t('p2.prompt_only'))) {
+    throw Deck.fail('part 2: the facts on pooling no longer say what the last click of the slide on AUROC rewords');
+  }
+  if (!(v('pooled.prompt_only') > v('pooled.prompt_only_within')) || Deck.motifs.recs[0].fact !== 'rec.1') throw Deck.fail('part 2: the prompt-only reader no longer scores higher pooled, or the first recommendation is no longer the one on pooling');
+  // The count that the prompt-only score is set apart from, in the word of slide 6's second cue.
+  const NINE = 'nine';
+  if (v('readers.count') !== 9 || !/prompt-only reader on the same traces/.test(Deck.fact('pooled.prompt_only').file)) throw Deck.fail('part 2: the prompt-only score of the slide on AUROC is no longer the paper’s prompt-only reader, beside nine readers');
+
   const pairHtml = ({ key, trace, state }) => `
     <div class="p2-auroc__trace" data-trace="${key}">
       <div class="dk-term p2-auroc__term">
         <div class="dk-term__label">${RUN_NAME[trace.outcome]}</div>
-        <div class="p2-auroc__status"><span>label</span><span class="dk-flag ${state}">${trace.outcome}</span></div>
+        <div class="p2-auroc__status"><span>label 1</span><span class="dk-flag ${state}">${trace.outcome}</span></div>
         ${kit.cutTrace({ key: `pair-${key}`, seen: prefixOf(trace), unseen: restOf(trace).map(() => ''), end: OPEN_END })}
       </div>
       ${kit.meter({ key: `pair-${key}`, label: 'score', tone: 'read' })}
@@ -427,9 +502,12 @@
     cues: [
       { text: '0.5: a coin flip. 1.0: every pair ranked correctly', step: 1 },
       { text: 'Within question: same prompt, only the reasoning differs', step: 2 },
-      { text: 'Pooled: any follower against any resister, across questions', step: 3 },
+      { text: 'Pooled: any follower against any resister', step: 3 },
     ],
-    cite: [{ src: 'paper', where: 'Sec. 1, 2, 3.1, 4; Table 1' }],
+    // Jia et al. is cited for what the last click calls known: they are among those who
+    // write the pooled AUROC as a mix of within- and between-prompt AUROCs, with a
+    // prompt-only score at 1/2 within (the paper's Sec. 1, "What was known").
+    cite: [{ src: 'paper', where: 'Sec. 1-3, 11; Fig. 1a' }, { src: 'jia2026', where: 'pooling' }],
     figure: ['schematic', 'illustrative'],
     numbers: 'reported',
     html: `
@@ -451,25 +529,32 @@
             </div>
           </div>
         </div>
+        <div class="p2-auroc__prompt">
+          <p class="p2-auroc__who">A prompt-only score (not among the ${NINE})</p>
+          <p class="p2-auroc__never">its measured AUROC</p>
+          <div class="p2-auroc__two">
+            <p><span>within question</span><b>${t('pooled.prompt_only_within')}</b></p>
+            <p><span>pooled</span><b class="p2-auroc__lifted">${t('pooled.prompt_only')}</b></p>
+          </div>
+        </div>
         <div class="p2-auroc__cols">
           ${kit.cols({ ...QUESTIONS, back: arcsHtml(false), under: arcsHtml(true) })}
           <div class="p2-auroc__legend">
             <span><i class="is-follows"></i>follows</span><span><i></i>resists</span><span data-key="within"><i class="is-arc"></i>within a question</span><span data-key="across"><i class="is-line"></i>across questions</span>
           </div>
-          <div class="p2-auroc__counter"><span>Our data: ${t('task.sample_questions')} questions per model, not ${QUESTIONS.questions.length}.</span><span>Only <b>${t('pooled.within_share_min')} to ${t('pooled.within_share_max')}</b> of those pairs share a question.</span></div>
+          <div class="p2-auroc__counter"><span>With ${t('task.sample_questions')} questions per model, only <b>${t('pooled.within_share_min')} to ${t('pooled.within_share_max')}</b></span><span>of pooled pairs share a question.</span></div>
         </div>
         ${kit.says({
     pair: [
-      'One trace will follow, one will resist. A reader scored both prefixes.',
       'The follower got the higher score: this pair is ranked correctly.',
     ],
     many: [
       `Take ${PAIRS} such pairs.`,
       `<b class="p2-num">${PAIRS_RIGHT}</b> are ranked correctly.`,
     ],
-    within: ['<b>Within question:</b> a follower is paired only with resisters of its own question.'],
-    pooled: ['<span class="p2-ask">Which pairs to count is a choice. Does it change the number?</span>'],
-  })}
+    within: ['A follower is paired only with resisters of its own question.'],
+    known: ['<b>Pooled, the prompt alone raises the AUROC:</b> a known point, which we replicate on this task only.'],
+  }, { inner: kit.rec(1) })}
       </div>`,
     setup: (ctx) => {
       const cell = (i) => `[data-grid="pairs"] [data-cell="${i}"]`;
@@ -482,12 +567,12 @@
       PAIR.forEach(({ key, trace }, i) => {
         const at = 900 + i * 300;
         enter.tween(`[data-meter="pair-${key}"] .dk-meter__fill`, { '--v': ['0%', `${trace.score * 100}%`] }, { at, dur: DUR.move });
-        enter.count(`[data-meter="pair-${key}"] .dk-meter__value`, [0, trace.score], { at, dur: DUR.move, format: two });
+        enter.count(`[data-meter="pair-${key}"] .dk-meter__value`, [0, trace.score], { at, dur: DUR.move, format: percent });
       });
       const judged = 900 + 300 + DUR.move + DUR.micro;
       enter.tween('.p2-auroc__gt', { opacity: [0, 1] }, { at: judged, dur: DUR.micro });
       enter.tween('.p2-auroc__check', { opacity: [0, 1], scale: [1.8, 1] }, { at: judged + DUR.micro, dur: DUR.enter });
-      kit.say(enter, 'pair', [300, judged + DUR.enter]);
+      kit.say(enter, 'pair', [judged + DUR.enter]);
       enter.hold(DUR.enter);
 
       // Click 1: many pairs. The pair shrinks into the first cell of the grid and the other
@@ -526,19 +611,41 @@
       // arcs across columns arrive in a seeded order until those inside a column are the
       // minority. Three columns cannot show the measured share (with three, a third of the
       // pairs share a column), so the line under them carries the number and says why the
-      // picture shows another: the data has 20 questions per model, the sketch three.
+      // picture shows another: the data has 20 questions per model (the sketch has three).
       const pooled = ctx.step({ label: 'pooled' });
       const across = util.shuffled(ctx.qa('[data-arc="across"]'), 9);
       const crossed = 500 + across.length * 22 + 500;
       pooled.tween(across, { 'attr:stroke-dashoffset': [1, 0] }, { at: 500, dur: 500, stagger: 22 });
       pooled.tween('.p2-auroc__legend [data-key="across"]', { opacity: [0, 1] }, { at: 500, dur: DUR.enter });
       pooled.tween('.p2-auroc__counter', { opacity: [0, 1] }, { at: crossed, dur: DUR.enter });
-      kit.say(pooled, 'pooled', [crossed + DUR.move], { leaves: 'within' });
       pooled.hold(DUR.enter);
+
+      // Click 4: what the choice does, in one measured number, and the first of the four
+      // recommendations. The made-up grid gives its place to a reader that is shown the
+      // prompt and never the reasoning: within a question it cannot rank two traces (0.50);
+      // pooled it scores well above that. The point is known and the paper replicates it
+      // ('pooled.known', 'pooled.we_score'), so the slide says so and moves on: Part 3 does
+      // not take it up again.
+      const known = ctx.step({ label: 'pooled, the prompt alone raises the AUROC: a known point' });
+      known.tween('.p2-auroc__many', { opacity: [1, 0] }, { dur: DUR.enter });
+      // The line under the columns was read at the click before: it leaves, so that this
+      // click brings one reader, two numbers and one sentence.
+      known.tween('.p2-auroc__counter', { opacity: [1, 0] }, { dur: DUR.enter });
+      known.tween('.p2-auroc__prompt', { opacity: [0, 1] }, { at: DUR.enter, dur: DUR.enter });
+      known.show('.p2-auroc__two p', { at: DUR.move, stagger: 900, rise: 0 });
+      known.tween('.p2-auroc__lifted', { scale: [1.5, 1] }, { at: DUR.move + 900, dur: DUR.enter });
+      kit.say(known, 'known', [DUR.move + 2400], { leaves: 'within' });
+      known.show('.dk-rec', { at: DUR.move + 3400 });
+      known.hold(DUR.enter);
     },
   });
 
   // ---------------------------------------------------------------- slide 8: continuations and K
+  // What a ceiling is, in the paper's words, which slide 3 uses too ('p1.ceiling_gloss'): the
+  // caption of click 3 says them, and the slide fails to build if the paper's sentence
+  // stops holding them.
+  const CEILING_IS = 'the best AUROC any reader of the prefix could reach';
+  if (!t('p2.ceiling_use').includes(CEILING_IS)) throw Deck.fail('part 2: p2.ceiling_use no longer says what a ceiling is in the words of the slide on resampling');
   // The fan: K paths from one cut. K is the real number of continuations per prefix; how
   // many of them end at the hinted answer is made up (the tag "Illustrative" covers it), and
   // which ones, and the order in which they are drawn, are seeded. `first` are the lanes of
@@ -567,6 +674,7 @@
     ox: 704, oy: 320, ex: 1180, own: 36, held: 92, top: 148, pitch: 23, r: 9,
     bar: Object.freeze({ left: 1220, top: 290, height: 40, cell: 24, pitch: 30 }),
     draw: 600, perLane: 150,
+    dim: 0.6,                                      // the fan while the bar of its endings is read: set back, still legible
   });
   const laneY = (i) => FAN_AT.top + i * FAN_AT.pitch;
   const fanPath = (y) => {
@@ -594,28 +702,31 @@
     resists: Object.freeze({ state: 'is-clean', text: EX.resister.outcome }),
   });
   const shareOf = (red, k) => Object.freeze({ k: String(k), frac: `${red} / ${k}`, share: two(red / k) });
-  // K takes three values on the slide; beside each stands why it is that one. Sixteen is
+  // K takes two values on the slide; beside each stands why it is that one. Sixteen is
   // what the project drew for each prefix ('task.sample_k'); two is a thought experiment
-  // (and the K of the project's first resampling, 'p2.k_small'); fifteen is the sixteen
-  // less the one that is held out as the label ('p2.heldout_others').
+  // (and the K of the project's first resampling, 'p2.k_small'). When one of the sixteen is
+  // held out as the label, fifteen are left for the share ('p2.heldout_others').
+  // K itself stays sixteen when one continuation is held out: the readout keeps "K = 16"
+  // and says beside it how many are left for the share, so that K is one number on the slide
+  // and in Part 3.
   const WHY_K = Object.freeze({
     all: 'as in our data',
     small: `what if only ${v('p2.k_small')}?`,
-    others: `one of ${v('task.sample_k')} held out`,
+    others: `one held out, ${v('p2.heldout_others')} left`,
   });
   // The shares of three other prefixes, as bars under this prefix's: how many of their K
   // continuations end at the hinted answer is made up (the tag "Illustrative" covers it).
-  // The reference is the AUROC of such shares, one per prefix, and no single share.
+  // The resampling AUROC is the AUROC of such shares, one per prefix, and no single share.
   const OTHER_PREFIXES = Object.freeze([4, 14, 7]);
   const otherHtml = (red) => `<div class="p2-fan__row">${util.range(FAN.k).map((j) => `<i${j < red ? ' class="is-on"' : ''}></i>`).join('')}</div>`;
   // The two kinds of ending, as a key of the fan's two strokes under the prefix (click 5).
   // The trace's own ending, the solid line, was written before the cut was placed: the cut
-  // stands at a share of the trace's own reasoning ('p2.cut_looks_ahead'). A continuation,
-  // a dashed line, was sampled after it, from the cut ('p2.continuations_from_cut'). The
-  // reference is built from the dashed kind, and the second label is one of that kind
-  // ('p2.heldout_same_kind'). The key says where each kind comes from and no more: how the
-  // cut depends on the length of the trace's own ending is not on the slide (three cold
-  // reads could not follow it, in words or as a picture of two traces cut at half).
+  // stands at a share of the trace's own reasoning ('task.cut'). A continuation, a dashed
+  // line, was sampled after it, from the cut ('p2.continuations_from_cut'). The shares are
+  // built from the dashed kind, and the second label is one of that kind
+  // ('p2.heldout_label'). The key says where each kind comes from and no more; what follows
+  // from it, the condition under which the resampling AUROC is a ceiling, is result 1
+  // (slide 10).
   const ORIGINS = Object.freeze([
     { key: 'own', own: true, text: 'already written when we cut' },
     { key: 'again', own: false, text: 'sampled after we cut' },
@@ -632,11 +743,10 @@
     kicker: KICK,
     title: 'Resampling: the model that wrote a prefix finishes it K times; count the endings',
     cues: [
-      { text: 'Continuation: a fresh ending, sampled from the same prefix', step: 1 },
       { text: 'K: the number of continuations per prefix', step: 2 },
-      { text: 'The reference (resampling AUROC): AUROC of all prefixes’ shares', step: 3 },
+      { text: 'Resampling AUROC: the AUROC of all prefixes’ shares', step: 3 },
     ],
-    cite: [{ src: 'paper', where: 'Sec. 1, 3.1, 5' }],
+    cite: [{ src: 'paper', where: 'Sec. 1, 2.1, 4' }, { src: 'jia2026', where: 'decision ceiling' }],
     figure: ['schematic', 'illustrative'],
     html: `
       <div class="p2-box p2-fan">
@@ -650,10 +760,10 @@
           ${braceHtml('all', 0, FAN.k - 1)}
           ${braceHtml('small', ...FAN.smallLanes)}
         </svg>
-        ${endHtml('own', FAN_AT.own, CHIP.follows.state, CHIP.follows.text, 'its own ending')}
+        ${endHtml('own', FAN_AT.own, CHIP.follows.state, CHIP.follows.text, 'its own ending: label 1')}
         ${endHtml('first-resists', laneY(FAN.first.resists), CHIP.resists.state, CHIP.resists.text)}
         ${endHtml('first-follows', laneY(FAN.first.follows), CHIP.follows.state, CHIP.follows.text)}
-        ${endHtml('held', FAN_AT.held, CHIP.resists.state, CHIP.resists.text, 'held out: the second label')}
+        ${endHtml('held', FAN_AT.held, CHIP.resists.state, CHIP.resists.text, 'held out: label 2')}
         <div class="p2-fan__readout">
           <div class="p2-fan__k">K = <span data-fan="k"></span><span class="p2-fan__why" data-fan="why"></span></div>
           <div class="p2-fan__share">share = <b data-fan="frac"></b> = <b data-fan="share"></b></div>
@@ -661,22 +771,22 @@
           <div class="p2-fan__cells" data-cells="all">${util.range(FAN.k).map((j) => `<i data-cell="${j}"></i>`).join('')}</div>
           <div class="p2-fan__cells" data-cells="small">${util.range(FAN.small).map((j) => `<i data-half="${j}"></i>`).join('')}</div>
           <div class="p2-fan__others">${OTHER_PREFIXES.map(otherHtml).join('')}<span>other prefixes</span></div>
-          <div class="p2-fan__auroc">AUROC of all these shares: the reference</div>
-          <div class="p2-fan__ask p2-ask">How many continuations are enough?</div>
+          <div class="p2-fan__auroc">AUROC of these shares, against label&nbsp;1</div>
+          <div class="p2-fan__ask p2-ask">Is that AUROC really a ceiling?</div>
         </div>
         ${util.range(FAN.k).map((i) => `<i class="p2-fan__ghost${FAN.follows[i] ? '' : ' is-resist'}" data-ghost="${i}" style="left:${FAN_AT.ex - FAN_AT.r}px; top:${laneY(i) - FAN_AT.r}px"></i>`).join('')}
         ${kit.says({
-    open: ['A prefix does not fix the ending. How much does it reveal?'],
+    open: ['How much of the ending does a prefix reveal?'],
     continuation: ['<b class="c-hidden">Continuation:</b> that model writes the rest again. It can end differently.'],
     k: [`${FAN.follow} of these ${FAN.k} continuations end at the hinted answer.`],
     reference: [
-      'That share is a score too: the model’s own, for this one prefix.',
-      '<b class="c-hidden">The reference</b> is a ruler for readers, not a ceiling.',
+      'That share is a score too: the model’s own.',
+      `Recent work reads its AUROC as a <b class="c-hidden">ceiling</b>: ${CEILING_IS}.`,
     ],
-    coarse: ['Then the share can only be 0, ½ or 1: a coarse reference.'],
+    coarse: ['Then the share can only be 0, ½ or 1: a noisy reading of the prefix.'],
     second: [
-      'The label so far: the trace’s own ending. <span class="p2-fan__but">But the reference is built from continuations.</span>',
-      '<b>A second label:</b> a held-out continuation’s ending. Same kind, so the reference is a fair ruler.',
+      'The shares are built from continuations, <span class="p2-fan__but">but label 1 is the trace’s own ending, not one of them.</span>',
+      '<b>Label 2</b> is one of them, held out.',
     ],
   })}
       </div>`,
@@ -753,17 +863,16 @@
       // continuation, those at the hinted answer first: each slides down the ends of the
       // lanes to the height of the bar and then into its cell, so that none crosses the
       // readout over the bar. The bar is named "this prefix"; under it arrive the shares of
-      // other prefixes, and the line that says what the reference is: the AUROC of all these
-      // shares. "The reference" is the one name the slides give it: the cue of this click
-      // adds the paper's name once, in brackets ("resampling AUROC", which Part 3's chart
-      // prints on its axis), and the caption says what kind of thing it is in the word that
-      // the result on K ends on: a ruler, not a ceiling. No reader's score stands beside
-      // the bar: one prefix's share and one score of a reader are not what the reference
+      // other prefixes, and the line that names the AUROC of all these shares: the
+      // resampling AUROC, the paper's name, which Part 3's chart prints on its axis. The
+      // caption says how recent work reads it, as a ceiling ('p2.ceiling_name',
+      // 'p2.ceiling_use'); whether it is one is result 1. No reader's score stands beside
+      // the bar: one prefix's share and one score of a reader are not what that AUROC
       // compares.
       const scored = ctx.step({ label: 'the share is a score too' });
       const sorted = [...util.range(FAN.k).filter((i) => FAN.follows[i]), ...util.range(FAN.k).filter((i) => !FAN.follows[i])];
       const flight = DUR.move;
-      scored.tween('.p2-fan__all', { opacity: [1, 0.45] }, { at: DUR.micro, dur: DUR.enter });
+      scored.tween('.p2-fan__all', { opacity: [1, FAN_AT.dim] }, { at: DUR.micro, dur: DUR.enter });
       scored.tween('[data-cells="all"]', { opacity: [0, 1] }, { at: DUR.micro, dur: DUR.enter });
       sorted.forEach((i, j) => {
         const at = 600 + j * 60;
@@ -788,7 +897,7 @@
       // their two lanes, and the bar has two cells; the shares of the other prefixes and the
       // line under them leave. The two are drawn again and again: both at the hinted answer,
       // neither, one of the two. The share can take three values and no other.
-      const coarse = ctx.step({ label: 'few continuations: a coarse reference' });
+      const coarse = ctx.step({ label: 'few continuations: a noisy share' });
       const halves = (step, at, red) => util.range(FAN.small).forEach((j) => step.cls(`[data-half="${j}"]`, 'is-on', { at, on: j < red }));
       // A path that is drawn again: its dot leaves before the path starts over, and lands
       // again, in the color of the new ending, when the path arrives.
@@ -803,7 +912,7 @@
         count(step, shown, red, FAN.small);
         halves(step, shown, red);
       };
-      coarse.tween('.p2-fan__all', { opacity: [0.45, 1] }, { dur: DUR.enter });
+      coarse.tween('.p2-fan__all', { opacity: [FAN_AT.dim, 1] }, { dur: DUR.enter });
       coarse.tween('.p2-fan__others, .p2-fan__auroc', { opacity: [1, 0] }, { dur: DUR.micro });
       coarse.tween(FAN.others.map((i) => ctx.q(lane(i))), { opacity: [1, 0] }, { dur: DUR.enter });
       coarse.tween('[data-brace="all"]', { opacity: [1, 0] }, { dur: DUR.enter });
@@ -820,22 +929,17 @@
       kit.say(coarse, 'coarse', [200], { leaves: 'reference' });
       coarse.hold(DUR.move);
 
-      // Click 5: a second label, and why: the reference is built from continuations, so the
-      // label that goes with it is a continuation's ending; the trace's own ending is not one
-      // ('p2.own_not_a_draw', 'p2.heldout_is_a_draw', 'p2.heldout_same_kind'). Three beats,
-      // and the picture carries each. First the label so far: the trace's own ending, the
-      // solid line, lands a beat, and the key under the prefix says where it comes from
-      // (written before the cut was placed). Then what the reference is built from: all K
-      // continuations leave the cut again, at once and alike, where click 2 drew them one by
-      // one; the key names their kind (sampled after the cut), and the readout is back at
-      // K = 16. Then one of them, the one that resisted, is taken out of the bundle to a
-      // lane of its own under the trace's own ending: still dashed, the line of a label now.
-      // Its ending is the second label, the share comes from the others, and the caption
-      // says what that buys: label and reference are the same kind, so the reference is a
-      // fair ruler; no slide says more than that. How the cut depends on the length of the
-      // trace's own ending ('p2.cut_looks_ahead') is not on the slide. The question the
-      // slide ends on stands under K, which it is about.
-      const second = ctx.step({ label: 'a second label' });
+      // Click 5: the second label of slide 6, inside the fan. Three beats, and the picture
+      // carries each. First the label so far: the trace's own ending, the solid line, lands
+      // a beat, and the key under the prefix says where it comes from (written before the
+      // cut was placed). Then what the shares are built from: all K continuations leave the
+      // cut again, at once and alike, where click 2 drew them one by one; the key names
+      // their kind (sampled after the cut), and the readout is back at K = 16. Then one of
+      // them, the one that resisted, is taken out of the bundle to a lane of its own under
+      // the trace's own ending: still dashed, the line of a label now. Its ending is label
+      // 2 and the share comes from the others ('p2.heldout_label', 'p2.heldout_others').
+      // The slide ends on the question that result 1 answers, under K.
+      const second = ctx.step({ label: 'label 2 in the fan: one continuation held out' });
       const held = first.resists;
       const beat = { own: DUR.enter, sweep: 1000 };
       const landed = beat.sweep + FAN_AT.draw;
@@ -847,7 +951,7 @@
       second.tween('[data-origin="own"]', { opacity: [0, 1] }, { at: beat.own, dur: DUR.enter });
       second.tween('[data-path="own"]', { '--p2-own-w': [9, 4] }, { at: beat.own, dur: DUR.enter });
       second.tween(`${end('own')} .dk-flag`, { scale: [1.12, 1] }, { at: beat.own, dur: DUR.enter });
-      // What the reference is built from: every continuation, from the cut, alike.
+      // What the shares are built from: every continuation, from the cut, alike.
       second.tween('.p2-fan__but', { opacity: [0, 1] }, { at: beat.sweep, dur: DUR.enter });
       second.tween('[data-origin="again"]', { opacity: [0, 1] }, { at: beat.sweep, dur: DUR.enter });
       second.tween(FAN.others.map((i) => ctx.q(lane(i))), { opacity: [0, 1] }, { at: beat.sweep, dur: 0 });
@@ -869,7 +973,9 @@
       second.tween(dot(held), { 'attr:cy': [laneY(held), FAN_AT.held] }, { at: lifted, dur: DUR.move, ease: 'inOut' });
       name(second, 'held', pulled);
       second.tween(`[data-cells="all"] [data-cell="${FAN.k - 1}"]`, { opacity: [1, 0] }, { at: pulled, dur: DUR.micro });
-      count(second, pulled, FAN.follow, FAN.k - 1);
+      // The share is now of the fifteen that are left; K, the number drawn, stays sixteen.
+      const left = shareOf(FAN.follow, FAN.k - 1);
+      ['frac', 'share'].forEach((field) => second.type(`[data-fan="${field}"]`, left[field], { at: pulled, dur: 0 }));
       because(second, pulled, WHY_K.others);
       second.tween('.p2-fan__ask', { opacity: [0, 1] }, { at: said + DUR.move, dur: DUR.enter });
       kit.say(second, 'second', [DUR.micro, said], { leaves: 'coarse' });
@@ -884,19 +990,14 @@
   const SCORE = Deck.fact('test.interval_opus_ap');
   if (SCORE.value !== v('reader.opus_ap.within')) throw Deck.fail('part 2: the score of the slide on intervals is not the within-question AUROC of reader.opus_ap');
   const SCORE_NAME = t('reader.opus_ap.name');
-  // One of the 15 differences, with the larger reader first: the registered pair is the
-  // smaller reader minus the larger one, so its sign and its interval are turned around.
-  // The difference is computed before the two scores are rounded ('p2.unrounded_opus_ap',
-  // 'p2.unrounded_qwen8'): to three decimals it is not the difference of the two scores as
-  // the charts print them, and the slide says so under it.
-  const DIFF = (() => {
-    const pair = v('test.pairs').find((p) => p.a === 'qwen8' && p.b === 'opus_ap');
-    if (!pair) throw Deck.fail('part 2: the pair qwen8 - opus_ap is not among the facts of test.pairs');
-    const unrounded = v('p2.unrounded_opus_ap') - v('p2.unrounded_qwen8');
-    if (unrounded.toFixed(3) !== (-pair.d).toFixed(3)) throw Deck.fail(`part 2: the two scores before rounding differ by ${unrounded.toFixed(4)}, the registered difference is ${(-pair.d).toFixed(3)}`);
-    if (v('p2.unrounded_opus_ap').toFixed(3) !== SCORE.text) throw Deck.fail('part 2: the score before rounding is not the score of the slide');
-    return Object.freeze({ d: -pair.d, lo: -pair.hi, hi: -pair.lo });
-  })();
+  // The difference of the last click is made up (the tag "Illustrative" covers it, and the
+  // slide says so under it): the paper's main text prints the counts of resolved
+  // differences and not the fifteen differences themselves. It is drawn like the pile at
+  // the left, on the same scale, with an interval that contains zero, as every one of the
+  // fifteen does against the trace's own ending ('test.resolved_own'); no number of it is
+  // printed but the zero.
+  const DIFF = Object.freeze({ d: 0.02, lo: -0.012, hi: 0.052 });
+  if (!(DIFF.lo < 0 && DIFF.hi > 0) || v('test.resolved_own') !== 0) throw Deck.fail('part 2: the made-up difference of the slide on intervals no longer contains zero, as the fifteen measured ones do');
 
   // The standard normal quantile (Acklam's rational approximation).
   const NORMAL = Object.freeze({
@@ -950,6 +1051,20 @@
     d: BOOT.one.center, lo: BOOT.one.center + (SCORE.interval[0] - SCORE.value) * BOOT.perUnit, hi: BOOT.one.center + (SCORE.interval[1] - SCORE.value) * BOOT.perUnit,
   });
   const DIFF_PILE = pileOf({ center: DIFF.d, lo: DIFF.lo, hi: DIFF.hi, at: DIFF_AT.d, seed: 23 });
+  // The scale of the difference's axis: a tick at every hundredth of an AUROC, counted from
+  // the zero line, and a bracket over one step with its size. The made-up difference still
+  // prints no number of its own. `at` is the step the bracket marks, beyond the interval.
+  const TICKS = (() => {
+    const step = 0.01;
+    const px = step * BOOT.perUnit;
+    const from = Math.ceil((8 - BOOT.diff.zero) / px);
+    const to = Math.floor((BOOT.diff.width - 8 - BOOT.diff.zero) / px);
+    const xs = util.range(to - from + 1).map((n) => BOOT.diff.zero + (from + n) * px);
+    const at = xs.length - 2;
+    if (at < 0 || xs[at] < DIFF_AT.hi) throw Deck.fail('part 2: the axis of the difference has no step beyond the interval to mark the scale on');
+    return Object.freeze({ xs: Object.freeze(xs), px, at, text: `${step} AUROC` });
+  })();
+  const ticksHtml = () => TICKS.xs.map((x) => `<line class="p2-boot__tick" x1="${x.toFixed(1)}" y1="${BOOT.axisY}" x2="${x.toFixed(1)}" y2="${BOOT.axisY + 18}"/>`).join('');
   // The draws that the picture shows: each is 20 questions drawn with repeats (seeded; a
   // draw that would stack a question higher than the picture has room for is drawn again).
   const DRAWS = (() => {
@@ -970,11 +1085,10 @@
     <line class="p2-boot__guide" data-guide="${name}" x1="${at.lo}" y1="${BOOT.dropFrom + 16}" x2="${at.lo}" y2="${BOOT.axisY + 14}"/>
     <line class="p2-boot__guide" data-guide="${name}" x1="${at.hi}" y1="${BOOT.dropFrom + 16}" x2="${at.hi}" y2="${BOOT.axisY + 14}"/>
     <rect class="p2-boot__span" data-span="${name}" x="${at.lo}" y="${BOOT.axisY + 4}" width="${at.hi - at.lo}" height="8" rx="4"/>`;
-  // Two bells that stand side by side and then merge: the two readers' piles on the way to
-  // the pile of their difference. Each is a sketch of that reader's recomputed scores, like
-  // the pile at the left; one line under the two says so, and that both readers are
-  // recomputed on the same draws of the questions ('p2.diff_same_draws'). The two have no
-  // common axis and no numbers (only the first reader's pile is drawn from data, at the left).
+  // Two bells that stand side by side and then merge: two readers' piles on the way to the
+  // pile of their difference. Each is a sketch of a reader's recomputed scores, like the
+  // pile at the left. The two have no common axis, no numbers and no reader's name (only
+  // the first pile, at the left, is drawn from data).
   const BELL = Object.freeze({ sd: 48, height: 88, base: 152, points: 25, one: 170, minus: 392, other: 614 });
   const bellPath = (cx) => {
     const points = util.range(BELL.points).map((i) => {
@@ -993,18 +1107,17 @@
     kicker: KICK,
     title: 'A bootstrap interval shows how far a score could move with other questions',
     cues: [
-      { text: `Resample the questions, recompute, repeat ${t('test.replicates')} times`, step: 1 },
       { text: `${t('test.interval_level')} interval: the middle ${t('test.interval_level')} of the recomputed scores`, step: 2 },
       { text: 'Resolved: a difference whose interval excludes zero', step: 3 },
     ],
-    cite: [{ src: 'paper', where: 'Sec. 1, 4; Table 2-3' }],
-    figure: 'schematic',
+    cite: [{ src: 'paper', where: 'Sec. 2.1, 6; Table 4-5' }],
+    figure: ['schematic', 'illustrative'],
     numbers: 'reported',
     html: `
       <div class="p2-box p2-boot">
         <div class="p2-boot__one">
-          <div class="p2-boot__rowname" data-row="have">The ${t('task.sample_questions')} questions</div>
-          <div class="p2-boot__rowname" data-row="draw">↓ drawn again, with repeats</div>
+          <div class="p2-boot__rowname" data-row="have">The ${t('task.sample_questions')} questions (dot: trace)</div>
+          <div class="p2-boot__rowname" data-row="draw">↓ redrawn with repeats</div>
           ${util.range(BOOT.questions).map((q) => `<span class="p2-boot__tile" data-tile="${q}" style="left:${q * BOOT.pitch}px; top:${BOOT.rowTop}px">${tileDots(q)}</span>`).join('')}
           ${util.range(BOOT.questions).flatMap((q) => util.range(BOOT.levels).map((level) => `<span class="p2-boot__tile p2-boot__copy" data-copy="${q}-${level}" style="left:${q * BOOT.pitch}px; top:${BOOT.copyTop + level * BOOT.copyPitch}px">${tileDots(q)}</span>`)).join('')}
           <svg class="p2-boot__art" viewBox="0 0 ${BOOT.one.width} ${PIC.height}" width="${BOOT.one.width}" height="${PIC.height}" aria-hidden="true">
@@ -1014,34 +1127,32 @@
             ${spanHtml('one', SCORE_AT)}
             <circle class="p2-boot__score" cx="${BOOT.one.center}" cy="${BOOT.axisY}" r="10"/>
           </svg>
-          <div class="p2-boot__what">${SCORE_NAME} · within-question AUROC</div>
+          <div class="p2-boot__what">${SCORE_NAME} · within-question AUROC, label 1</div>
           ${numHtml('one-lo', SCORE_AT.lo, SCORE.interval[0].toFixed(3))}
           ${numHtml('one-d', SCORE_AT.d, SCORE.text, ' p2-boot__num--main')}
           ${numHtml('one-hi', SCORE_AT.hi, SCORE.interval[1].toFixed(3))}
         </div>
         <div class="p2-boot__diff">
-          <div class="p2-boot__names">${nameHtml('one', SCORE_NAME)}${nameHtml('minus', 'minus')}${nameHtml('other', t('reader.qwen8.name'))}</div>
-          <div class="p2-boot__piles">both recomputed on the same redrawn questions</div>
+          <div class="p2-boot__names">${nameHtml('one', 'one reader')}${nameHtml('minus', 'minus')}${nameHtml('other', 'another reader')}</div>
           <div class="p2-boot__verdict">${kit.flag({ key: 'resolved', text: 'not resolved' })}</div>
           <svg class="p2-boot__art" viewBox="0 0 ${BOOT.diff.width} ${PIC.height}" width="${BOOT.diff.width}" height="${PIC.height}" aria-hidden="true">
             ${bellHtml('one', 'bell')}${bellHtml('other', 'bell')}
             ${bellHtml('one', 'ghost')}${bellHtml('other', 'ghost')}
             ${pileHtml(DIFF_PILE, 'gap')}
+            <g class="p2-boot__ticks">${ticksHtml()}</g>
             <line class="p2-boot__axis" x1="0" y1="${BOOT.axisY}" x2="${BOOT.diff.width}" y2="${BOOT.axisY}"/>
             <line class="p2-boot__zero" x1="${DIFF_AT.zero}" y1="${BOOT.dropFrom + 8}" x2="${DIFF_AT.zero}" y2="${BOOT.axisY + 14}"/>
             ${spanHtml('diff', DIFF_AT)}
           </svg>
           ${numHtml('zero', DIFF_AT.zero, '0', ' p2-boot__num--zero')}
-          ${numHtml('diff-lo', DIFF_AT.lo, signed(DIFF.lo))}
-          ${numHtml('diff-d', DIFF_AT.d, signed(DIFF.d), ' p2-boot__num--main')}
-          ${numHtml('diff-hi', DIFF_AT.hi, signed(DIFF.hi))}
-          <div class="p2-boot__unrounded" style="left:${DIFF_AT.d.toFixed(1)}px">computed before rounding</div>
+          <div class="p2-boot__madeup" style="left:${DIFF_AT.d.toFixed(1)}px">a made-up example</div>
+          <div class="p2-boot__scale" style="left:${TICKS.xs[TICKS.at].toFixed(1)}px; width:${TICKS.px.toFixed(1)}px"><i></i><span>${TICKS.text}</span></div>
         </div>
         ${kit.says({
-    one: [`This score rests on the scored sample: ${t('task.sample_questions')} questions per model. Others would give another number.`],
-    boot: ['<b>Bootstrap:</b> draw whole questions again and recompute the score.'],
+    one: [`This score rests on ${t('task.sample_questions')} questions per model. Others would give another number.`],
+    boot: [`<b>Bootstrap:</b> draw whole questions again and recompute, ${t('test.replicates')} times.`],
     diff: [
-      'A difference between readers gets its interval the same way.',
+      'A difference between readers gets an interval too.',
       'This one contains zero.',
     ],
   })}
@@ -1131,11 +1242,10 @@
         diff.tween(`[data-ghost="${key}"]`, { opacity: [0.8, 0] }, { at: merged + DUR.enter, dur: DUR.move });
       });
       diff.tween('[data-name="minus"]', { opacity: [0, 1] }, { at: 600 + 250, dur: DUR.enter });
-      diff.tween('.p2-boot__piles', { opacity: [0, 1] }, { at: 600 + 500 + DUR.micro, dur: DUR.enter });
-      diff.tween('.p2-boot__diff .p2-boot__axis', { opacity: [0, 1] }, { at: merged - DUR.enter, dur: DUR.enter });
+      diff.tween('.p2-boot__diff .p2-boot__axis, .p2-boot__ticks, .p2-boot__scale', { opacity: [0, 1] }, { at: merged - DUR.enter, dur: DUR.enter });
       DIFF_PILE.forEach((_, k) => drop(diff, 'gap', k, DIFF_PILE, merged + DUR.enter + Math.round(1100 * ((k + 1) / DIFF_PILE.length) ** 0.7), 300));
       diff.tween('.p2-boot__zero, [data-num="zero"]', { opacity: [0, 1] }, { at: piled, dur: DUR.enter });
-      span(diff, 'diff', 'gap', DIFF_PILE, piled + DUR.enter, '[data-num="diff-lo"], [data-num="diff-d"], [data-num="diff-hi"], .p2-boot__unrounded', DIFF_AT);
+      span(diff, 'diff', 'gap', DIFF_PILE, piled + DUR.enter, '.p2-boot__madeup', DIFF_AT);
       const judged = piled + DUR.enter + DUR.micro + DUR.move + DUR.enter;
       diff.tween('[data-flag="resolved"]', { opacity: [0, 1], scale: [1.6, 1] }, { at: judged, dur: DUR.enter });
       kit.say(diff, 'diff', [200, judged], { leaves: 'boot' });

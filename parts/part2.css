@@ -35,7 +35,7 @@
 }
 .p2-reader__score { position: absolute; left: 1000px; top: 80px; width: 728px; --meter-label: 96px; --meter-value: 150px; }
 /* The label, on the columns of the meter over it: its name, a dotted run to the chip that
-   stands where a full bar would end, and its value. Under it, what the two labels are. */
+   stands where a full bar would end, and its value (follows 1, resists 0). */
 .p2-reader__label {
   position: absolute; left: 1000px; top: 160px; width: 728px;
   display: grid; grid-template-columns: 96px minmax(0, 1fr) 150px; column-gap: var(--sp-6); align-items: center;
@@ -45,13 +45,20 @@
 .p2-reader__label-run i { flex: 1; border-top: var(--stroke-1) dotted var(--c-line); }
 .p2-reader__label-run .dk-flag { background: var(--c-bg); }
 .p2-reader__label-value { font: 600 var(--fs-4)/var(--lh-4) var(--font-mono); text-align: right; color: var(--c-alarm); }
-.p2-reader__label-key { grid-column: 2; justify-self: end; font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); color: var(--c-faint); white-space: nowrap; }
+/* The second label, a held-out continuation's ending, in its own row under the first: here
+   it resists, so its value is in the green of a trace that resists. */
+.p2-reader__label-value[data-label="held"] { color: var(--c-ok); }
+.p2-reader__label-name { white-space: nowrap; }
+/* The answer chip of the terminal when the continuation typed beyond the cut resists. */
+.p2-reader__term .dk-cut__end.p2-is-resists { border-color: var(--c-ok); color: var(--c-ok); }
 
 /* The three kinds of reader: a card each, with a dot per reader (the dots are its count).
    The cards are as wide as their sentences need: the open monitors' is the shortest. A card
-   holds its head and three lines at the size of a caption. */
+   holds its head and four lines at the size of a caption; the caption of this slide is one
+   line in every step, so it gives the cards the height of its second line. */
+.p2-reader > .dk-says { height: 40px; }
 .p2-reader__kinds {
-  position: absolute; left: 0; top: 348px; width: 1728px; height: 188px;
+  position: absolute; left: 0; top: 348px; width: 1728px; height: 228px;
   display: grid; grid-template-columns: minmax(0, 14fr) minmax(0, 8fr) minmax(0, 12fr); column-gap: var(--sp-6);
 }
 .p2-reader__kind { padding: var(--sp-3) var(--sp-6); border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-2); background: var(--c-surface); }
@@ -115,9 +122,24 @@
    bright arc for a pair within a question, a gray line for a pair across questions. */
 .p2-auroc__legend i.is-arc { box-sizing: border-box; height: 12px; border: 3px solid var(--c-text); border-bottom: 0; border-radius: 12px 12px 0 0; background: none; }
 .p2-auroc__legend i.is-line { height: 3px; border-radius: 0; background: var(--c-faint); }
-/* Two lines: what the sketch is not (it has three questions), and the measured share. */
+/* Two lines: the measured share, with what the data has and the sketch has not (20 questions
+   per model, where the sketch has three). */
 .p2-auroc__counter { position: absolute; left: 0; top: 424px; width: 872px; font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); }
 .p2-auroc__counter span { display: block; white-space: nowrap; }
+/* The last click, where the made-up grid stood: a reader that is shown the prompt alone,
+   with its two measured AUROCs, the pooled one in the red of the least expected number. */
+.p2-auroc__prompt { position: absolute; left: 0; top: 54px; width: 776px; height: 428px; display: flex; flex-direction: column; justify-content: center; }
+.p2-auroc__who { font: 600 var(--fs-2)/var(--lh-2) var(--font-sans); color: var(--c-text); }
+.p2-auroc__never { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); }
+.p2-auroc__two { margin-top: var(--sp-6); display: grid; grid-template-columns: repeat(2, max-content); column-gap: var(--sp-16); }
+.p2-auroc__two p { display: grid; }
+.p2-auroc__two span { font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-faint); white-space: nowrap; }
+.p2-auroc__two b { font: 600 var(--fs-6)/var(--lh-6) var(--font-mono); color: var(--c-dim); transform-origin: 0 50%; }
+.p2-auroc__two b.p2-auroc__lifted { color: var(--c-alarm); }
+/* The first recommendation shares the caption's place and stands under its one line; the
+   caption of this slide is a little taller for it. */
+.p2-auroc > .dk-says { height: 88px; }
+.p2-auroc > .dk-says > .dk-rec { position: absolute; left: 0; right: 0; top: 36px; }
 .p2-auroc__counter b { font-weight: 600; }
 
 /* ------------------------------------------------------------------ slide 8: continuations and K */
@@ -175,12 +197,14 @@
 .p2-fan__ref::before { border-left: var(--stroke-1) solid var(--c-hidden); }
 .p2-fan__ref::after { border-right: var(--stroke-1) solid var(--c-hidden); }
 .p2-fan__cells { position: absolute; left: 0; top: 290px; width: 474px; height: 40px; display: flex; column-gap: 6px; }
-.p2-fan__cells i { flex: 1; border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-1); background: var(--c-surface-2); }
+.p2-fan__cells i { flex: 1; border: var(--stroke-1) solid var(--c-faint); border-radius: var(--radius-1); background: var(--c-surface-2); }
 .p2-fan__cells i.is-on { border-color: var(--c-hidden); background: var(--c-hidden); }
 .p2-fan__others { position: absolute; left: 0; top: 344px; width: 474px; display: grid; row-gap: var(--sp-2); }
 .p2-fan__row { height: 12px; display: flex; column-gap: 6px; }
-.p2-fan__row i { flex: 1; border-radius: var(--radius-1); background: var(--c-surface-2); }
-.p2-fan__row i.is-on { background: color-mix(in srgb, var(--c-hidden) 60%, var(--c-bg)); }
+/* A cell that is off keeps an outline, and one that is on has the full amber: the thin bars
+   are read against a dark stage from the back of a room. */
+.p2-fan__row i { flex: 1; border-radius: var(--radius-1); background: var(--c-surface-2); box-shadow: inset 0 0 0 var(--stroke-1) var(--c-faint); }
+.p2-fan__row i.is-on { background: var(--c-hidden); box-shadow: none; }
 .p2-fan__others span { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); white-space: nowrap; }
 /* One line in the deck's own face, two in a wider one. */
 .p2-fan__auroc { position: absolute; left: 0; top: 444px; width: 508px; font: 600 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-hidden); }
@@ -216,6 +240,12 @@
 .p2-boot__score { fill: var(--c-read); stroke: var(--c-bg); stroke-width: 4; }
 .p2-boot__span { fill: var(--c-read); }
 .p2-boot__zero { stroke: var(--c-dim); stroke-width: 2; }
+/* The scale of the difference's axis: a tick at every 0.01, and under one step a bracket
+   with its size (the made-up difference prints no number of its own). */
+.p2-boot__tick { stroke: var(--c-dim); stroke-width: 2; }
+.p2-boot__scale { position: absolute; top: 462px; }
+.p2-boot__scale i { display: block; height: 8px; border: var(--stroke-1) solid var(--c-dim); border-top: 0; }
+.p2-boot__scale span { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); color: var(--c-dim); white-space: nowrap; }
 .p2-boot__bell { fill: color-mix(in srgb, var(--c-read) 28%, transparent); stroke: var(--c-read); stroke-width: 2; }
 .p2-boot__bell--other { fill: color-mix(in srgb, var(--c-dim) 20%, transparent); stroke: var(--c-dim); }
 /* Whose score it is, under the number. */
@@ -231,9 +261,7 @@
 .p2-boot__names { position: absolute; left: 0; top: 0; width: 784px; height: var(--lh-1); }
 .p2-boot__names span { position: absolute; top: 0; width: 320px; margin-left: -160px; font: 600 var(--fs-1)/var(--lh-1) var(--font-sans); text-align: center; color: var(--c-text); white-space: nowrap; }
 .p2-boot__names [data-name="minus"] { font-weight: 400; color: var(--c-dim); }
-/* What the two bells are, under them: one line for both. */
-.p2-boot__piles { position: absolute; left: 0; top: 152px; width: 784px; height: var(--lh-0); font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); text-align: center; color: var(--c-dim); white-space: nowrap; }
-/* Under the difference: it is not the difference of the two scores as printed. */
-.p2-boot__unrounded { position: absolute; top: 504px; width: 400px; margin-left: -200px; font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); text-align: center; color: var(--c-dim); white-space: nowrap; }
+/* Under the difference: it is an example of ours, not a measured one. */
+.p2-boot__madeup { position: absolute; top: 468px; width: 400px; margin-left: -200px; font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); text-align: center; color: var(--c-dim); white-space: nowrap; }
 .p2-boot__verdict { position: absolute; right: 0; top: 200px; }
 .p2-boot__verdict .dk-flag { transform-origin: 100% 50%; }

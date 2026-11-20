@@ -1,261 +1,147 @@
 // Part 3: What we found. Slides 10-13 (Results, Conclusion).
 // SPEC.md section 5 describes each slide; parts/sample.js shows the registration API.
-// Slides 10 to 12 share one frame (.p3-res): the result's head (kit.resultHead), the picture,
-// and under it the caption of the step (kit.says). On the last click the caption's place
-// holds the recommendation (kit.rec) and, under it, its limits. On slides 10 and 12 nothing
-// moves to make room: what a later click brings has its place from the start. Slide 11
-// shows its chart alone in the middle until the gauge needs the right half. The closing
-// slide (13) is text only and keeps what is on screen in its middle.
+// The three results are the paper's three contributions (its v2 draft, Sec. 4 to 6): when a
+// resampling ceiling is a ceiling (slide 10), whether alarms come in time (slide 11), what a
+// comparison of readers can resolve (slide 12). They share one frame (.p3-res): the result's
+// head (kit.resultHead), the picture, and under it the caption of the step (kit.says). On
+// the last click the caption's place holds the recommendation (kit.rec) and its limit. The
+// closing slide (13) is text only.
 // Every number and quote on screen is read from the fact table by key. What a drawing makes
-// up (the follow rates of slide 10's three columns) is named where it is defined, and the
-// footer tag "Schematic" covers it.
+// up (the lengths of slide 10's bars, the endings and the alarm of slide 11's one trace) is
+// named where it is defined, and the footer tag "Schematic" covers it. A term or a mark is
+// said in plain words where it first stands: an axis has its ticks, a mark its key, and a
+// count the things it counts.
 (() => {
   'use strict';
 
   const PART = 3;
   const { kit, util } = Deck;
   const DUR = Deck.timeline.DUR;
-  const { choices: CHOICES, kicker, readers: READERS, kept: KEPT } = Deck.motifs;
-  // The four readers that the held-out label sets above the small open monitor (slide 12).
+  const { choices: CHOICES, recs: RECS, kicker, readers: READERS, kept: KEPT } = Deck.motifs;
+  // The four readers that the held-out label sets above the small open monitor (slide 12):
+  // the paper's "frontier readings", two models under two prompts.
   const HELD_ABOVE = Object.freeze(['opus_ap', 'astra_ap', 'opus_in', 'astra_in']);
   // The forced reader that was never checked against the numerical tolerance (slide 12): the
-  // paper's "Qwen3-32B forced" ('readers.forced_aside'; paper/tmlr/sections/03_tasks.tex:47-48).
+  // paper's "Qwen3-32B forced" ('readers.forced_aside').
   const UNCHECKED = 'qwen32_forced';
 
-  // A source that only Part 3 cites (slide 13): one of the three papers whose published
-  // conclusions were re-scored. Copied from final-project/paper/tmlr/references.bib:37-42
-  // (title, author and arXiv id as printed there, read on 2026-11-18); the paper was not
-  // opened for this deck. The paper's reference list has three entries of this author and
-  // year and prints this one as "Young (2026b)"; shared/sources.js holds another of them
-  // under the short name "Young 2026c" (young2026lie, the paper's "Young (2026c)").
-  Deck.addSources({
-    young2026divergence: {
-      short: 'Young 2026b',
-      authors: 'Young',
-      title: 'Why Models Know But Don’t Say: Chain-of-Thought Faithfulness Divergence Between Thinking Tokens and Answers in Open-Weight Reasoning Models',
-      ref: 'arXiv:2603.26410',
-    },
+  // Facts that only Part 3 needs, each with the page and the words of the paper's v2 draft
+  // it was read in (sources/paper-v2-draft.pdf; the form of `file` is that of
+  // shared/facts.js, and tools/selftest.mjs looks every quotation up on its page).
+  const PDF = 'sources/paper-v2-draft.pdf';
+  const at = (page, quote) => `p.${page}: "${quote}"`;
+  const paper = (where, cites, rest) => Object.freeze({ src: 'paper', where, file: `${PDF}, ${[].concat(cites).join('; ')}`, ...rest });
+  const three = (n) => n.toFixed(3);
+  // Table 4 prints each reader's within-question AUROC with its nominal 95% interval. The
+  // interval cites the reader's row of the table, as the reader's other facts do, and the
+  // row has to print it behind the AUROC: a number typed wrongly here fails the build.
+  const WITHIN_CI = Object.freeze({
+    opus_ap: [0.793, 0.860], opus_in: [0.790, 0.856], qwen32: [0.788, 0.856], astra_in: [0.790, 0.855], astra_ap: [0.782, 0.853],
+    qwen8: [0.761, 0.842], forced_nohint: [0.808, 0.875], forced: [0.804, 0.874], qwen32_forced: [0.784, 0.856],
   });
-  // The three papers whose conclusions were re-scored, by key of the bibliography, each with
-  // the number of its conclusions (paper/tmlr/appendix/g_rescore.tex:4-5: Y5 and Y6, Y1 to
-  // Y4, M1a, M1b and M2), in the order in which the paper's introduction cites them. Slide
-  // 13 cites each of them.
-  const RESCORED = Object.freeze({ young2026lie: 2, young2026divergence: 4, merrill2026: 3 });
-
-  // Facts that only Part 3 needs. Each was read at its source on 2026-11-17; `file` is
-  // relative to final-project/, as in shared/facts.js.
+  Deck.addFacts(Object.fromEntries(Object.entries(WITHIN_CI).map(([key, [lo, hi]]) => {
+    const row = Deck.fact(`reader.${key}.within`);
+    if (!row.file.includes(`${row.text} [${three(lo)}, ${three(hi)}]`)) throw new Error(`the interval of reader "${key}" is not the one its row of Table 4 prints`);
+    return [`p3.within_ci.${key}`, Object.freeze({ src: 'paper', where: 'Table 4, Within [95% CI]', file: row.file, value: Object.freeze([lo, hi]), text: `${three(lo)} to ${three(hi)}` })];
+  })));
   Deck.addFacts({
-    // Slide 10, what the readers' rise under pooling is held against: the spread of the nine
-    // readers' within-question AUROCs, largest mean minus smallest (0.844 - 0.803, the two
-    // ends that the caption of click 3 prints). Read on 2026-11-18.
-    'p3.reader_spread': {
-      value: 0.041, text: '0.041', src: 'paper', where: 'Table 3',
-      file: 'paper/tmlr/sections/04_readers.tex:71 (Spread of reader means, observed 0.041; results/revision_inference/inference.txt:122; the two ends in results/prompt_only_pooled/prompt_only_pooled.txt:30)',
-    },
-    // Slide 11, the level of the gauge's reader: Claude Opus 5.5 IN's (the paper's Opus IN-num)
-    // within-question AUROC against a held-out continuation's ending. It is the numerator of
-    // the two normalized AUROCs that Table 2 prints for this reader (0.96 and 0.81); Table 12
-    // prints the value itself.
-    'p3.opus_in_heldout': {
-      value: 0.833, text: '0.833', src: 'paper', where: 'App. E; Table 12',
-      file: 'results/revision_round6/round6.txt:16 (also paper/tmlr/appendix/e_ceiling.tex:115)',
-    },
-    // Slide 11, why the gauge's larger reference is "from 15" while the curve ends at K = 16:
-    // one of the 16 continuations is held out as the label, and the reference is the share
-    // of m of the other 15.
-    'p3.heldout_others': {
-      value: 15, text: '15', src: 'paper', where: 'Sec. 5.1', file: 'paper/tmlr/sections/05_ceiling.tex:75-76',
-    },
-    // Slide 11, the points that are counted above the reference: the nine readers of the
-    // talk in the seven resampled models. The paper counts 19 of 105 cells, which adds the
-    // six verdicts (15 readers, Sec. 5.4, paper/tmlr/sections/05_ceiling.tex:172); the
-    // results file has the 19 among the 63 cells of the nine readers ("graded (63): point >
-    // 1 19"), and none of the 63 above the reference from 15 (its next line).
-    'p3.reader_points': {
-      value: 63, text: '63', src: 'paper', where: 'Sec. 5.4; Table 12',
-      file: 'results/revision_round6/round6.txt:25-26 (graded (63): point > 1 19, then 0)',
-    },
+    // Slide 10, assumption M in plain words: the paper's own second wording of it.
+    'p3.m_fresh': paper('Sec. 4', at(6, 'the bound needs the trace’s own remainder to behave like a fresh continuation'), {
+      text: 'the trace’s own remainder behaves like a fresh continuation',
+    }),
+    // Slide 10, what "biased low" means: where the resampling AUROC from K continuations
+    // lies against its limit.
+    'p3.biased_low': paper('Sec. 4', at(6, 'UK lies at or below its limit in expectation, less so as K grows'), {
+      text: 'at or below its limit in expectation, less so as K grows',
+    }),
+    // Slide 11, where a monitor reads a trace: twelve positions, of which the ten up to
+    // 0.8 are the looks of the false-alarm count ('p3.looks_who').
+    'p3.reads': paper('Sec. 5.2', at(9, 'alarms at the first read position (r = 0, 0.1, . . . , 1.0 and 0.25) at which its verdict names the hinted answer.'), {
+      value: Object.freeze([0, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]), text: '12',
+    }),
+    // Slide 11, whose false alarms the two rates are, and over which reads (the paper's
+    // "looks"). The paper's main text counts the five ("five continuous readers", of the
+    // nine continuous-score readers of its Sec. 2.2) and does not name them, so the slide
+    // counts them too and names none.
+    'p3.looks_who': paper('Sec. 5.2, P5', at(10, 'For five continuous readers, a threshold set to a per-look rate of 0.10 over ten looks (r = 0 to 0.8)'), {
+      value: 5, from: 0, to: 0.8, text: '5',
+    }),
+    // Slide 11, the two outputs of an open monitor: its score, which ranks traces (the
+    // AUROC of Table 4), and its verdict, which sets the alarm.
+    'p3.score_px': paper('Sec. 2.2', at(3, 'scored by the letter probability of X'), { text: 'the letter probability of X' }),
+    'p3.verdict': paper('Sec. 2.2', at(3, 'The six verdicts are the open monitors’ predicted letter'), { text: 'the open monitors’ predicted letter' }),
+    // Slide 11, what the rule says of the second monitor: its count is one short, so no
+    // statement holds for it (its frozen outcome: "the answer depends on the model").
+    'p3.qwen8_outcome': paper('Sec. 5.2', at(9, 'For Qwen3-8B the rule gives no single statement.'), { text: 'no single statement' }),
+    // Slide 11, what the recommendation's "reference" is in this work: the point that an
+    // alarm's timing is read against.
+    'p3.reference': paper('Sec. 5', at(9, 'Our reference is not an annotated onset but a point of no return estimated by resampling.'), {
+      text: 'a point of no return estimated by resampling',
+    }),
+    // Slide 12, why a comparison is also run with pairs matched in prefix length: the cut
+    // gives the length away (slide 10's words for it).
+    'p3.cut_leaks': paper('Sec. 1, What was known', at(2, 'a cut at a fraction of the final length leaks that length ... and our positions leak it too'), {
+      text: 'a cut at a fraction of the final length leaks that length, and our positions leak it too',
+    }),
+    // Slide 11, how the check of the point of no return stands: the paper's tier X.
+    'p3.pnr_check_tier': paper('Sec. 5.1', at(9, 'The K = 16 continuations at r = 0.5 test this directly [X].'), { text: 'exploratory' }),
     // Slide 12, what testing one pair at a time would do: if all nine readers had the same
     // true AUROC, 1.8 of the 36 unadjusted 95% intervals would still exclude zero (36 times
     // 0.05; 2.3 in the paper's simulation).
-    'p3.chance_resolved': {
-      value: 1.8, text: 'about 2', src: 'paper', where: 'Table 3',
-      file: 'results/revision_inference/inference.txt:114-115 (analytic 1.80, simulated 2.27; paper/tmlr/sections/04_readers.tex:64)',
-    },
+    'p3.chance_resolved': paper('Table 5', at(11, 'if equal: nominal (simulated; P (≥ obs.)) 1.8 (2.3; 0.35)'), { value: 1.8, text: 'about 2' }),
     // Slide 12, the counts with the three forced readers kept: the joint test (Bonferroni
     // over the 36 pairs) resolves one difference against the trace's own outcome, and the
     // calibrated one six to nine against a held-out continuation's, by bootstrap run.
-    // Unadjusted, three of the 36 exclude zero against the trace's own outcome.
-    'p3.resolved_all_own': {
-      value: 1, text: '1', src: 'paper', where: 'Sec. 4; Table 3',
-      file: 'results/revision_inference/inference.txt:113 (also paper/tmlr/sections/04_readers.tex:87-88)',
-    },
-    'p3.resolved_all_held': {
-      value: Object.freeze([6, 9]), text: '6 to 9', src: 'paper', where: 'Sec. 1; Sec. 4',
-      file: 'paper/tmlr/sections/04_readers.tex:89-90 (also paper/tmlr/sections/01_intro.tex:68-69)',
-    },
-    // Slide 12, the four differences that the joint test resolves against the held-out
-    // label: the small open monitor below each of these four readers ('test.resolved_held_who').
-    'p3.resolved_held_pairs': {
-      value: HELD_ABOVE,
-      text: `${Deck.fact('readers.name_qwen8').text} below ${HELD_ABOVE.map((key) => Deck.fact(`reader.${key}.name`).text).join(', ')}`,
-      src: 'paper', where: 'Sec. 4; App. J', file: 'results/revision_cold_r4/cold_r4.txt:18',
-    },
-    // Slide 12, click 2: the same 15 differences against a held-out continuation's ending,
-    // point and bootstrap standard error (a minus b, in the order of 'test.pairs'), read on
-    // 2026-11-18. The results file holds no percentile interval for this label, so the bar
-    // of a pair alone is d +- 1.960 SE and the joint interval d +- 3.197 SE: the paper's
-    // joint test for this label resolves a pair when |d| / SE is above 3.197
-    // (src/cotx/analysis/revision_cold_r4_core.py:49-57). `alone`: how many exclude zero
-    // one pair at a time (cold_r4.txt:17, "unadjusted 8"); the slide fails to build if the
-    // bars drawn from these values do not give that count and the four of the joint test.
-    'p3.pairs_held': {
-      value: Object.freeze([
-        ['qwen8', 'qwen32', -0.01942, 0.00828],
-        ['qwen8', 'opus_ap', -0.03065, 0.00914],
-        ['qwen8', 'astra_ap', -0.03921, 0.01025],
-        ['qwen8', 'opus_in', -0.04360, 0.01104],
-        ['qwen8', 'astra_in', -0.04020, 0.00993],
-        ['qwen32', 'opus_ap', -0.01123, 0.00978],
-        ['qwen32', 'astra_ap', -0.01979, 0.00890],
-        ['qwen32', 'opus_in', -0.02418, 0.00980],
-        ['qwen32', 'astra_in', -0.02078, 0.00855],
-        ['opus_ap', 'astra_ap', -0.00856, 0.01123],
-        ['opus_ap', 'opus_in', -0.01295, 0.00837],
-        ['opus_ap', 'astra_in', -0.00955, 0.01001],
-        ['astra_ap', 'opus_in', -0.00439, 0.00876],
-        ['astra_ap', 'astra_in', -0.00099, 0.00571],
-        ['opus_in', 'astra_in', 0.00340, 0.00702],
-      ].map(([a, b, d, se]) => Object.freeze({ a, b, d, se }))),
-      alone: 8, text: '15 differences', src: 'paper', where: 'Sec. 4; App. J',
-      file: 'results/revision_cold_r4/cold_r4.json:1996-2087 (analysis.per_pair["held|none"].rest_15.pairs: d, se; counts in cold_r4.txt:17)',
-    },
-    // The critical value of an interval for one pair alone; the joint one is this times
-    // 'test.joint_widening' (3.197).
-    'p3.z_alone': {
-      value: 1.960, text: '1.960', src: 'paper', where: 'Table 3; App. J',
-      file: 'results/revision_round8/mdd.txt:2 (z: unadjusted 1.960, z36 3.197)',
-    },
+    'p3.resolved_all_own': paper('Sec. 6.1; Table 5', at(12, 'Bonferroni resolves one, the hint-removed forced answer above'), { value: 1, text: '1' }),
+    'p3.resolved_all_held': paper('Sec. 6.1', at(12, 'six to nine over independent runs'), { value: Object.freeze([6, 9]), text: '6 to 9' }),
     // Slide 12, what the held-out label's 4 is the largest of ("at most 4" in the paper and
     // in the text of 'test.resolved_held_max'): the joint test of the count (Bonferroni)
     // resolves 4; it is anti-conservative for this label, and a critical value calibrated
-    // for it (c* = 3.370) resolves 3 or 4, by bootstrap run; keeping only pairs of traces
-    // within 25% in length, the joint test resolves none.
-    'p3.resolved_held_stricter': {
-      value: Object.freeze([3, 4]), text: '3 or 4', src: 'paper', where: 'Sec. 4; Table 3',
-      file: 'paper/tmlr/sections/04_readers.tex:85-87 (also results/revision_cold_r4/cold_r4.txt:17, c_star 3, and :35, runs)',
-    },
-    'p3.resolved_held_matched': {
-      value: 0, text: '0', src: 'paper', where: 'Sec. 4',
-      file: 'paper/tmlr/sections/04_readers.tex:84-85 (also results/revision_cold_r4/cold_r4.txt:21, held|L1 rest_15 z36 0; paper/tmlr/sections/04_readers.tex:13, within 25% in prefix length)',
-    },
+    // for it resolves 3 or 4, by bootstrap run.
+    'p3.resolved_held_stricter': paper('Sec. 6.1; Table 5', at(12, 'resolves 3 or 4, by bootstrap run'), { value: Object.freeze([3, 4]), text: '3 or 4' }),
     // Slide 12, the check that two of the forced readers fail: the forced answer is read
     // incrementally along a trace, and its letter probabilities may differ from a one-shot
-    // recomputation by at most a tolerance fixed before the subject readings (5e-3, fixed
-    // on 2026-10-24). The slide says it without the terms: the score, computed two ways,
-    // must agree within a limit. Read again on 2026-11-18.
-    'p3.forced_check': {
+    // recomputation by at most a tolerance fixed before the subject readings. The slide
+    // says it without the terms: a preset check of their computation (the paper's "a
+    // preset numerical check", and what that check compares).
+    'p3.forced_check': paper('Sec. 2.2', at(3, 'Computed incrementally along the trace, the forced answer fails on all eight models a numerical tolerance fixed before the subject readings'), {
       text: 'computed incrementally along the trace, the forced answer fails a numerical tolerance fixed before the subject readings',
-      src: 'paper', where: 'Sec. 3.2; App. A',
-      file: 'paper/tmlr/sections/03_tasks.tex:46-48 (the check: paper/tmlr/appendix/a_provenance.tex:219-221)',
-    },
-    // Slide 12, what "tested jointly" means, beside the key of the two marks: the paper's
-    // simultaneous 95% intervals, which on the main task are Bonferroni over the 36 pairs
-    // (chosen by a rule fixed in advance). The level is nominal: the simulated coverage of
-    // the family is 0.939 (paper/tmlr/sections/04_readers.tex:48-49). Read on 2026-11-18.
-    'p3.joint_level': {
-      value: 95, text: '95%', src: 'paper', where: 'App. J; Table 3',
-      file: 'paper/tmlr/appendix/k_inference.tex:21-22 (simultaneous 95% intervals; Bonferroni on the main task: :25-26)',
-    },
-    // Slide 13, the pilot behind the open question: its hint is a block <question_metadata>
-    // in the user turn whose <answer_key> field names the wrong option, and its model is
-    // QwQ-32B. Neither is the main task's: that task's hint is a sentence in the prompt (the
-    // sycophancy template, 'task.hint_template') and QwQ-32B is not one of its eight models
-    // ('task.model_names'). The slide says so, in the words "another model" and "another
-    // hint", and fails to build if either stops being true of the facts. Read on 2026-11-18.
-    'p3.pilot_hint': {
-      text: 'a metadata block whose answer-key field names the wrong option', src: 'paper', where: 'App. I',
-      file: 'paper/tmlr/appendix/i_s22.tex:7-8',
-    },
-    // Slide 13, the limit on the second task, with its result: for six of the paper's eight
-    // pitfalls a check was frozen "(written to a file with a recorded digest, under our own
-    // version control) before the second task's traces were downloaded (four sample files
-    // excepted)"; four of the six passed ('second.checks'), and the test has almost no power
-    // to confirm or refute transfer ('second.power'). The slide says "fixed in advance" for
-    // "frozen before the download". Read on 2026-11-18.
-    'p3.second_frozen': {
-      text: 'fixed in advance', src: 'paper', where: 'Sec. 1; Sec. 6.1',
-      file: 'paper/tmlr/sections/01_intro.tex:25-27 (a check was frozen before the second task\'s traces were downloaded, four sample files excepted; also paper/tmlr/sections/07_checklist.tex:65, "Of the six frozen checks, four passed, exactly the threshold")',
-    },
-    'p3.pilot_other': {
-      text: 'another model, another hint', src: 'paper', where: 'Sec. 3.1; App. I',
-      file: 'paper/tmlr/appendix/i_s22.tex:7-8 (the metadata hint; the subject model is QwQ-32B) against paper/tmlr/sections/03_tasks.tex:8-13 (the main task: the sycophancy template; eight subject models, QwQ-32B not among them)',
-    },
-    // Slide 13, the published conclusions that were re-scored: nine, chosen verbatim from
-    // three papers (RESCORED), each with a rule, frozen before any of its numbers, for when
-    // a correction rewrites it. By those rules one of the nine is rewritten (M2 of Merrill
-    // and Srivastava), and the paper judges that rewrite not credible: it comes through an
-    // extrapolation of the rule that the paper's own measurements contradict. With a
-    // secondary detector, report-only by the frozen file, three of the nine would be
-    // rewritten; none of the nine is a prefix-monitor AUROC. The slide prints the count, the
-    // papers, the one rewrite and the judgment; the last two facts are checked, not printed.
-    // Read on 2026-11-18.
-    'p3.rescored': {
-      value: 9, text: '9', src: 'paper', where: 'Sec. 1; Sec. 6.2; Sec. 9; App. G',
-      file: 'paper/tmlr/sections/01_intro.tex:35-37 (also paper/tmlr/sections/10_conclusion.tex:8-9 and paper/tmlr/sections/07_checklist.tex:105-106)',
-    },
-    'p3.rescored_papers': {
-      value: Object.keys(RESCORED).length, by: RESCORED, text: String(Object.keys(RESCORED).length), src: 'paper', where: 'Sec. 1; App. G',
-      file: 'paper/tmlr/appendix/g_rescore.tex:4-5 (Y1 to Y4, Y5 and Y6, M1a, M1b and M2; the three citations also in paper/tmlr/sections/01_intro.tex:36)',
-    },
-    'p3.rescored_frozen': {
-      text: 'under rules frozen in advance', src: 'paper', where: 'Sec. 6.2; App. G',
-      file: 'paper/tmlr/sections/07_checklist.tex:105-106 (also paper/tmlr/appendix/g_rescore.tex:4, "frozen before any of its numbers")',
-    },
-    'p3.rescored_rewritten': {
-      value: 1, text: '1', src: 'paper', where: 'Sec. 1; Sec. 6.2; Sec. 9; App. G',
-      file: 'paper/tmlr/sections/01_intro.tex:35 (also paper/tmlr/sections/07_checklist.tex:106-107, M2, and paper/tmlr/appendix/g_rescore.tex:33)',
-    },
-    'p3.rescored_judged': {
-      text: 'we judge that rewrite not credible', src: 'paper', where: 'Sec. 1; Sec. 6.2; Sec. 9',
-      file: 'paper/tmlr/sections/01_intro.tex:36-37 (also paper/tmlr/sections/10_conclusion.tex:9 and paper/tmlr/sections/07_checklist.tex:108-111, the reasons)',
-    },
-    'p3.rescored_second_detector': {
-      value: 3, text: '3', src: 'paper', where: 'Sec. 1; Sec. 6.2; App. G',
-      file: 'paper/tmlr/sections/01_intro.tex:36 (three with a secondary detector; also paper/tmlr/appendix/g_rescore.tex:30-33)',
-    },
-    'p3.rescored_no_auroc': {
-      text: 'none a monitor AUROC claim', src: 'paper', where: 'Sec. 1; Sec. 6.2; Sec. 9; App. G',
-      file: 'paper/tmlr/sections/01_intro.tex:36 (also paper/tmlr/sections/10_conclusion.tex:9 and paper/tmlr/appendix/g_rescore.tex:6, "None of the nine is a prefix-monitor AUROC")',
-    },
+    }),
+    'p3.forced_check_what': paper('Sec. 7.3', [at(14, 'Two of them fail a preset numerical check'), at(14, 'a check compares those letter probabilities with a one-shot recomputation and requires their largest absolute difference to be at most 5 × 10−3')], {
+      text: 'a preset numerical check: the letter probabilities read along the trace against a one-shot recomputation',
+    }),
+    // Slide 12, the level of the joint ("simultaneous") intervals.
+    'p3.joint_level': paper('abstract; Table 5', [at(1, 'simultaneous 95% intervals resolve no reader difference'), at(11, 'Simultaneous: Bonferroni (own outcome)')], { value: 95, text: '95%' }),
+    // Slide 12, what a joint test keeps small: if all readers were equal, at least one
+    // difference would be resolved in about one dataset in twenty (Table 5 prints the
+    // simulated share, 0.03 to 0.06, for the trace's own outcome).
+    'p3.joint_chance': paper('Table 5', at(11, 'if equal: expected; P (≥ 1) 0.05–0.10; 0.03–0.06'), { value: Object.freeze([0.03, 0.06]), text: '0.03 to 0.06' }),
   });
 
   const t = (key) => Deck.fact(key).text;
   const v = (key) => Deck.fact(key).value;
-  const percent = (key) => `${Math.round(v(key) * 100)}%`;
   const round3 = (n) => Math.round(n * 1000) / 1000;
   const two = (n) => n.toFixed(2);
-  const three = (n) => n.toFixed(3);
   const RESULTS = kicker(PART, 'Results');
-  // How the analyses of a result slide stand: most were planned after results had been read.
+  // How the analyses of a result stand: most were planned after results had been read
+  // (the paper's tier X); one statement was fixed before the data (its tier F).
   const EXPLORATORY = 'exploratory';
   const { POP } = kit;
 
   // ---------------------------------------------------------------- shared by slides 10 to 12
   // The caption under the picture (kit.says): `notes` is { key: sentence }, one sentence a
   // step (a list of sentences where a later click adds a line to the one that stands). The
-  // recommendation and its limits share its place and arrive on the last click; a slide
-  // whose limit stands in its cue row has no `limit`.
+  // recommendation and its limit share its place and arrive on the last click.
   const captionHtml = ({ notes, rec, limit }) => kit.says(
     Object.fromEntries(Object.entries(notes).map(([key, html]) => [key, [].concat(html)])),
     { inner: `${kit.rec(rec)}${limit ? `<p class="p3-res__limit">${limit}</p>` : ''}` },
   );
   // The sentence of a step takes the place of the one before it (`leaves`).
-  const note = (step, key, { leaves, at = 0 } = {}) => kit.say(step, key, [at + (leaves === undefined ? 0 : DUR.micro)], { leaves, leaveAt: at });
+  const note = (step, key, { leaves, at: when = 0 } = {}) => kit.say(step, key, [when + (leaves === undefined ? 0 : DUR.micro)], { leaves, leaveAt: when });
   // The last click of a result slide: the last sentence (`leaves`) goes, the picture steps
-  // back and the recommendation arrives in the part's violet, then its limits (unless an
-  // earlier click has brought them). `dims` names what steps back, where a slide keeps a
-  // part of its picture at full strength to the end (the whole picture otherwise).
+  // back and the recommendation arrives in the part's violet, then its limit (unless an
+  // earlier click has brought it). `dims` names what steps back, where a slide keeps a part
+  // of its picture at full strength to the end (the whole picture otherwise).
   const conclude = (step, { leaves, limit, dims = '.p3-res__picture' }) => {
     step.tween(`[data-says="${leaves}"]`, { opacity: [1, 0] }, { dur: DUR.micro });
     step.tween(dims, { opacity: [1, 0.4] }, { dur: DUR.enter });
@@ -263,420 +149,157 @@
     if (limit) step.show('.p3-res__limit', { at: DUR.enter + DUR.move, rise: 0 });
     step.hold(DUR.enter);
   };
-  // A mark beats once when something lands on it.
-  const beat = (step, target, at) => {
-    step.tween(target, { scale: [1, 1.5] }, { at, dur: 160 });
-    step.tween(target, { scale: [1.5, 1] }, { at: at + 160, dur: 300 });
-  };
-  // The two labels a reader can be scored against (slide 8), as chips: slide 11 puts one on
-  // its curve and the other on its gauge, slide 12 one on each of its two counts. The
+  // The two labels a reader can be scored against (slide 6), as chips: slide 10 puts the
+  // first on its chart, slide 12 one on each row of its counts. The
   // held-out label is made of a continuation and has the amber of continuations.
-  const LABELS = Object.freeze({ own: 'label: own ending', held: 'label: held-out continuation' });
+  const LABELS = Object.freeze({ own: 'label 1: own ending', held: 'label 2: held-out continuation' });
   const labelChip = (key) => `<span class="dk-chip" data-label="${key}"${key === 'held' ? ' data-tone="hidden"' : ''}>${LABELS[key]}</span>`;
   // The part of a title that is held back until the picture has shown it.
-  const revealTitle = (ctx, step, at) => step.tween(ctx.q('.dk-title em'), { opacity: [0, 1] }, { at, dur: DUR.move });
+  const revealTitle = (ctx, step, when) => step.tween(ctx.q('.dk-title em'), { opacity: [0, 1] }, { at: when, dur: DUR.move });
+  // The recommendation that closes result n ('motifs.choices').
+  const recOf = (n) => CHOICES[n - 1].rec;
 
-  // ---------------------------------------------------------------- slide 10: result 1, pooled or within
-  // The peak of the talk. A reader that never sees the reasoning gives every trace of a
-  // question one score, how often that question is followed. Within a question every pair
-  // is then a tie (click 1); across questions a follower of a question that is usually
-  // followed beats a resister of one that is usually resisted, and the reader's pooled
-  // square slides from 0.50 to 0.62 while the title gets its answer (click 2). The nine real
-  // readers rise too (click 3), and the slide ends on the first recommendation (click 4).
-  // The three columns get their scores on the entrance, one after the other, so that the
-  // room has read "one score per question" before a pair is compared.
-  // The title's answer is the least expected number of the talk and is set in red, the role
-  // "alarm" (parts/part3.css): a reader that reads nothing should score 0.5. It is not in the
-  // teal of a reader's score nor in the part's violet, which would read as a way of scoring
-  // to prefer. It lands once, with a beat and a glow that fades, as the second half of slide
-  // 4's title does.
-  // The slide has one cue, the size of the readers' rise: what the reader is shown and that
-  // every pair inside a question is a tie are said by the caption, so that the last state
-  // holds the recommendation, its limits, one cue and the chart, which stays at full
-  // strength; only the columns at the left step back.
-  // The cue sets the rise beside what it is as large as, in numbers: the spread of the nine
-  // readers' within-question AUROCs ('p3.reader_spread', 0.041: the 0.803 to 0.844 of the
-  // caption of that click). "As much as readers differ" left the room to check it against
-  // the six readers' 0.803 to 0.828 of slides 3 and 12, which are 0.025 apart.
-  // The title prints the measured 0.62 beside the three columns, and a listener can count
-  // the columns' dots: with rates of 90%, 50% and 20% the sketch itself scored 0.81 pooled,
-  // and the 0.62 read as a mistake. The rates are still made up, but chosen so that the
-  // sketch, counted off its dots, gives the measured number (POOL_AUROC, below).
-  const POOL = Object.freeze({
-    traces: 15,
-    // Made up: how many of fifteen traces follow the hint in each of three questions.
-    follows: Object.freeze([10, 9, 6]),
-    // The pairs across columns that are drawn. `bundles`: the follower's column, the
-    // resister's column, how many pairs: the follower's question is followed more often, so
-    // the prompt-only reader ranks the pair correctly. `misses`: pairs the other way round,
-    // which it ranks wrongly (the follower's column and row, the resister's). Two arcs are
-    // drawn right for each one drawn wrong, about as the sketch's pairs across columns
-    // stand (231 ranked correctly, 111 wrongly).
-    bundles: Object.freeze([[0, 1, 3], [1, 2, 3], [0, 2, 4]]),
-    misses: Object.freeze([[1, 2, 0, 11], [1, 7, 0, 14], [2, 0, 1, 10], [2, 4, 1, 13], [2, 2, 0, 12]]),
-    stampY: 84, tieBow: 30,
-    // Enter, in ms: the columns, the reader with its lens covered, then one stamp a column.
-    colsAt: 400, readerAt: 1000, capAt: 1500, stampAt: 2200, perStamp: 450,
-    // Click 1, in ms: the reader's dot lands at 0.50. Click 3: the nine squares slide out.
-    dotAt: 1900, liftAt: 1500,
-    // Click 2, in ms: the arcs light up one by one, then the square slides. The title's
-    // answer lands from `answerBeat` times its size.
-    arcAt: 300, perArc: 70, slideAfter: 500, answerBeat: 1.3,
+  // ---------------------------------------------------------------- slide 10: result 1, when the ceiling is a ceiling
+  // The paper's first contribution, in its order, one picture at a time. The claim of recent
+  // work: the resampling AUROC is a ceiling, the best AUROC any reader of the prefix could
+  // reach (the words of slide 3). It needs assumption M, which the slide says in the paper's
+  // plainer words: the trace's own remainder behaves like a fresh continuation (entrance:
+  // the trace as it was written, a solid bar beyond the cut, over fresh continuations of
+  // that prefix, dashed bars; the two strokes of slide 8's key).
+  // Click 1: our cut, at half of the trace's final length, uses the future and breaks M, and
+  // our data reject M. The sketch shows what the test compares: of the continuations that
+  // end as the trace did, which are shorter than the trace's own remainder (a guide at its
+  // end, "shorter" and "longer"; the continuation with another ending steps back). The side
+  // asks that question in words and answers it on a small axis with its ticks: one half if
+  // M holds, the measured share and its whole interval below it, and under the verdict what
+  // that means, by the name the sketch gives the bar: "its own remainder" runs shorter
+  // ('m.shorter').
+  // Click 2: even where M holds, a value from K continuations is biased low: the measured
+  // curve takes the sketch's place, still rising at K = 16.
+  // Click 3: the question of slide 3, answered on that chart. The six readers' AUROCs are a
+  // band on it ('readers.within_min' to 'readers.within_max_kept': Table 4, within question,
+  // against the trace's own ending, at r = 0.5, as the curve is): just under the curve at
+  // K = 2, well under it at K = 16.
+  // The title gets its second half there, the paper's "a finite-K value is biased low and
+  // is not a bound". Then the recommendation (click 4), and under it why it asks for the
+  // label (a held-out continuation as the label makes M hold by construction, 'm.heldout')
+  // and the one term of it that is new.
+  // The bars of the first picture are a drawing: the own remainder is as long as the prefix
+  // (a cut at half), and the continuations' lengths and endings are made up, so that of
+  // those that end as the trace did half are shorter than its own remainder: what M
+  // implies. What is measured is printed: that share lies 0.024 below one half
+  // ('m.rejected').
+  // Not on the slide: one reader's normalized AUROC against the held-out label's ceiling
+  // from 2 and from 15 continuations (Table 4: 0.96 and 0.81 for Claude Opus 5.5 IN). It
+  // says for one reader and the second label what the band says for six readers and the
+  // label of slide 3, with a second pair of ceilings (0.848, 0.912) beside the curve's
+  // (0.846, 0.915); the part's speaking time has no room for both. Nor the paper's count of
+  // points above a ceiling ("19 of 105 points at 2, 0 at 15", Table 7): its main text does
+  // not say what a point is.
+  // The curve joins the four values the paper prints (K = 2, 4, 8, 16), against the trace's
+  // own ending, the label of the readers' AUROCs in the band.
+  const MX = Object.freeze({
+    width: 900, height: 448, x0: 16, prefix: 300, gap: 28, own: 300, barH: 44,
+    // From the top: the bracket of the cut (click 1), the trace as written, its two names,
+    // then the continuations (made up: how long each one is, and whether it ends as the
+    // trace did, `same`).
+    halfY: 40, rowY: 76, nameY: 152, contY: 212, pitch: 56, contH: 36, keyY: 412,
+    conts: Object.freeze([{ w: 208, same: true }, { w: 396, same: false }, { w: 420, same: true }]),
   });
-  const POOL_QUESTIONS = Object.freeze(POOL.follows.map((follows, c) => Object.freeze({ label: `Question ${c + 1}`, follows, traces: POOL.traces })));
-  // The question columns of the slide on AUROC (kit.cols), in this slide's size.
-  const COLS = Object.freeze({
-    key: 'pool', cls: 'p3-svg', width: 660, height: 392, x: Object.freeze([112, 330, 548]),
-    box: Object.freeze({ w: 104, top: 36, h: 320, r: 16 }), labelY: 24, dotTop: 106, pitch: 17, r: 7, gap: 2, bend: 0.4,
-    legendY: 384, questions: POOL_QUESTIONS,
-  });
-  // The score the prompt-only reader stamps on a column: that question's follow rate.
-  const poolRate = (c) => `${Math.round((POOL.follows[c] / POOL.traces) * 100)}%`;
-  // What the sketch itself scores, pooled: every follower against every resister of the
-  // three columns, a trace's score being its column's follow rate. The reader ranks a pair
-  // correctly if the follower's column is followed more often; a pair inside a column (or
-  // between columns of one rate) is a tie and counts a half. Rates are compared as whole
-  // numbers, so that a tie is exact.
-  const poolAuroc = (questions) => {
-    const cells = questions.flatMap((f) => questions.map((r) => {
-      const ahead = f.follows * r.traces - r.follows * f.traces;
-      return { pairs: f.follows * (r.traces - r.follows), won: ahead > 0 ? 1 : ahead === 0 ? 0.5 : 0 };
-    }));
-    const sum = (of) => cells.reduce((acc, cell) => acc + of(cell), 0);
-    return sum((cell) => cell.pairs * cell.won) / sum((cell) => cell.pairs);
-  };
-  const POOL_AUROC = poolAuroc(POOL_QUESTIONS);
-  if (two(POOL_AUROC) !== t('pooled.prompt_only')) {
-    throw new Error(`the three columns of slide 10 score ${POOL_AUROC.toFixed(4)} pooled, counted off their dots; the slide prints ${t('pooled.prompt_only')} beside them`);
-  }
-  // Inside a column: a follower and a resister near where the two kinds meet, joined on the
-  // side of the column that no pair across columns touches (the last column: its right).
-  // Every tie bows out by the same `tieBow` pixels, however far apart its two dots are.
-  const poolTie = (c) => {
-    const follows = POOL.follows[c];
-    const a = Math.max(0, follows - 2);
-    const b = Math.min(POOL.traces - 1, follows + 1);
-    return kit.colsArc({ ...COLS, bow: POOL.tieBow / ((b - a) * COLS.pitch) }, [c, a], [c, b], { side: c === POOL.follows.length - 1 ? 1 : -1 });
-  };
-  // Across columns: a follower (column i, row a) against a resister (column j, row b). The
-  // prompt-only reader ranks the pair correctly when question i is followed more often than
-  // question j. The pairs of a bundle are spread evenly over both columns, so that their
-  // arcs do not cross.
-  const spread = (items, n) => util.range(n).map((k) => items[Math.round((k * (items.length - 1)) / (n - 1))]);
-  const POOL_PAIRS = Object.freeze([
-    ...POOL.bundles.flatMap(([i, j, n]) => {
-      const resisters = spread(util.range(POOL.traces).slice(POOL.follows[j]), n);
-      return spread(util.range(POOL.follows[i]), n).map((a, k) => ({ i, j, a, b: resisters[k] }));
-    }),
-    ...POOL.misses.map(([i, a, j, b]) => ({ i, j, a, b })),
-  ].map((pair) => Object.freeze({ ...pair, right: POOL.follows[pair.i] > POOL.follows[pair.j] })));
-  if (POOL_PAIRS.some((pair) => pair.a >= POOL.follows[pair.i] || pair.b < POOL.follows[pair.j] || pair.b >= POOL.traces)) throw new Error('a pair of slide 10 no longer joins a follower and a resister');
-  if (POOL_PAIRS.some((pair, n) => pair.right !== n < POOL_PAIRS.length - POOL.misses.length)) throw new Error('the arcs of slide 10 are no longer the pairs ranked correctly, then the pairs ranked wrongly');
-  const POOL_RIGHT = POOL_PAIRS.filter((pair) => pair.right).length;
-  const poolCross = ({ i, j, a, b }) => kit.colsArc(COLS, [i, a], [j, b]).d;
-  // Under the dots: the web of pairs as the slide on AUROC left it, the same arcs in the
-  // color of how the reader ranks them, and the pair that ties inside each column.
-  const poolUnder = () => `
-    ${POOL_PAIRS.map((pair) => `<path class="p3-pool__web" d="${poolCross(pair)}"/>`).join('')}
-    ${POOL_PAIRS.map((pair) => `<path class="p3-pool__cross${pair.right ? '' : ' is-wrong'}" pathLength="1" d="${poolCross(pair)}"/>`).join('')}
-    ${POOL_QUESTIONS.map((_, c) => `<path class="p3-pool__tie" pathLength="1" d="${poolTie(c).d}"/>`).join('')}`;
-  const poolOver = () => `
-    ${POOL_QUESTIONS.map((_, c) => {
-    const { mid } = poolTie(c);
+  const MX_CUT = MX.x0 + MX.prefix + MX.gap / 2;
+  const MX_FROM = MX.x0 + MX.prefix + MX.gap;
+  const MX_OWN_END = MX_FROM + MX.own;
+  const mxContY = (i) => MX.contY + i * MX.pitch;
+  if (MX.own !== MX.prefix || v('task.cut_r') !== 0.5) throw new Error('the cut of slide 10 no longer stands at half of the trace as written');
+  // The drawing shows what M implies: of the continuations that end as the trace did, half
+  // are shorter than the trace's own remainder; one with another ending is left out.
+  const MX_SAME = MX.conts.filter((c) => c.same);
+  if (!MX.conts.some((c) => !c.same) || MX_SAME.some((c) => c.w === MX.own) || MX_SAME.filter((c) => c.w < MX.own).length * 2 !== MX_SAME.length) throw new Error('the same-ending continuations of slide 10 are no longer half shorter and half longer than the trace’s own remainder');
+  const mSketch = () => `
+    <svg class="p3-svg p3-m__art" viewBox="0 0 ${MX.width} ${MX.height}" width="${MX.width}" height="${MX.height}">
+      <g class="p3-m__half">
+        <path d="M${MX.x0} ${MX.halfY + 16} v-12 H${MX_OWN_END} v12 M${MX_CUT} ${MX.halfY - 2} v12"/>
+        <text class="p3-mid" x="${MX_CUT}" y="${MX.halfY - 12}">r = ${t('task.cut_r')}: half the final length</text>
+      </g>
+      <rect class="p3-m__prefix" x="${MX.x0}" y="${MX.rowY}" width="${MX.prefix}" height="${MX.barH}" rx="8"/>
+      <line class="p3-m__cut" x1="${MX_CUT}" x2="${MX_CUT}" y1="${MX.rowY - 12}" y2="${mxContY(MX.conts.length - 1) + MX.contH + 12}"/>
+      <rect class="p3-m__own" x="${MX_FROM}" y="${MX.rowY}" width="${MX.own}" height="${MX.barH}" rx="8"/>
+      <circle class="p3-m__end is-follows" cx="${MX_OWN_END + 28}" cy="${MX.rowY + MX.barH / 2}" r="10"/>
+      <text class="p3-m__name is-prefix" x="${MX.x0}" y="${MX.nameY}">the prefix</text>
+      <text class="p3-m__name is-own" x="${MX_FROM}" y="${MX.nameY}">its own remainder</text>
+      ${MX.conts.map((c, i) => `
+      <g class="p3-m__cont${c.same ? '' : ' is-other'}">
+        <rect x="${MX_FROM}" y="${mxContY(i)}" width="${c.w}" height="${MX.contH}" rx="8"/>
+        <circle class="p3-m__end${c.same ? ' is-follows' : ''}" cx="${MX_FROM + c.w + 28}" cy="${mxContY(i) + MX.contH / 2}" r="10"/>
+      </g>`).join('')}
+      <g class="p3-m__same">
+        <line x1="${MX_OWN_END}" x2="${MX_OWN_END}" y1="${MX.rowY + MX.barH}" y2="${mxContY(MX.conts.length - 1) + MX.contH}"/>
+        ${MX.conts.map((c, i) => (c.same ? `<text x="${MX_FROM + 16}" y="${mxContY(i) + MX.contH / 2 + 8}">${c.w < MX.own ? 'shorter' : 'longer'}</text>` : '')).join('')}
+      </g>
+      <text class="p3-m__name is-cont" x="${MX_FROM}" y="${MX.keyY}">fresh continuations</text>
+    </svg>`;
+  // The test of M on a small axis with its ticks. The axis is the share that the question
+  // over it asks for: of the fresh continuations that end as the trace did, the share that
+  // is shorter than the trace's own remainder. M puts it at one half (the dashed line); the
+  // measured mean lies 'm.rejected' below, and so does its whole interval (the ends are the
+  // fact's, taken from one half), which is why the data reject M.
+  const MT = Object.freeze({ width: 720, height: 124, x0: 24, perUnit: 7200, from: 0.43, to: 0.52, axisY: 76, half: 0.5, ticks: Object.freeze([0.45, 0.5]) });
+  const mtX = (share) => round3(MT.x0 + (share - MT.from) * MT.perUnit);
+  const mTest = () => {
+    const gap = Deck.fact('m.rejected');
+    const [near, far] = gap.interval;
+    if (!(near > 0 && far > near && gap.value > near && gap.value < far)) throw new Error('the interval of slide 10’s test of M no longer lies on one side of one half, around its point');
+    if (!MT.ticks.includes(MT.half) || MT.half - far < MT.from) throw new Error('the axis of slide 10’s test of M no longer holds one half and the whole interval');
     return `
-        <text class="p3-pool__stamp p3-pop" data-stamp="${c}" x="${COLS.x[c]}" y="${POOL.stampY}">${poolRate(c)}</text>
-        <g class="p3-pool__equal p3-pop"><circle cx="${mid.x}" cy="${mid.y}" r="14"/><text x="${mid.x}" y="${mid.y + 8}">=</text></g>`;
-  }).join('')}
-    ${[0, 1].map((c) => `<text class="p3-pool__gt p3-pop" x="${(COLS.x[c] + COLS.x[c + 1]) / 2}" y="${POOL.stampY}">&gt;</text>`).join('')}
-    <g class="p3-pool__arckey">
-      <line class="p3-pool__cross" x1="280" x2="304" y1="${COLS.legendY - 8}" y2="${COLS.legendY - 8}"/>
-      <text x="312" y="${COLS.legendY}">ranked correctly</text>
-      <line class="p3-pool__cross is-wrong" x1="548" x2="572" y1="${COLS.legendY - 8}" y2="${COLS.legendY - 8}"/>
-      <text x="580" y="${COLS.legendY}">wrongly</text>
-    </g>`;
-
-  // The chart is the paper's Fig. 2a drawn from the facts: an AUROC axis from 0.5 to 0.9, the
-  // prompt-only row at the bottom and the nine readers above it, each a dot (within
-  // question), a square (pooled) and a line between the two. No ranks and no arrows between
-  // rows: the paper could not tell whether pooling reorders the readers. The prompt-only
-  // reader's range by model and its value at the traces' natural frequency are not drawn:
-  // the pooled 0.62 carries the result.
-  const PC = Object.freeze({
-    width: 1040, height: 448, x0: 340, perUnit: 1600, from: 0.5,
-    ticks: Object.freeze([0.5, 0.6, 0.7, 0.8, 0.9]),
-    // From the top: the legend of the two marks, the nine readers, the prompt-only reader
-    // with its two values over its marks, the axis.
-    legendY: 20, rowY: 56, pitch: 34, heroY: 366, valueY: 344, axisY: 396, tickY: 428,
-    nameX: 804, heroNameX: 324, mark: 6, heroMark: 9,
-    // The note on the three forced readers, in the empty left of the rows under them.
-    asideX: 348, asideRow: 2,
-  });
-  const pcX = (value) => round3(PC.x0 + (value - PC.from) * PC.perUnit);
-  const pcRow = (i) => PC.rowY + i * PC.pitch;
-  const pcSquare = (x, y, half, cls, attrs = '') => `<rect class="${cls}" x="${round3(x - half)}" y="${y - half}" width="${half * 2}" height="${half * 2}" ${attrs}/>`;
-  // The legend says what a dot and a square are on every row of the chart, the nine readers'
-  // as well as the prompt-only reader's: its marks have the color of neither. The three
-  // forced readers carry a star: slide 12 sets them aside, and the note says so here, where
-  // the room first sees that two of them score highest.
-  const poolChart = () => {
-    const hero = { within: pcX(v('pooled.prompt_only_within')), pooled: pcX(v('pooled.prompt_only')) };
-    const y = PC.heroY;
-    const legend = PC.legendY;
-    return `
-    <svg class="p3-svg p3-pool__chart" viewBox="0 0 ${PC.width} ${PC.height}" width="${PC.width}" height="${PC.height}">
-      <g class="p3-pool__frame">
-        ${PC.ticks.map((tick) => `
-          <line class="p3-grid" x1="${pcX(tick)}" x2="${pcX(tick)}" y1="${tick >= 0.8 ? legend + 20 : y - 28}" y2="${PC.axisY}"/>
-          <line class="p3-axis" x1="${pcX(tick)}" x2="${pcX(tick)}" y1="${PC.axisY}" y2="${PC.axisY + 8}"/>
-          <text class="p3-num p3-mid" x="${pcX(tick)}" y="${PC.tickY}">${tick.toFixed(1)}</text>`).join('')}
-        <line class="p3-axis" x1="${PC.x0}" x2="${pcX(PC.ticks[PC.ticks.length - 1])}" y1="${PC.axisY}" y2="${PC.axisY}"/>
-        <text class="p3-end" x="300" y="${PC.tickY}">AUROC</text>
-        <text class="p3-pool__name is-hero" x="${PC.heroNameX}" y="${y + 10}">Prompt-only reader</text>
-      </g>
-      <g class="p3-pool__legend" data-legend="within">
-        <circle cx="${PC.x0 + 10}" cy="${legend}" r="10"/>
-        <text x="${PC.x0 + 32}" y="${legend + 10}">within question</text>
-      </g>
-      <g class="p3-pool__legend" data-legend="pooled">
-        ${pcSquare(PC.x0 + 318, legend, 10, 'p3-pool__glyph')}
-        <text x="${PC.x0 + 340}" y="${legend + 10}">pooled</text>
-      </g>
-      <g class="p3-pool__aside">
-        <text x="${PC.asideX}" y="${pcRow(PC.asideRow) + 8}">* set aside</text>
-        <text x="${PC.asideX}" y="${pcRow(PC.asideRow) + 36}">(slide 12)</text>
-      </g>
-      <line class="p3-pool__rise is-hero" x1="${hero.within}" x2="${hero.within}" y1="${y}" y2="${y}"/>
-      <circle class="p3-pool__within is-hero p3-pop" cx="${hero.within}" cy="${y}" r="${PC.heroMark}"/>
-      ${pcSquare(hero.within, y, PC.heroMark, 'p3-pool__pooled is-hero p3-pop')}
-      <text class="p3-pool__value p3-num p3-mid" data-value="within" x="${hero.within}" y="${PC.valueY}">${t('pooled.prompt_only_within')}</text>
-      <text class="p3-pool__value p3-pool__lift p3-num p3-mid p3-pop" x="${hero.pooled}" y="${PC.valueY}"></text>
-      ${READERS.map((key, i) => {
-    const x = pcX(v(`reader.${key}.within`));
-    return `
-        <text class="p3-pool__name" data-name="${key}" x="${PC.nameX}" y="${pcRow(i) + 10}">${t(`reader.${key}.name`)}${KEPT.includes(key) ? '' : '<tspan class="p3-pool__star">*</tspan>'}</text>
-        <line class="p3-pool__rise" data-rise="${key}" x1="${x}" x2="${x}" y1="${pcRow(i)}" y2="${pcRow(i)}"/>
-        <circle class="p3-pool__within p3-pop" data-within="${key}" cx="${x}" cy="${pcRow(i)}" r="${PC.mark}"/>
-        ${pcSquare(x, pcRow(i), PC.mark, 'p3-pool__pooled', `data-pooled="${key}"`)}`;
-  }).join('')}
+    <svg class="p3-svg p3-m__test" viewBox="0 0 ${MT.width} ${MT.height}" width="${MT.width}" height="${MT.height}">
+      <line class="p3-axis" x1="${mtX(MT.from)}" x2="${mtX(MT.to)}" y1="${MT.axisY}" y2="${MT.axisY}"/>
+      ${MT.ticks.map((tick) => `
+        <line class="p3-axis" x1="${mtX(tick)}" x2="${mtX(tick)}" y1="${MT.axisY}" y2="${MT.axisY + 8}"/>
+        <text class="p3-num p3-mid" x="${mtX(tick)}" y="${MT.axisY + 36}">${two(tick)}</text>`).join('')}
+      <line class="p3-m__at-half" x1="${mtX(MT.half)}" x2="${mtX(MT.half)}" y1="${MT.axisY - 56}" y2="${MT.axisY}"/>
+      <text class="p3-m__if" x="${mtX(MT.half) + 12}" y="${MT.axisY - 12}">if M holds</text>
+      <line class="p3-m__span" x1="${mtX(MT.half - far)}" x2="${mtX(MT.half - near)}" y1="${MT.axisY - 20}" y2="${MT.axisY - 20}"/>
+      <circle class="p3-m__point" cx="${mtX(MT.half - gap.value)}" cy="${MT.axisY - 20}" r="9"/>
+      <text class="p3-m__found p3-mid" x="${mtX(MT.half - gap.value)}" y="${MT.axisY - 44}"><tspan class="p3-num">${gap.text}</tspan> below one half</text>
     </svg>`;
   };
-  const RISE = `${t('pooled.reader_rise_min')} to ${t('pooled.reader_rise_max')}`;
-  // The spread that the cue prints is the distance between the two ends that the caption
-  // prints, and the largest rise is as large as it: the cue's comparison.
-  if (three(v('readers.within_max') - v('readers.within_min')) !== t('p3.reader_spread')) throw new Error('the nine readers of slide 10 no longer span the spread that its cue prints');
-  if (v('pooled.reader_rise_max') < v('p3.reader_spread')) throw new Error('the largest rise under pooling on slide 10 is no longer as large as the spread of the nine readers');
-  // The caption of the entrance says what the reader is shown and stays through click 1,
-  // which adds its second line: one score per question is why every pair inside a question
-  // is a tie.
-  const POOL_NOTES = Object.freeze({
-    reader: Object.freeze([
-      'Shown only the question and the hint, it gives every trace of a question one score: how often that question is followed.',
-      `Within question every pair is a tie: ${t('pooled.prompt_only_within')}.`,
-    ]),
-    across: 'Across questions it wins: a follower from a usually followed question, against a resister from a usually resisted one.',
-    // What pooling does to them is the cue of that click, which stays to the last state; the
-    // two ends printed here are 'p3.reader_spread' apart, the number the cue compares with.
-    nine: `Nine real readers score ${t('readers.within_min')} to ${t('readers.within_max')} within question.`,
-  });
-  // Under the recommendation: its one term that the talk has not used ("base rate"), in the
-  // words in which the caption of the entrance says what the columns' scores are; then
-  // 'pooled.only_there', 'pooled.known' and 'scope.size', in the talk's words, on a line of
-  // their own.
-  const POOL_LIMIT = 'Base rate: how often a question is followed.<br>Shown on this task only, on questions chosen because the hint moves the answer. The mechanism was known; we add its size.';
 
-  Deck.register({
-    id: 'p3-pooled',
-    part: PART,
-    kicker: RESULTS,
-    title: `What does a reader score if it never sees the reasoning? <em>Pooled, ${t('pooled.prompt_only')}</em>`,
-    cues: [
-      { text: `Pooling adds ${RISE}; nine readers span ${t('p3.reader_spread')}`, step: 3, at: POOL.liftAt },
-    ],
-    // Jia et al. is cited for what the last click calls known: they write the pooled AUROC
-    // as a mix of within- and between-prompt AUROCs, with a prompt-only score at 1/2 within
-    // (paper/tmlr/sections/01_intro.tex:41-42).
-    cite: [{ src: 'paper', where: 'Sec. 4; Table 2; Fig. 2a; App. F' }, { src: 'jia2026', where: 'pooled vs within' }],
-    figure: ['data', 'schematic'],
-    html: `
-      <div class="p3-res p3-pool">
-        ${kit.resultHead(1, EXPLORATORY)}
-        <div class="p3-res__picture">
-          <div class="p3-pool__left">
-            <div class="p3-pool__reader">
-              <span class="p3-pool__who">Prompt-only reader</span>
-              <span class="p3-pool__lens">${kit.lens({ key: 'covered' })}<i class="p3-pool__cap"></i></span>
-              <span class="p3-pool__capnote">never sees the reasoning</span>
-            </div>
-            ${kit.cols({ ...COLS, under: poolUnder(), over: poolOver() })}
-          </div>
-          <div class="p3-pool__right">
-            ${poolChart()}
-          </div>
-        </div>
-        ${captionHtml({ notes: POOL_NOTES, rec: 1, limit: POOL_LIMIT })}
-      </div>`,
-    setup: (ctx) => {
-      const { fact, dur } = ctx;
-      const within = fact('pooled.prompt_only_within');
-      const pooled = fact('pooled.prompt_only');
-      const hero = { dot: ctx.q('.p3-pool__within.is-hero'), square: ctx.q('.p3-pool__pooled.is-hero'), rise: ctx.q('.p3-pool__rise.is-hero') };
-
-      // Enter: the columns of the slide on AUROC, the reader with its lens covered (it never
-      // sees the reasoning), and one score stamped on each column: how often that question
-      // is followed.
-      const enter = ctx.step({ label: 'result 1 of 3: the prompt-only reader' });
-      kit.enterResult(enter);
-      note(enter, 'reader', { at: 300 });
-      enter.show('.dk-cols__label', { at: POOL.colsAt, stagger: 80, rise: 0 });
-      enter.tween('.dk-cols__col', { opacity: [0, 1] }, { at: POOL.colsAt, stagger: 80 });
-      enter.tween('.dk-cols > .dk-cols__dot', { opacity: [0, 1] }, { at: POOL.colsAt + 100, stagger: 15, dur: dur.micro });
-      enter.tween('.p3-pool__web', { opacity: [0, 1] }, { at: POOL.colsAt + 400, dur: dur.move });
-      enter.tween('.dk-cols__legend', { opacity: [0, 1] }, { at: POOL.colsAt + 500 });
-      enter.tween('.p3-pool__frame', { opacity: [0, 1] }, { at: 700 });
-      enter.show('.p3-pool__who', { at: POOL.readerAt, rise: 0 });
-      enter.tween('.p3-pool__lens', { opacity: [0, 1] }, { at: POOL.readerAt + 100 });
-      enter.tween('.p3-pool__cap', { opacity: [0, 1], y: [-20, 0] }, { at: POOL.capAt, dur: dur.enter });
-      enter.show('.p3-pool__capnote', { at: POOL.capAt + 300, rise: 0 });
-      enter.tween('.p3-pool__stamp', { opacity: [0, 1], scale: [1.8, 1] }, { at: POOL.stampAt, stagger: POOL.perStamp, dur: dur.enter });
-      enter.hold(300);
-
-      // Click 1: within a question every trace carries the same score, so a follower and a
-      // resister tie. The reader's dot lands at 0.50.
-      const tie = ctx.step({ label: 'within question: a coin flip' });
-      tie.tween('.p3-pool__tie', { opacity: [0, 1], 'stroke-dashoffset': [1, 0] }, { at: 300, stagger: 250, dur: dur.move });
-      tie.tween('.p3-pool__equal', POP, { at: 900, stagger: 250, dur: dur.enter, ease: 'back' });
-      tie.tween('[data-legend="within"]', { opacity: [0, 1] }, { at: POOL.dotAt - dur.micro });
-      tie.tween(hero.dot, { opacity: [0, 1], scale: [2.4, 1] }, { at: POOL.dotAt, dur: dur.enter });
-      tie.tween('[data-value="within"]', { opacity: [0, 1] }, { at: POOL.dotAt, dur: dur.enter });
-      tie.tween('[data-says-line="reader:1"]', { opacity: [0, 1] }, { at: POOL.dotAt, dur: dur.enter });
-      tie.hold(300);
-
-      // Click 2, wow 2: pairs reach across questions. The arcs light up as ranked correctly
-      // (two, the other way round, as ranked wrongly: it does not win every pair), the
-      // pooled square slides out of the dot to 0.62, its value counting up over where it
-      // lands, and the title gets its answer, in red, with a beat and a glow.
-      const wow = ctx.step({ label: 'wow 2: pooled, it scores well above chance' });
-      note(wow, 'across', { leaves: 'reader' });
-      const lit = { dur: dur.move, stagger: POOL.perArc };
-      const missAt = POOL.arcAt + POOL_RIGHT * POOL.perArc;
-      wow.tween('path.p3-pool__cross:not(.is-wrong)', { opacity: [0, 1], 'stroke-dashoffset': [1, 0] }, { ...lit, at: POOL.arcAt });
-      wow.tween('.p3-pool__gt', POP, { at: POOL.arcAt + 400, stagger: 500, dur: dur.enter, ease: 'back' });
-      wow.tween('path.p3-pool__cross.is-wrong', { opacity: [0, 1], 'stroke-dashoffset': [1, 0] }, { ...lit, at: missAt });
-      wow.tween('.p3-pool__arckey', { opacity: [0, 1] }, { at: missAt });
-      const slideAt = POOL.arcAt + POOL_PAIRS.length * POOL.perArc + POOL.slideAfter;
-      const landed = slideAt + dur.reveal;
-      const gliding = { at: slideAt, dur: dur.reveal, ease: 'inOut' };
-      wow.tween('[data-legend="pooled"]', { opacity: [0, 1] }, { at: slideAt - dur.enter });
-      wow.tween([hero.square, hero.rise, ctx.q('.p3-pool__lift')], { opacity: [0, 1] }, { at: slideAt - dur.micro, dur: dur.micro });
-      wow.tween(hero.square, { 'attr:x': [pcX(within.value) - PC.heroMark, pcX(pooled.value) - PC.heroMark] }, gliding);
-      wow.tween(hero.rise, { 'attr:x2': [pcX(within.value), pcX(pooled.value)] }, gliding);
-      kit.countTo(wow, '.p3-pool__lift', 'pooled.prompt_only', { ...gliding, from: within.value, format: two });
-      beat(wow, hero.square, landed);
-      beat(wow, '.p3-pool__lift', landed);
-      const answer = ctx.q('.dk-title em');
-      const answerAt = landed + 200;
-      wow.tween(answer, { opacity: [0, 1] }, { at: answerAt, dur: dur.enter });
-      wow.tween(answer, { scale: [POOL.answerBeat, 1] }, { at: answerAt, dur: dur.move, ease: 'out' });
-      wow.tween(answer, { '--p3-glow': [1, 0] }, { at: answerAt + dur.enter, dur: dur.reveal });
-      wow.hold(300);
-
-      // Click 3: the nine readers, in the order of the paper's Fig. 2a. Their dots land
-      // within question; then every square slides out to its pooled value.
-      const nine = ctx.step({ label: 'the nine readers rise too' });
-      note(nine, 'nine', { leaves: 'across' });
-      READERS.forEach((key, i) => {
-        const from = pcX(fact(`reader.${key}.within`).value);
-        const to = pcX(fact(`reader.${key}.pooled`).value);
-        const at = 300 + i * 90;
-        const lift = { at: POOL.liftAt + i * 40, dur: dur.move, ease: 'inOut' };
-        const square = ctx.q(`[data-pooled="${key}"]`);
-        const line = ctx.q(`[data-rise="${key}"]`);
-        nine.tween(ctx.q(`[data-name="${key}"]`), { opacity: [0, 1] }, { at, dur: dur.micro });
-        nine.tween(ctx.q(`[data-within="${key}"]`), { opacity: [0, 1], scale: [2.4, 1] }, { at: at + 100, dur: dur.enter });
-        nine.tween([square, line], { opacity: [0, 1] }, { at: lift.at - dur.micro, dur: dur.micro });
-        nine.tween(square, { 'attr:x': [from - PC.mark, to - PC.mark] }, lift);
-        nine.tween(line, { 'attr:x2': [from, to] }, lift);
-      });
-      nine.tween('.p3-pool__aside', { opacity: [0, 1] }, { at: POOL.liftAt + dur.move + 300 });
-      nine.hold(300);
-
-      // Click 4: the columns step back and the chart stays; the first recommendation, then
-      // what limits it.
-      conclude(ctx.step({ label: 'recommendation 1' }), { leaves: 'nine', limit: true, dims: '.p3-pool__left' });
-    },
-  });
-
-  // ---------------------------------------------------------------- slide 11: result 2, the curve in K
-  // The resampling AUROC as a curve in K (the paper's Fig. 1), and what its rise does to a
-  // reader's standing. The standing is drawn as a gauge: a ruler from guessing (0.5) to the
-  // reference, with one reader's level fixed on it. Built from 2 continuations the
-  // reference lies just above the reader (click 2); built from 15 it lies higher, the ruler
-  // stretches under the reader's mark, and the reading falls from 96% to 81% (click 3,
-  // wow 3). The two ends of that comparison stop on a click each, as SPEC.md section 2 asks
-  // of every comparison.
-  // The gauge uses another reference than the curve: the one behind the paper's normalized
-  // AUROCs, against a held-out continuation's ending ('k.ceiling_2', 'k.ceiling_15'). Its two
-  // levels are labeled by their number of continuations; no point of the curve moves to them.
-  // The two halves say which label they are scored against, in the chips that slide 12 uses
-  // for its two counts, and the gauge prints the three AUROCs its reading is made of: the
-  // reader's 0.833 and the references 0.848 and 0.912, all against the held-out label, so
-  // that (0.833 - 0.5) / (0.848 - 0.5) and (0.833 - 0.5) / (0.912 - 0.5) can be checked on
-  // screen. The larger reference is from 15 and not from 16: one of the 16 continuations is
-  // the label ('p3.heldout_others'). The curve is drawn from K = 2, where the talk starts;
-  // the point at K = 1 of the paper's figure is left out.
-  // The two halves are scored against two labels, and the curve's 0.846 at K = 2 stands
-  // beside the gauge's reference from 2, 0.848: from the click that brings the gauge each
-  // half stands in a frame under its label's chip, gray for the trace's own ending and
-  // amber for the held-out continuation, and the reader's 0.833 says which label it is
-  // scored against (it is above the 0.803 to 0.828 that slides 3 and 12 give for the six
-  // readers against the trace's own ending). Under the reader's level the gauge writes out
-  // its reading with the three numbers beside it: (0.833 - 0.5) / (0.848 - 0.5) = 96%. On
-  // the last click the reading and the line under it stay at full strength.
-  // The frames were not enough: the curve's 0.846 and 0.915 (own ending) were still read as
-  // the gauge's 0.848 and 0.912 (held-out label) written wrongly. So the values on the curve
-  // leave when the gauge arrives; the curve, its axes and the gain of its last doubling
-  // stay, and the only AUROCs printed in the picture are then the gauge's.
-  // Two sets of numbers that nearly agree still stood side by side with nothing to say how
-  // they belong together (the title's first half rests on the curve, its second on the
-  // gauge): the gauge's chips open on "Same rise, with", so that the right half reads
-  // as the rise of the curve under the other label (0.848 from 2 to 0.912 from 15, against
-  // the curve's 0.846 at K = 2 and 0.915 at K = 16).
-  // The K axis doubles from tick to tick: its label says "(log scale)", and a short tick
-  // stands at every K between the labeled ones.
-  // The reading is written out twice, one fraction for each reference, and both stand in
-  // the last state, the first one stepped back: (0.833 - 0.5) / (0.848 - 0.5) = 96% over
-  // (0.833 - 0.5) / (0.912 - 0.5) = 81%. With one fraction whose reference was exchanged,
-  // the 96% was gone from the picture that the title's "96% of the way becomes 81%" rests on.
-  // On click 3 the higher reference is named and the second fraction gets its reference
-  // before the ruler moves: the reading starts to fall only then. Falling beside nothing
-  // but "reference from 2: 0.848", it read as 81% of the way to the reference from 2.
-  // The points are one cell each, lit while above the reference and left as a ring once the
-  // reference has passed them: a key under the cells says so, a glyph and a word or two for
-  // each state, the ring's when the first ring appears.
-  // The points above the reference are counted in the "7 resampled models": slide 4 said
-  // that 7 of the 8 models are in the scored sample (paper/tmlr/sections/03_tasks.tex:13-14).
+  // The curve: the resampling AUROC against the trace's own ending at the K the paper prints.
   const KC = Object.freeze({
     width: 720, height: 448, x0: 112, first: 24, octave: 176, top: 56, bottom: 368, lo: 0.75, hi: 0.95,
-    yTicks: Object.freeze([0.75, 0.80, 0.85, 0.90, 0.95]),
+    yTicks: Object.freeze([0.75, 0.85, 0.95]),
     xTicks: Object.freeze([2, 4, 8, 16]),
-    // The points that carry their value: the fact behind each.
+    // The fact behind each point.
     named: Object.freeze({ 2: 'k.u2', 4: 'k.u4', 8: 'k.u8', 16: 'k.u16' }),
-    // Click 1, in ms: the curve is drawn from K = 2 to 16.
-    drawAt: 500, drawDur: 2400,
+    // Click 2, in ms: the curve is drawn from K = 2 to 16.
+    pointAt: 500, drawAt: 1300, drawDur: 2400,
   });
   const kcX = (k) => round3(KC.x0 + KC.first + (Math.log2(k) - 1) * KC.octave);
   const kcY = (value) => round3(KC.bottom - ((value - KC.lo) / (KC.hi - KC.lo)) * (KC.bottom - KC.top));
-  const KC_POINTS = Object.freeze(v('k.curve').filter(([k]) => k >= KC.xTicks[0]).map(([k, value]) => Object.freeze({ k, value, x: kcX(k), y: kcY(value) })));
+  const KC_POINTS = Object.freeze(v('k.curve').map(([k, value]) => Object.freeze({ k, value, x: kcX(k), y: kcY(value) })));
+  if (KC_POINTS.map((p) => p.k).join() !== KC.xTicks.join() || KC_POINTS.some((p) => three(p.value) !== t(KC.named[p.k]))) throw new Error('the curve of slide 10 is no longer the four values the paper prints, each with its fact');
+  if (three(v('k.u16') - v('k.u8')) !== t('k.step_8_16')) throw new Error('the last doubling of slide 10’s curve no longer adds what its label prints');
   const kcPoint = (k) => KC_POINTS.find((p) => p.k === k);
+  // The band of click 3: the six readers that are kept, from the lowest of their
+  // within-question AUROCs to the highest (Table 4), on the curve's own axis. Every one of
+  // them lies under the curve's first point, so the band answers the question of slide 3
+  // by where it lies against the curve's two ends.
+  const BAND = (() => {
+    const scores = KEPT.map((key) => v(`reader.${key}.within`));
+    const lo = Deck.fact('readers.within_min');
+    const hi = Deck.fact('readers.within_max_kept');
+    if (Math.min(...scores) !== lo.value || Math.max(...scores) !== hi.value) throw new Error('the band of slide 10 no longer runs from the lowest to the highest AUROC of the six readers');
+    if (!(hi.value < v('k.u2')) || lo.value < KC.lo) throw new Error('the band of slide 10 no longer lies on its chart, under the curve');
+    return Object.freeze({ lo: lo.text, hi: hi.text, top: kcY(hi.value), bottom: kcY(lo.value) });
+  })();
   // The curve, and how far along it each point lies (0 to 1).
   const KC_LINE = (() => {
-    const drawn = KC_POINTS;
-    const lengths = drawn.map((p, i) => (i ? Math.hypot(p.x - drawn[i - 1].x, p.y - drawn[i - 1].y) : 0));
+    const lengths = KC_POINTS.map((p, i) => (i ? Math.hypot(p.x - KC_POINTS[i - 1].x, p.y - KC_POINTS[i - 1].y) : 0));
     const total = lengths.reduce((sum, n) => sum + n, 0);
     const along = lengths.reduce((acc, n) => [...acc, (acc.length ? acc[acc.length - 1] : 0) + n], []);
     return Object.freeze({
-      d: drawn.map((p, i) => `${i ? 'L' : 'M'} ${p.x} ${p.y}`).join(' '),
-      share: Object.freeze(Object.fromEntries(drawn.map((p, i) => [p.k, along[i] / total]))),
+      d: KC_POINTS.map((p, i) => `${i ? 'L' : 'M'} ${p.x} ${p.y}`).join(' '),
+      share: Object.freeze(Object.fromEntries(KC_POINTS.map((p, i) => [p.k, along[i] / total]))),
     });
   })();
   const curveChart = () => {
@@ -688,183 +311,150 @@
         ${KC.yTicks.map((tick) => `
           <line class="p3-grid" x1="${KC.x0}" x2="${kcX(16)}" y1="${kcY(tick)}" y2="${kcY(tick)}"/>
           <text class="p3-num p3-end" x="${KC.x0 - 12}" y="${kcY(tick) + 8}">${two(tick)}</text>`).join('')}
-        ${KC_POINTS.filter((p) => !KC.xTicks.includes(p.k)).map((p) => `<line class="p3-axis" x1="${p.x}" x2="${p.x}" y1="${KC.bottom}" y2="${KC.bottom + 4}"/>`).join('')}
         ${KC.xTicks.map((k) => `
           <line class="p3-axis" x1="${kcX(k)}" x2="${kcX(k)}" y1="${KC.bottom}" y2="${KC.bottom + 8}"/>
           <text class="p3-num p3-mid" x="${kcX(k)}" y="${KC.bottom + 36}">${k}</text>`).join('')}
         <line class="p3-axis" x1="${KC.x0}" x2="${kcX(16)}" y1="${KC.bottom}" y2="${KC.bottom}"/>
         <line class="p3-axis" x1="${KC.x0}" x2="${KC.x0}" y1="${KC.top}" y2="${KC.bottom}"/>
-        <text class="p3-mid" x="${(KC.x0 + kcX(16)) / 2}" y="${KC.bottom + 68}">K, continuations (log scale)</text>
-        <text class="p3-mid" transform="rotate(-90 24 ${(KC.top + KC.bottom) / 2})" x="24" y="${(KC.top + KC.bottom) / 2 + 8}">resampling AUROC</text>
+        <text class="p3-mid" x="${(KC.x0 + kcX(16)) / 2}" y="${KC.bottom + 68}">K, continuations</text>
+        <text class="p3-mid" transform="rotate(-90 24 ${(KC.top + KC.bottom) / 2})" x="24" y="${(KC.top + KC.bottom) / 2 + 8}">AUROC</text>
+        <text class="p3-kc__name" x="${KC.x0 + 16}" y="${KC.top + 36}">resampling AUROC</text>
+      </g>
+      <g class="p3-kc__band">
+        <rect x="${KC.x0}" y="${BAND.top}" width="${round3(kcX(16) - KC.x0)}" height="${round3(BAND.bottom - BAND.top)}"/>
+        <text class="p3-end" x="${kcX(16)}" y="${BAND.bottom + 32}">our six monitors: <tspan class="p3-num">${BAND.lo} to ${BAND.hi}</tspan></text>
       </g>
       <path class="p3-kc__line" pathLength="1" d="${KC_LINE.d}"/>
-      <g class="p3-kc__step">
-        <line class="p3-kc__level" x1="${before.x}" x2="${last.x + 28}" y1="${before.y}" y2="${before.y}"/>
-        <line class="p3-kc__gain" x1="${last.x + 20}" x2="${last.x + 20}" y1="${before.y}" y2="${last.y}"/>
-        <text class="p3-end" x="${last.x + 28}" y="${before.y + 44}">K = 8 to 16: <tspan class="p3-num">+${t('k.step_8_16')}</tspan></text>
-      </g>
-      ${KC_POINTS.map((p) => `<circle class="p3-kc__point p3-pop${KC.named[p.k] ? ' is-named' : ''}" data-k="${p.k}" cx="${p.x}" cy="${p.y}" r="${KC.named[p.k] ? 8 : 5}"/>`).join('')}
-      ${Object.entries(KC.named).map(([k, key]) => {
-    const p = kcPoint(Number(k));
-    return Number(k) === 2
-      ? `<text class="p3-kc__value p3-num" data-value="${k}" x="${p.x + 16}" y="${p.y + 36}">${t(key)}</text>`
-      : `<text class="p3-kc__value p3-num p3-end" data-value="${k}" x="${p.x + 8}" y="${p.y - 18}">${t(key)}</text>`;
-  }).join('')}
+      <text class="p3-kc__step p3-end" x="${last.x + 28}" y="${before.y + 60}">K = 8 to 16: still <tspan class="p3-num">+${t('k.step_8_16')}</tspan></text>
+      ${KC_POINTS.map((p) => `<circle class="p3-kc__point p3-pop is-named" data-k="${p.k}" cx="${p.x}" cy="${p.y}" r="8"/>`).join('')}
+      ${KC_POINTS.map((p) => (p.k === 2
+    ? `<text class="p3-kc__value p3-num" data-value="${p.k}" x="${p.x - 16}" y="${p.y - 28}">${t(KC.named[p.k])}</text>`
+    : `<text class="p3-kc__value p3-num p3-end" data-value="${p.k}" x="${p.x + 8}" y="${p.y - 18}">${t(KC.named[p.k])}</text>`)).join('')}
     </svg>`;
   };
 
-  // The gauge. `from` is guessing; the ruler runs from there up to the reference, and its
-  // quarter marks spread when the reference rises. The reader's mark does not move.
-  const GAUGE = Object.freeze({
-    width: 520, height: 408, x: 84, bar: 72, base: 364, perUnit: 840, from: 0.5,
-    quarters: Object.freeze([0.25, 0.5, 0.75]),
-    points: Object.freeze({ cols: 21 }),
-    // Click 2, in ms: once the chart has made room, the ruler, the reader's level, the
-    // reference, then the count.
-    scaleAt: 900, growAt: 1300, growDur: 1200, countAt: 3000, perCell: 40,
-    // Click 3, in ms: the higher reference is named and written into the second fraction
-    // (`nameAt`); only then the reference climbs and the reading falls; then the points that
-    // were above it are counted again. `was`: how far what belongs to the reference from 2
-    // steps back (its label, its fraction).
-    nameAt: 300, climbAt: 1300, recountAfter: 1700, was: 0.6,
+  const CEILING_NOTES = Object.freeze({
+    // 'ceiling.claim' and 'm.assumption', in the talk's words (the ceiling as slide 3
+    // defines it), and what is ours in this result ('scope.conditions').
+    claim: '<b>The claim:</b> the resampling AUROC is a ceiling, the best AUROC any reader of the prefix could reach. It needs <b>assumption M</b>. We give conditions, not a correction.',
+    // 'm.future' in plain words: placed at a share of the final length, the cut tells how
+    // long the trace will run (what that does to the trace's own remainder against a fresh
+    // continuation is the side panel's, with the measured share). Then 'm.not_established',
+    // in the paper's direction: the ceiling "need not bound readers" (there: against the
+    // trace's own outcome).
+    cut: '<b>Our cut uses the future:</b> it gives away how long the rest will run. So the ceiling need not bound readers, by an amount not established.',
+    // 'k.not_bound': the second condition, on a measured curve; 'p3.biased_low' says what
+    // "biased low" means, and the last words what the limit is the limit of.
+    finite: '<b>Even under M:</b> from K continuations the resampling AUROC is <b>biased low</b>: on average at or below its limit (endless continuations).',
+    // The question of slide 3, in its words, and what the chart shows of it: the band
+    // against the two ends of the curve ('k.u2', 'k.u16'). No distance is printed that the
+    // paper does not print. Click 1 has said that this curve need not bound readers, so the
+    // answer opens on reading it as a ceiling all the same; that the answer depends on K
+    // is its two halves.
+    band: `<b>Have these monitors nearly reached the ceiling?</b> Even read as a ceiling: just under it at K = ${KC.xTicks[0]}, well under it at K = ${KC.xTicks[KC.xTicks.length - 1]}.`,
   });
-  const gaugeY = (value) => round3(GAUGE.base - (value - GAUGE.from) * GAUGE.perUnit);
-  // The gauge's reader, by the name the charts of slides 10 and 12 give it.
-  const GAUGE_READER = t('reader.opus_in.name');
-  // What "of the way" is, written out with the numbers on the gauge: the reader's AUROC
-  // minus guessing over the reference minus guessing. One fraction for the reference from 2
-  // continuations and, `pitch` pixels under it, one for the reference from 15; the result
-  // of a fraction (`how-is`) can arrive after its two lines.
-  const HOW = Object.freeze({
-    width: 158, lead: 28, pitch: 92,
-    refs: Object.freeze([[2, 'k.ceiling_2', 'reader.opus_in.norm2'], [15, 'k.ceiling_15', 'reader.opus_in.norm15']]),
-  });
-  const gaugeHow = (x, y) => {
-    const minus = `− ${GAUGE.from}`;
-    return HOW.refs.map(([m, ref, share], i) => {
-      const top = y + i * HOW.pitch;
-      return `
-      <g class="p3-gauge__how" data-how="${m}">
-        <text class="p3-num" x="${x}" y="${top}"><tspan class="p3-gauge__how-reader">${t('p3.opus_in_heldout')}</tspan> ${minus}</text>
-        <line class="p3-gauge__how-bar" x1="${x}" x2="${x + HOW.width}" y1="${top + 12}" y2="${top + 12}"/>
-        <text class="p3-num p3-gauge__how-ref" x="${x}" y="${top + 12 + HOW.lead}">${t(ref)}</text>
-        <text class="p3-num p3-end" x="${x + HOW.width}" y="${top + 12 + HOW.lead}">${minus}</text>
-        <text class="p3-num p3-gauge__how-is" x="${x + HOW.width + 12}" y="${top + 20}">= ${percent(share)}</text>
-      </g>`;
-    }).join('');
-  };
-  const gaugeHtml = () => {
-    const { x, bar, base } = GAUGE;
-    const low = gaugeY(v('k.ceiling_2'));
-    const high = gaugeY(v('k.ceiling_15'));
-    const level = gaugeY(v('p3.opus_in_heldout'));
-    return `
-    <svg class="p3-svg p3-gauge__svg" viewBox="0 0 ${GAUGE.width} ${GAUGE.height}" width="${GAUGE.width}" height="${GAUGE.height}">
-      <g class="p3-gauge__scale">
-        <rect class="p3-gauge__ruler" x="${x}" y="${low}" width="${bar}" height="${base - low}"/>
-        ${GAUGE.quarters.map((q) => `
-          <line class="p3-gauge__tick" data-quarter="${q}" x1="${x}" x2="${x + bar}" y1="${base}" y2="${base}"/>
-          <text class="p3-gauge__quarter p3-num p3-end" data-quarter="${q}" x="${x - 20}" y="${base}">${q * 100}%</text>`).join('')}
-        <line class="p3-gauge__top" x1="${x - 12}" x2="${x + bar + 12}" y1="${low}" y2="${low}"/>
-        <line class="p3-gauge__base" x1="${x - 12}" x2="${x + bar + 12}" y1="${base}" y2="${base}"/>
-        <text class="p3-gauge__full p3-num p3-end" x="${x - 20}" y="${low + 8}">100%</text>
-        <text class="p3-num p3-end" x="${x - 20}" y="${base + 8}">0%</text>
-        <text class="p3-mid" x="${x + bar / 2}" y="${base + 36}">guessing (0.5)</text>
-      </g>
-      <line class="p3-gauge__ghost" x1="${x - 12}" x2="${x + bar + 12}" y1="${low}" y2="${low}"/>
-      <line class="p3-gauge__ghost" data-aim x1="${x - 12}" x2="${x + bar + 12}" y1="${high}" y2="${high}"/>
-      <g class="p3-gauge__level">
-        <rect class="p3-gauge__fill" x="${x}" y="${base}" width="${bar}" height="0"/>
-        <line class="p3-gauge__mark" x1="${x - 12}" x2="${x + bar + 12}" y1="${base}" y2="${base}"/>
-      </g>
-      <text class="p3-gauge__ref" data-ref="15" x="${x + bar + 24}" y="${high + 8}">reference from ${t('p3.heldout_others')}: <tspan class="p3-num">${t('k.ceiling_15')}</tspan></text>
-      <text class="p3-gauge__ref" data-ref="2" x="${x + bar + 24}" y="${low - 4}">reference from 2: <tspan class="p3-num">${t('k.ceiling_2')}</tspan></text>
-      <text class="p3-gauge__who" x="${x + bar + 24}" y="${level + 32}">${GAUGE_READER}: <tspan class="p3-num">${t('p3.opus_in_heldout')}</tspan></text>
-      <text class="p3-gauge__who" x="${x + bar + 24}" y="${level + 60}">(held-out label)</text>
-      ${gaugeHow(x + bar + 24, level + 128)}
-    </svg>`;
-  };
-  const SHARE = Object.freeze({ at2: percent('reader.opus_in.norm2'), at15: percent('reader.opus_in.norm15') });
-  // The curve needs no caption: its last doubling is labeled on the chart ("K = 8 to 16:
-  // +0.011"), and the cue of click 1 says that it is still rising.
-  const CURVE_NOTES = Object.freeze({
-    // 'p3.heldout_others': why the reference is from 2 and from 15 of the 16 continuations.
-    gauge: `One reader, <b>${GAUGE_READER}</b>, scored against the ending of 1 of ${t('task.sample_k')} continuations; the reference uses 2 of the other ${t('p3.heldout_others')}.<span class="p3-curve__more"> Then all ${t('p3.heldout_others')}.</span>`,
-  });
-  // The limit of this result is its third cue ('k.not_bound', in the talk's words), which
-  // stays in the cue row under the recommendation; the points above the reference show it.
+  // Under the recommendation: why it asks for the label ('m.heldout': against label 2 of
+  // slide 8, M holds by construction), and the one term of it that the talk has not used
+  // (the limit has stood on click 2; a sensitivity analysis is new: 'k.assumption',
+  // 'k.limit_sensitivity').
+  const CEILING_LIMIT = 'Label 2 (a held-out continuation): M holds by construction. Sensitivity analysis: a what-if under an assumption the data cannot check.';
 
   Deck.register({
-    id: 'p3-curve',
+    id: 'p3-ceiling',
     part: PART,
     kicker: RESULTS,
-    title: `With more continuations the reference keeps rising, <em>so ${SHARE.at2} of the way becomes ${SHARE.at15}</em>`,
-    cues: [
-      `Resampling AUROC from K = 2 continuations: ${t('k.u2')}`,
-      { text: `At K = 16 it is ${t('k.u16')}, and still rising`, step: 1, at: KC.drawAt + KC.drawDur },
-      { text: 'A value at one K is an estimate, not a bound', step: 3, at: GAUGE.climbAt + DUR.reveal + GAUGE.recountAfter },
-    ],
-    cite: [{ src: 'paper', where: 'Sec. 5; Fig. 1; Table 2, 12' }],
+    // The first half is the paper's conclusion ('close.conditions'), in the words of slide
+    // 13; the second its statement on a value from K continuations ('k.not_bound',
+    // 'k.exceed'). The slide shows no reader above a ceiling, so the title does not say that
+    // one is.
+    // The comma belongs to the half that is held back (click 3), so that until then the
+    // title is a whole sentence and does not end on a comma.
+    title: 'A resampling ceiling holds only under conditions<em>, and a finite-K value is biased low, not a bound</em>',
+    cues: [],
+    // Jia et al. is cited for the claim the slide opens on: the paper quotes their reading
+    // that the ceiling bounds every monitor of the prefix ('ceiling.claim').
+    cite: [{ src: 'paper', where: 'Sec. 4; Fig. 2; Table 4' }, { src: 'jia2026', where: 'ceiling claim' }],
     figure: ['data', 'schematic'],
     html: `
       <div class="p3-res p3-curve">
-        ${kit.resultHead(2)}
+        ${kit.resultHead(1, EXPLORATORY)}
         <div class="p3-res__picture">
+          <div class="p3-m">
+            ${mSketch()}
+            <div class="p3-m__side">
+              <p class="p3-m__title">Assumption M</p>
+              <p class="p3-m__means">The trace’s own remainder behaves like a <b>fresh continuation</b>.</p>
+              <div class="p3-m__data">
+                <p class="p3-m__ask">Fresh continuations that end as the trace did: what share is shorter than its own remainder?</p>
+                ${mTest()}
+                <p class="p3-m__verdict"><b>Our data reject M</b> <span class="p3-m__why">Its own remainder runs shorter.</span> <span>95% interval: ${three(Deck.fact('m.rejected').interval[0])} to ${three(Deck.fact('m.rejected').interval[1])} below</span></p>
+              </div>
+            </div>
+          </div>
           <div class="p3-curve__left">
-            <i class="p3-curve__frame" data-frame="own"></i>
             ${curveChart()}
             <div class="p3-tags p3-curve__tags">${labelChip('own')}${kit.standing('measured curve')}</div>
           </div>
-          <div class="p3-gauge">
-            <i class="p3-curve__frame" data-frame="held"></i>
-            <div class="p3-tags p3-gauge__tags"><span class="p3-gauge__same">Same rise, with</span>${labelChip('held')}<span class="dk-chip">${EXPLORATORY}</span></div>
-            ${gaugeHtml()}
-            <div class="p3-gauge__side">
-              <p class="p3-gauge__reading"><b class="p3-gauge__share"></b><span>of the way</span></p>
-              <p class="p3-gauge__punch">The reader did not change.<br>The ruler did.</p>
-              <div class="p3-gauge__points">
-                ${kit.grid({ key: 'above', n: v('p3.reader_points'), cols: GAUGE.points.cols, tone: 'read' })}
-                <p class="p3-gauge__key"><span data-key="on"><i class="is-on"></i>above</span><span data-key="was"><i class="is-was"></i>no longer</span></p>
-              </div>
-              <p class="p3-gauge__count">Above the reference from 2: ${t('k.above_at_2')} of ${t('p3.reader_points')} (${t('readers.count')} readers × ${t('task.resampled_models')} resampled models).<span class="p3-gauge__none"> From ${t('p3.heldout_others')}: ${t('k.above_at_15')}.</span></p>
-            </div>
-          </div>
         </div>
-        ${captionHtml({ notes: CURVE_NOTES, rec: 2 })}
+        ${captionHtml({ notes: CEILING_NOTES, rec: recOf(1), limit: CEILING_LIMIT })}
       </div>`,
     setup: (ctx) => {
       const { fact, dur } = ctx;
-      const reader = fact('p3.opus_in_heldout').value;
-      const low = fact('k.ceiling_2').value;
-      const high = fact('k.ceiling_15').value;
-      // The gauge prints what its geometry shows; that has to be the paper's two numbers,
-      // and the three AUROCs printed beside it have to give them.
-      const shareOf = (reference) => `${Math.round(((reader - GAUGE.from) / (reference - GAUGE.from)) * 100)}%`;
-      if (shareOf(low) !== SHARE.at2 || shareOf(high) !== SHARE.at15) throw new Error('the gauge no longer reads the normalized AUROCs of Table 2');
-      // The points counted above the reference are the nine readers in the resampled models,
-      // and one continuation of the sample's K is the label.
-      if (fact('readers.count').value * fact('task.resampled_models').value !== fact('p3.reader_points').value) throw new Error('the points of slide 11 are no longer the nine readers in the resampled models');
-      if (fact('task.sample_k').value - 1 !== fact('p3.heldout_others').value) throw new Error('the held-out label no longer leaves all but one continuation for the reference');
+      // The curve ends at the sample's K, which the caption of the band names.
+      if (KC.xTicks[KC.xTicks.length - 1] !== fact('task.sample_k').value) throw new Error('the curve of slide 10 no longer ends at the sample’s K');
+      // The side panel, the captions and the limit reword these facts.
+      if (!/behave like a fresh continuation/.test(fact('p3.m_fresh').file) || !/one more draw from the continuation sampler/.test(fact('m.assumption').text) || !/violates M, and our data reject M/.test(fact('m.cut_violates').text) || !/how long the trace will run/.test(fact('m.future').text) || !/not established/.test(fact('m.not_established').text)) throw new Error('the facts on assumption M no longer say what slide 10 rewords');
+      if (!/share of those continuations shorter than it/.test(fact('m.rejected').file) || !/shorter than a fresh continuation with the same outcome/.test(fact('m.shorter').file)) throw new Error('the test of M is no longer the share of same-outcome continuations shorter than the trace’s own remainder, which slide 10 asks for');
+      if (!/M holds by construction and the ceiling bounds readers in expectation/.test(fact('m.heldout').text) || !/at or below its limit in expectation, less so as K grows/.test(fact('p3.biased_low').text)) throw new Error('the facts on the held-out label and the finite-K value no longer say what slide 10 rewords');
+      if (!/conditions, not a correction/.test(fact('scope.conditions').text) || !/estimator of \[the limit\] rests on an assumption/.test(fact('k.assumption').text) || !/assumption the data cannot check/.test(fact('k.limit_sensitivity').text) || !/sensitivity analyses/.test(RECS[recOf(1) - 1].rec) || RECS[recOf(1) - 1].fact !== 'rec.2') throw new Error('the limit under slide 10’s recommendation no longer rests on its facts');
+      // The title's two halves: the paper's conclusion, and its statement on a finite K.
+      if (!/only under conditions/.test(fact('close.conditions').text) || !/a finite-K value is biased low and is not a bound/.test(fact('k.exceed').text)) throw new Error('the paper no longer says what the title of slide 10 rewords');
       const point = (k) => ctx.q(`.p3-kc__point[data-k="${k}"]`);
       const value = (k) => ctx.q(`.p3-kc__value[data-value="${k}"]`);
       const reached = (k) => KC.drawAt + KC_LINE.share[k] * KC.drawDur;
-      // Until the gauge arrives the chart stands in the middle of the picture's row.
-      const chart = ctx.q('.p3-curve__left');
-      const centered = Math.round((ctx.q('.p3-res__picture').offsetWidth - chart.offsetWidth) / 2);
 
-      // Enter: the axes, and the reference as it is usually reported: from two continuations.
-      // The curve's two tags: the label it is scored against, and that it is measured.
-      const enter = ctx.step({ label: 'result 2 of 3: two continuations' });
+      // Enter: the trace as it was written, a solid bar beyond the cut, and under it fresh
+      // continuations of the same prefix, dashed. Beside them what assumption M says.
+      const enter = ctx.step({ label: 'result 1 of 3: the ceiling needs assumption M' });
       kit.enterResult(enter);
-      enter.tween('.p3-curve__tags [data-label]', POP, { at: 600, dur: dur.enter, ease: 'back' });
-      enter.tween('.p3-kc__frame', { opacity: [0, 1] }, { at: 400 });
-      enter.tween(point(2), { opacity: [0, 1], scale: [2.4, 1] }, { at: 1200, dur: dur.enter });
-      enter.show(value(2), { at: 1400, rise: 0 });
+      note(enter, 'claim', { at: 300 });
+      enter.tween('.p3-m__prefix, .p3-m__name.is-prefix', { opacity: [0, 1] }, { at: 500 });
+      enter.tween('.p3-m__cut', { opacity: [0, 1] }, { at: 900 });
+      enter.tween('.p3-m__own, .p3-m__art > .p3-m__end, .p3-m__name.is-own', { opacity: [0, 1] }, { at: 1300 });
+      enter.tween('.p3-m__cont', { opacity: [0, 1], x: [-24, 0] }, { at: 2100, stagger: 250 });
+      enter.tween('.p3-m__name.is-cont', { opacity: [0, 1] }, { at: 2900 });
+      enter.show('.p3-m__title', { at: 3300, rise: 0 });
+      enter.show('.p3-m__means', { at: 3500 });
       enter.hold(300);
 
-      // Click 1: the curve of the paper's Fig. 1, point by point. The values at 4, 8 and 16
-      // count up as the line reaches them; the last doubling still adds 0.011.
-      const rise = ctx.step({ label: 'the curve keeps rising' });
+      // Click 1: where the cut comes from, and the test. A bracket spans the whole trace
+      // with the cut at its middle. Then the question of the test and, in the sketch, what
+      // it compares: the continuation with another ending steps back, a guide stands at the
+      // end of the trace's own remainder, and the two that end as the trace did are named
+      // against it. Then the measured share on its small axis, left of the one half, and
+      // the verdict.
+      const cut = ctx.step({ label: 'our cut breaks M, and our data reject it' });
+      note(cut, 'cut', { leaves: 'claim' });
+      cut.tween('.p3-m__half', { opacity: [0, 1] }, { at: 400 });
+      cut.show('.p3-m__ask', { at: 1500, rise: 0 });
+      cut.tween(ctx.qa('.p3-m__cont.is-other > *'), { opacity: [1, 0.3] }, { at: 1900 });
+      cut.tween('.p3-m__same', { opacity: [0, 1] }, { at: 2100 });
+      cut.tween('.p3-m__test', { opacity: [0, 1] }, { at: 2900 });
+      cut.tween('.p3-m__point', { scale: [2.4, 1] }, { at: 3100, dur: dur.enter });
+      cut.tween('.p3-m__verdict', POP, { at: 4000, dur: dur.enter, ease: 'back' });
+      cut.hold(300);
+
+      // Click 2: the second condition. The sketch gives its place to the measured curve:
+      // the resampling AUROC from two continuations, then drawn on to 16, the values at 4,
+      // 8 and 16 counting up as the line reaches them; the last doubling still adds 0.011.
+      const rise = ctx.step({ label: 'even under M: biased low at a finite K' });
+      note(rise, 'finite', { leaves: 'cut' });
+      rise.tween('.p3-m', { opacity: [1, 0] }, { dur: dur.enter });
+      rise.tween('.p3-kc__frame', { opacity: [0, 1] }, { at: 300 });
+      // The chart's two tags arrive with it (the head's tag has been up since the entrance).
+      rise.tween('.p3-curve__tags', { opacity: [0, 1] }, { at: 500 });
+      rise.tween(point(2), { opacity: [0, 1], scale: [2.4, 1] }, { at: KC.pointAt, dur: dur.enter });
+      rise.show(value(2), { at: KC.pointAt + 200, rise: 0 });
       rise.tween('.p3-kc__line', { opacity: [0, 1] }, { at: KC.drawAt - dur.micro, dur: dur.micro });
       rise.tween('.p3-kc__line', { 'stroke-dashoffset': [1, 0] }, { at: KC.drawAt, dur: KC.drawDur, ease: 'linear' });
       KC_POINTS.filter((p) => p.k > 2).forEach((p) => rise.tween(point(p.k), { opacity: [0, 1], scale: [2, 1] }, { at: reached(p.k), dur: dur.micro }));
@@ -876,262 +466,465 @@
       rise.tween('.p3-kc__step', { opacity: [0, 1] }, { at: KC.drawAt + KC.drawDur + 300 });
       rise.hold(300);
 
-      // Click 2: the chart moves to the left half, without the values on its curve (they are
-      // against the other label), and the gauge takes the right one, under its
-      // own label and with the reference built from 2 continuations. The reader is nearly
-      // there, and 19 of the 63 points lie above this reference. "Of the way" arrives once
-      // the reading has stopped counting, so that no passing number is read as a result.
-      const gauge = ctx.step({ label: 'the gauge at 2 continuations: 96% of the way' });
-      const lit = ctx.qa('.p3-gauge__points [data-cell]').slice(0, fact('k.above_at_2').value);
-      note(gauge, 'gauge');
-      gauge.tween(chart, { x: [centered, 0] }, { dur: dur.move, ease: 'inOut' });
-      gauge.tween('.p3-kc__value', { opacity: [1, 0] }, { dur: dur.enter });
-      gauge.tween('.p3-curve__frame', { opacity: [0, 1] }, { at: GAUGE.scaleAt - 200 });
-      gauge.tween('.p3-gauge__tags', { opacity: [0, 1] }, { at: GAUGE.scaleAt - 200 });
-      gauge.tween('.p3-gauge__scale', { opacity: [0, 1] }, { at: GAUGE.scaleAt });
-      gauge.show('[data-ref="2"]', { at: GAUGE.scaleAt + 200, rise: 0 });
-      gauge.tween([ctx.q('.p3-gauge__level'), ctx.q('.p3-gauge__share')], { opacity: [0, 1] }, { at: GAUGE.growAt, dur: dur.micro });
-      const grow = gauge.signal({ at: GAUGE.growAt, dur: GAUGE.growDur });
-      gauge.show('.p3-gauge__who', { at: GAUGE.growAt + GAUGE.growDur, rise: 0 });
-      gauge.show('.p3-gauge__reading span', { at: GAUGE.growAt + GAUGE.growDur, rise: 0 });
-      gauge.tween('.p3-gauge__how[data-how="2"]', { opacity: [0, 1] }, { at: GAUGE.growAt + GAUGE.growDur + 300 });
-      gauge.tween('.p3-gauge__points', { opacity: [0, 1] }, { at: GAUGE.countAt - 300 });
-      gauge.tween('.p3-gauge__key [data-key="on"]', { opacity: [0, 1] }, { at: GAUGE.countAt });
-      gauge.cls(lit, 'is-on', { at: GAUGE.countAt, stagger: GAUGE.perCell });
-      gauge.show('.p3-gauge__count', { at: GAUGE.countAt, rise: 0 });
-      gauge.hold(300);
+      // Click 3: the question of slide 3. The six monitors' band is drawn across the chart
+      // and named; what lies between the curve's two ends steps back, so that the band is
+      // read against K = 2 and K = 16. Then the title gets its second half.
+      const band = ctx.step({ label: 'the six monitors: nearly at the ceiling? it depends on K' });
+      note(band, 'band', { leaves: 'finite' });
+      band.tween('.p3-kc__band rect', { opacity: [0, 1] }, { at: 400, dur: dur.move });
+      band.tween('.p3-kc__band text', { opacity: [0, 1] }, { at: 900 });
+      band.tween([value(4), value(8), ctx.q('.p3-kc__step')], { opacity: [1, 0.4] }, { at: 1300 });
+      revealTitle(ctx, band, 1900);
+      band.hold(300);
 
-      // Click 3, wow 3: the reference is built from 15 continuations in place of 2. First
-      // the caption says so, the higher reference gets its name and its level (a dashed line
-      // where the ruler will end), and the second fraction is written with that reference
-      // under the line, still without a result. Only then the reference's line climbs, the
-      // ruler stretches under the reader's mark and the reading falls; the first fraction
-      // and the lower reference's label step back and stay, and the second fraction gets its
-      // result when the reading has stopped. The second half of the title arrives; no point
-      // is above the higher reference, and the key says what a ring is.
-      const wow = ctx.step({ label: 'wow 3: the ruler moves' });
-      const climbed = GAUGE.climbAt + dur.reveal;
-      const stepsBack = { at: GAUGE.climbAt - dur.micro, dur: dur.micro };
-      wow.tween('.p3-curve__more', { opacity: [0, 1] }, { at: GAUGE.nameAt });
-      wow.tween('.p3-gauge__ghost[data-aim]', { opacity: [0, 1] }, { at: GAUGE.nameAt, dur: dur.micro });
-      wow.show('[data-ref="15"]', { at: GAUGE.nameAt, rise: 0 });
-      wow.tween('.p3-gauge__how[data-how="15"]', { opacity: [0, 1] }, { at: GAUGE.nameAt + dur.micro });
-      wow.tween('.p3-gauge__ghost:not([data-aim])', { opacity: [0, 1] }, stepsBack);
-      wow.tween('[data-ref="2"]', { opacity: [1, GAUGE.was] }, stepsBack);
-      wow.tween('.p3-gauge__how[data-how="2"]', { opacity: [1, GAUGE.was] }, stepsBack);
-      const climb = wow.signal({ at: GAUGE.climbAt, dur: dur.reveal, ease: 'inOut' });
-      wow.tween('.p3-gauge__how[data-how="15"] .p3-gauge__how-is', { opacity: [0, 1] }, { at: climbed });
-      revealTitle(ctx, wow, climbed + 300);
-      wow.tween('.p3-gauge__punch', POP, { at: climbed + 1000, dur: dur.enter, ease: 'back' });
-      wow.cls(lit, 'is-on', { at: climbed + GAUGE.recountAfter, stagger: GAUGE.perCell, on: false });
-      wow.cls(lit, 'is-was', { at: climbed + GAUGE.recountAfter, stagger: GAUGE.perCell });
-      wow.tween('.p3-gauge__key [data-key="was"]', { opacity: [0, 1] }, { at: climbed + GAUGE.recountAfter });
-      wow.tween('.p3-gauge__none', { opacity: [0, 1] }, { at: climbed + GAUGE.recountAfter + lit.length * GAUGE.perCell });
-      wow.hold(300);
-
-      // Click 4: the second recommendation, over the cue that limits it. The reading and the
-      // line under it are the result and stay at full strength; the rest steps back.
-      conclude(ctx.step({ label: 'recommendation 2' }), {
-        leaves: 'gauge', limit: false,
-        dims: '.p3-curve__left, .p3-gauge > .p3-curve__frame, .p3-gauge__tags, .p3-gauge__svg, .p3-gauge__points, .p3-gauge__count',
-      });
-
-      // The ruler is drawn from its two signals on every frame: how far the reader's level
-      // has grown (click 2) and how far the reference has climbed (click 3).
-      const parts = {
-        ruler: ctx.q('.p3-gauge__ruler'), top: ctx.q('.p3-gauge__top'), full: ctx.q('.p3-gauge__full'),
-        fill: ctx.q('.p3-gauge__fill'), mark: ctx.q('.p3-gauge__mark'), share: ctx.q('.p3-gauge__share'),
-        ticks: ctx.qa('.p3-gauge__tick'), quarters: ctx.qa('.p3-gauge__quarter'),
-      };
-      const set = (el, attrs) => Object.entries(attrs).forEach(([name, n]) => el.setAttribute(name, String(round3(n))));
-      ctx.paint(() => {
-        const reference = util.lerp(low, high, climb());
-        const top = gaugeY(reference);
-        const level = util.lerp(GAUGE.base, gaugeY(reader), grow());
-        set(parts.ruler, { y: top, height: GAUGE.base - top });
-        set(parts.top, { y1: top, y2: top });
-        set(parts.full, { y: top + 8 });
-        const quarterY = (el) => GAUGE.base - (GAUGE.base - top) * Number(el.dataset.quarter);
-        parts.ticks.forEach((tick) => set(tick, { y1: quarterY(tick), y2: quarterY(tick) }));
-        parts.quarters.forEach((label) => set(label, { y: quarterY(label) + 8 }));
-        set(parts.fill, { y: level, height: GAUGE.base - level });
-        set(parts.mark, { y1: level, y2: level });
-        parts.share.textContent = `${Math.round(((GAUGE.base - level) / (GAUGE.base - top)) * 100)}%`;
-      });
+      // Click 4: the recommendation; the chart steps back.
+      conclude(ctx.step({ label: 'recommendation 2 of 4' }), { leaves: 'band', limit: true });
     },
   });
 
-  // ---------------------------------------------------------------- slide 12: result 3, testing differences
-  // Nine readers were scored and three are set aside after their counts had been seen: all
-  // nine are shown before the three step back. Among the six that stay, the fifteen
-  // differences are drawn as the results file has them (point and nominal 95% interval);
-  // every bar crosses zero, and tested jointly each only gets wider (click 1); a key beside
-  // the rows says which mark is which, in the words of the caption: the bar is a pair
-  // checked one by one, the thin line the pair tested jointly, and under those words what
-  // "jointly" means ('p3.joint_level': widened so that all 36 hold at once, 95% of the
-  // time). The key stays at full strength on the last click, beside the recommendation that
-  // uses the word. The five rows with Qwen3-8B carry the other reader's name at their left,
-  // under a heading that says what is subtracted; the ten others share one label. Against the other label at
-  // most four are resolved (click 2): the fifteen rows move to their intervals against that
-  // label ('p3.pairs_held'), in the amber of its chip, and the four rows whose joint
-  // interval then excludes zero get a mark at their left. What is drawn is what is counted:
-  // the cue that every interval contains zero names its label. On click 3 the rows move
-  // back to the trace's own ending, the label of the title, the marks go, and so does the
-  // other label's count: only the chip of the label on screen is left. Then what the
-  // design could detect on that label: the
-  // largest difference observed against the detectable one, on the scale of the bars, and
-  // the questions it would take against the questions there were (click 3).
-  // Each difference is drawn as the second reader of its pair minus the first. For the five
-  // pairs with Qwen3-8B that is the other reader minus Qwen3-8B: the way round in which the
-  // slide on intervals showed one of them (Claude Opus 5.5 AP: +0.026, from -0.003 to +0.055).
-  // The title gives the count of each label, as the paper's conclusion does (none of 15
-  // against the trace's own outcome, at most four against a held-out continuation's,
-  // paper/tmlr/sections/10_conclusion.tex:4-5): with the count of the own ending alone it
-  // read as the label picked for its result. All that is said about the three readers set
-  // aside stands on the entrance, in one place, under the dots that step back: one sentence
-  // that says when they were set aside (after the results had been seen: post hoc) and why
-  // (two fail a numerical check fixed in advance, 'p3.forced_check'; one was never checked),
-  // and in small print under it that the two score highest and that with the three kept a
-  // few more differences are resolved ('p3.resolved_all_own', '_held'). Spread over three
-  // clicks ("after we saw the counts", then "a check fixed in advance", then "two set aside
-  // score highest"), the same facts read as a contradiction and as picking data. The counts
-  // with all nine (1 of 36 against the trace's own ending, 6 to 9 against a held-out
-  // continuation's) are not on screen. It does not argue for the choice, and it does not
-  // say that the choice leaves the result as it is. The 36 of the key ("widened so all 36
-  // pairs of nine readers hold") are not the 15 of the chart: the note under the dots says
-  // that six readers make 15 pairs.
-  const PAIRS = Object.freeze(v('test.pairs').map((pair) => Object.freeze({ a: pair.a, b: pair.b, d: 0 - pair.d, lo: 0 - pair.hi, hi: 0 - pair.lo })));
-  // The pairs with Qwen3-8B come first in the list; each of their rows carries a name.
-  const FX_NAMED = PAIRS.findIndex((pair) => pair.a !== 'qwen8');
-  const FX = Object.freeze({
-    width: 720, height: 376, zero: 404, perUnit: 3400, from: -0.06, to: 0.08, half: 4,
-    // From the top: the heading of the named rows, those rows a line of text apart, then the
-    // other rows, closer.
-    headY: 24, rowY: 44, namedPitch: 24, restY: 162, pitch: 13, nameX: 188,
-    axisY: 290, tickY: 318, ticks: Object.freeze([-0.05, 0, 0.05]), rulerY: Object.freeze([338, 364]),
-    // The mark of a row that the other label resolves: a pointer on the rule at the left of
-    // the rows, where no bar reaches.
-    markX: 195, perMark: 120,
-    // The key of the two marks of a row, at the right of the lower rows, where no interval
-    // of either label reaches; under its second entry, what "jointly" means, a line each.
-    keyX: 612, keyW: 36, keyY: Object.freeze([160, 192]), keyLead: 28,
-    // Click 1, in ms: the bars, one after the other; then all of them widen.
-    barAt: 500, perBar: 60, widenAfter: 700,
-    // Clicks 2 and 3, in ms: the rows step back, change label and move (`moveAt`), then come
-    // forward; on click 2 the marks of the resolved rows follow. `otherCount`: how far the
-    // count of the label that is not on screen steps back on click 2.
-    moveAt: 400, marksAt: 1500, otherCount: 0.4,
-    // The entrance, in ms: the caption's small print, after the note under the dots.
-    smallAfter: 600,
-    // Click 3, in ms: the two lengths, then the tiles of the two stacks, one after the other.
-    rulerAt: 1300, perRuler: 600, tilesAt: 2800, neededAfter: 700, perTile: 10,
-  });
-  const fxX = (d) => round3(FX.zero + d * FX.perUnit);
-  const fxRow = (i) => (i < FX_NAMED ? FX.rowY + i * FX.namedPitch : FX.restY + (i - FX_NAMED) * FX.pitch);
-  // Each end of an interval, pushed out from the point by the joint test's factor: the
-  // paper's, Bonferroni over the 36 differences among all nine readers ('test.joint_widening').
-  const fxWide = (pair) => {
-    const k = v('test.joint_widening');
-    return Object.freeze({ lo: pair.d - (pair.d - pair.lo) * k, hi: pair.d + (pair.hi - pair.d) * k });
-  };
-  // The same rows against a held-out continuation's ending ('p3.pairs_held'), the way round
-  // of PAIRS: the interval of a pair alone and the joint one, each the point plus and minus
-  // its critical value times the standard error.
-  const HELD = Object.freeze(v('p3.pairs_held').map((pair) => {
-    const d = 0 - pair.d;
-    const alone = v('p3.z_alone') * pair.se;
-    const joint = alone * v('test.joint_widening');
-    return Object.freeze({ a: pair.a, b: pair.b, d, lo: d - alone, hi: d + alone, wide: Object.freeze({ lo: d - joint, hi: d + joint }) });
-  }));
-  const excludesZero = ({ lo, hi }) => lo > 0 || hi < 0;
-  // The rows that the other label resolves: Qwen3-8B against each reader of the fact.
-  const HELD_ROWS = Object.freeze(PAIRS.map((pair, i) => (pair.a === 'qwen8' && v('p3.resolved_held_pairs').includes(pair.b) ? i : -1)).filter((i) => i >= 0));
-  const signed = (d) => (d === 0 ? '0' : `${d > 0 ? '+' : '−'}${two(Math.abs(d))}`);
-  // What "tested jointly" means, under those words in the key ('p3.joint_level'), and what
-  // its 36 are: all pairs of the nine readers ('test.pairs_all'), of which the chart shows
-  // the 15 among the six that are kept. One entry a line.
-  const JOINT_MEANS = Object.freeze([
-    `widened so all ${t('test.pairs_all')} pairs`,
-    'of nine readers hold',
-    `at once, ${t('p3.joint_level')} of the time`,
-  ]);
-  const forest = () => {
-    const first = FX_NAMED;
-    const rule = (y1, y2) => `<line class="p3-axis" x1="196" x2="196" y1="${y1}" y2="${y2}"/>`;
-    const ruler = (i, label, value) => `
-        <g class="p3-fx__ruler" data-ruler="${i}">
-          <text class="p3-end" x="${FX.zero - 12}" y="${FX.rulerY[i] + 8}">${label}</text>
-          <rect x="${FX.zero}" y="${FX.rulerY[i] - 7}" width="${round3(value * FX.perUnit)}" height="14"/>
-        </g>`;
-    return `
-    <svg class="p3-svg p3-fx" viewBox="0 0 ${FX.width} ${FX.height}" width="${FX.width}" height="${FX.height}">
-      <g class="p3-fx__frame">
-        <text x="8" y="${FX.headY}">each minus ${t('reader.qwen8.name')}:</text>
-        ${PAIRS.slice(0, first).map((pair, i) => `<text class="p3-fx__name p3-end" x="${FX.nameX}" y="${fxRow(i) + 8}">${t(`reader.${pair.b}.name`)}</text>`).join('')}
-        ${rule(fxRow(0) - 8, fxRow(first - 1) + 8)}
-        <text x="8" y="${fxRow(first + 4) + 2}">the other</text>
-        <text x="8" y="${fxRow(first + 4) + 30}">ten pairs</text>
-        ${rule(fxRow(first) - 8, fxRow(PAIRS.length - 1) + 8)}
-        <line class="p3-fx__zero" x1="${FX.zero}" x2="${FX.zero}" y1="2" y2="${FX.axisY}"/>
-        <line class="p3-axis" x1="${fxX(FX.from)}" x2="${fxX(FX.to)}" y1="${FX.axisY}" y2="${FX.axisY}"/>
-        ${FX.ticks.map((tick) => `
-          <line class="p3-axis" x1="${fxX(tick)}" x2="${fxX(tick)}" y1="${FX.axisY}" y2="${FX.axisY + 6}"/>
-          <text class="p3-num p3-mid" x="${fxX(tick)}" y="${FX.tickY}">${signed(tick)}</text>`).join('')}
-        <text x="8" y="${FX.tickY}">difference</text>
+  // ---------------------------------------------------------------- slide 11: result 2, whether alarms come in time
+  // The paper's second contribution. Ranking is not timing, so an alarm is read against a
+  // point of no return, as the paper defines it: the earliest cut from which every
+  // continuation ends at the hinted answer, there and at every later cut (entrance: one
+  // followed trace as a bar from r = 0 to r = 1, cut at the six positions of the task, two
+  // continuations from each cut). A monitor alarms at its first read whose verdict is the
+  // hinted answer; an alarm after that point, or none, is a miss (click 1: the monitor's
+  // twelve reads on the same axis, a row of their own, and the alarm ringed). A rule fixed
+  // before the data: a monitor alarms after the point of no return on most followed traces
+  // if its miss rate is at least 0.5 in at least 5 of the 7 models; Qwen3-32B AP does, a
+  // monitor whose score ranks traces at an AUROC of 0.825 (click 2: the paper's Table 3 as
+  // bars; Qwen3-8B AP's count, 4 of 7, in words under them). The monitor is named as the
+  // reader of slide 12's chart, and the caption says in small print what its AUROC is of
+  // (its score: within question, label 1, r = 0.5) and that its alarm uses its verdict. But
+  // the point of no return is itself built from 2 continuations and comes too early: of
+  // the traces past it by r = 0.40, 20.4% do not end at the hinted answer in all 16
+  // continuations at r = 0.5 (click 3; one number, the check's two counts stay in the
+  // facts). And a threshold that lets 0.10 of resisting traces alarm at each of the first
+  // ten reads lets 0.31 to 0.37 of them alarm at some read (click 4). Then the
+  // recommendation (click 5).
+  // One word for one thing: the monitor "reads" (the paper's "looks" are its first ten
+  // reads), and continuations are sampled at "cuts". Each row's name carries its count, six
+  // cuts and twelve reads, so that the two are not taken for one list. The entrance says in
+  // small print where the two continuations per cut come from.
+  // The one trace of the first picture is a drawing: where its continuations end at each
+  // cut, where its point of no return falls and where the monitor alarms are made up. The
+  // cuts are the task's six positions and the reads the monitors' twelve ('p3.reads'); both
+  // rows stand on one axis, so a cut and a read line up only where the two lists share a
+  // position. One key serves both rows: a dot is a continuation's ending, a square a
+  // verdict, each filled or red for the hinted answer.
+  // Not on the slide: how often the monitors detect in time under either budget. The
+  // paper's numbers for it stand beside a note of its authors that their reference is still
+  // to be confirmed.
+  const TL = (() => {
+    const cuts = Deck.fact('pnr.positions').value;
+    // Made up: at each cut, whether each of the two continuations ends at the hinted answer.
+    const ends = Object.freeze([[false, true], [true, false], [true, true], [true, true], [true, true], [true, true]]);
+    const k = v('pnr.k');
+    if (ends.length !== cuts.length || cuts.length !== Deck.fact('pnr.k').positions || ends.some((pair) => pair.length !== k)) throw new Error('the trace of slide 11 no longer has the task’s six cuts with K continuations each');
+    // The point of no return of the drawing, by the paper's definition: the earliest cut
+    // from which every continuation ends at the hinted answer, there and at every later cut.
+    const from = ends.findIndex((_, i) => ends.slice(i).every((pair) => pair.every(Boolean)));
+    if (from <= 0) throw new Error('the trace of slide 11 no longer has a point of no return after its first cut');
+    // The monitor's reads (the paper's r = 0, 0.1, ..., 1.0 and 0.25) and, made up, the
+    // first one whose verdict is the hinted answer: after the point of no return, a miss.
+    const reads = Deck.fact('p3.reads').value;
+    const alarm = 0.6;
+    if (reads.length !== Number(t('p3.reads')) || reads.some((r, i) => i && r <= reads[i - 1]) || reads[0] !== 0 || reads[reads.length - 1] !== 1) throw new Error('the reads of slide 11 are no longer the twelve positions from the start of the trace to its end');
+    if (!reads.includes(alarm) || alarm <= cuts[from]) throw new Error('the alarm of slide 11 is no longer at a read position after the point of no return');
+    return Object.freeze({
+      cuts, ends, k, pnr: cuts[from], reads, alarm,
+      // A column of row names, then the axis from r = 0 to r = 1. From the top: the two
+      // ends of the axis, the trace, the continuations' endings, the point of no return's
+      // name, the reads, the alarm's name, the key.
+      width: 820, height: 292, nameX: 232, x0: 256, x1: 780,
+      endsY: 22, barY: 36, barH: 24, dotY: Object.freeze([100, 124]), pnrY: 168, readY: 200, alarmY: 252, keyY: 284,
+    });
+  })();
+  const tlX = (r) => round3(TL.x0 + r * (TL.x1 - TL.x0));
+  // A row's name, a line to an entry, right against the axis.
+  const tlName = (lines, y, cls = '') => lines.map((line, i) => `<text class="p3-end${cls}" x="${TL.nameX}" y="${y + i * 28}">${line}</text>`).join('');
+  // An entry of the key: the square of a verdict (from click 1), the dot of an ending, the
+  // words. The dot stands against the words, so that the entry has no gap before click 1.
+  const tlKey = (x, follows, text) => `
+        <rect class="p3-tl__read p3-tl__key-read${follows ? ' is-hinted' : ''}" x="${x}" y="${TL.keyY - 15}" width="14" height="14" rx="3"/>
+        <circle class="p3-tl__end${follows ? ' is-follows' : ''}" cx="${x + 32}" cy="${TL.keyY - 8}" r="8"/>
+        <text x="${x + 48}" y="${TL.keyY}">${text}</text>`;
+  const timeline = () => `
+    <svg class="p3-svg p3-tl" viewBox="0 0 ${TL.width} ${TL.height}" width="${TL.width}" height="${TL.height}">
+      <g class="p3-tl__axis">
+        <text class="p3-mid" x="${TL.x0}" y="${TL.endsY}">r = 0</text>
+        <text class="p3-mid" x="${TL.x1}" y="${TL.endsY}">r = 1</text>
+        ${tlName(['one trace', 'that follows'], TL.barY + 6)}
+        <rect class="p3-tl__trace" x="${TL.x0}" y="${TL.barY}" width="${TL.x1 - TL.x0}" height="${TL.barH}" rx="6"/>
+        <circle class="p3-tl__end is-follows" cx="${TL.x1 + 24}" cy="${TL.barY + TL.barH / 2}" r="10"/>
       </g>
-      ${HELD_ROWS.map((i) => `<path class="p3-fx__held" d="M${FX.markX} ${fxRow(i) - 6} h12 l8 6 l-8 6 h-12 Z"/>`).join('')}
-      <g class="p3-fx__bars">
-        ${PAIRS.map((pair, i) => `
-          <g data-pair="${i}">
-            <line class="p3-fx__joint" x1="${fxX(pair.lo)}" x2="${fxX(pair.hi)}" y1="${fxRow(i)}" y2="${fxRow(i)}"/>
-            <line class="p3-fx__cap" data-end="lo" x1="${fxX(pair.lo)}" x2="${fxX(pair.lo)}" y1="${fxRow(i) - 6}" y2="${fxRow(i) + 6}"/>
-            <line class="p3-fx__cap" data-end="hi" x1="${fxX(pair.hi)}" x2="${fxX(pair.hi)}" y1="${fxRow(i) - 6}" y2="${fxRow(i) + 6}"/>
-            <rect class="p3-fx__bar" x="${fxX(pair.lo)}" y="${fxRow(i) - FX.half}" width="${round3(fxX(pair.hi) - fxX(pair.lo))}" height="${FX.half * 2}" rx="2"/>
-            <circle class="p3-fx__point" cx="${fxX(pair.d)}" cy="${fxRow(i)}" r="3"/>
-          </g>`).join('')}
+      ${TL.cuts.map((r, i) => `
+      <g class="p3-tl__cut" data-at="${i}">
+        <line x1="${tlX(r)}" x2="${tlX(r)}" y1="${TL.barY - 4}" y2="${TL.barY + TL.barH + 4}"/>
+        ${TL.ends[i].map((follows, j) => `<circle class="p3-tl__end${follows ? ' is-follows' : ''}" cx="${tlX(r)}" cy="${TL.dotY[j]}" r="8"/>`).join('')}
+      </g>`).join('')}
+      <g class="p3-tl__per">${tlName([`${TL.cuts.length} cuts, each`, `${TL.k} continuations`], TL.dotY[0] + 4)}</g>
+      <g class="p3-tl__pnr">
+        <line x1="${tlX(TL.pnr)}" x2="${tlX(TL.pnr)}" y1="${TL.barY - 10}" y2="${TL.pnrY + 8}"/>
+        <line class="p3-tl__pnr-on" x1="${tlX(TL.pnr)}" x2="${tlX(TL.pnr)}" y1="${TL.pnrY + 8}" y2="${TL.readY + 18}"/>
+        <text x="${tlX(TL.pnr) + 12}" y="${TL.pnrY}">point of no return</text>
       </g>
-      <g class="p3-fx__key" data-key="alone">
-        <rect x="${FX.keyX}" y="${FX.keyY[0] - FX.half}" width="${FX.keyW}" height="${FX.half * 2}" rx="2"/>
-        <text x="${FX.keyX + FX.keyW + 12}" y="${FX.keyY[0] + 8}">checked one by one</text>
+      <g class="p3-tl__reads">
+        ${tlName(['the monitor’s', `${t('p3.reads')} reads`], TL.readY - 4, ' p3-tl__reads-name')}
+        ${TL.reads.map((r) => `<rect class="p3-tl__read${r >= TL.alarm ? ' is-hinted' : ''}${r === TL.alarm ? ' is-alarm' : ''}" x="${tlX(r) - 7}" y="${TL.readY - 7}" width="14" height="14" rx="3"/>`).join('')}
       </g>
-      <g class="p3-fx__key" data-key="joint">
-        <path d="M${FX.keyX} ${FX.keyY[1] - 6} v12 M${FX.keyX} ${FX.keyY[1]} h${FX.keyW} M${FX.keyX + FX.keyW} ${FX.keyY[1] - 6} v12"/>
-        <text x="${FX.keyX + FX.keyW + 12}" y="${FX.keyY[1] + 8}">tested jointly:</text>
-        ${JOINT_MEANS.map((line, i) => `<text x="${FX.keyX + FX.keyW + 12}" y="${FX.keyY[1] + 8 + (i + 1) * FX.keyLead}">${line}</text>`).join('')}
+      <g class="p3-tl__alarm">
+        <circle cx="${tlX(TL.alarm)}" cy="${TL.readY}" r="16"/>
+        <line x1="${tlX(TL.alarm)}" x2="${tlX(TL.alarm)}" y1="${TL.readY + 16}" y2="${TL.alarmY - 26}"/>
+        <text class="p3-mid" x="${tlX(TL.alarm)}" y="${TL.alarmY}">alarm: a miss</text>
       </g>
-      ${ruler(0, `largest observed: ${t('test.max_difference')}`, v('test.max_difference'))}
-      ${ruler(1, `detectable: ${t('test.detectable_own')}`, v('test.detectable_own'))}
+      <g class="p3-tl__key">${tlKey(TL.nameX, true, 'the hinted answer')}${tlKey(TL.nameX + 312, false, 'another answer')}</g>
     </svg>`;
-  };
-  // The nine readers on one AUROC axis, within question; the three forced readers are marked.
-  // The axis ends well short of the drawing's right edge: the names at the left of the bars
-  // beside it ("Claude Opus 5.5 AP", ended at FX.nameX) reach back over that edge in the
-  // wider faces, and may not run into the grid line at 0.85.
-  const RD = Object.freeze({ width: 500, height: 448, x0: 306, perUnit: 2200, from: 0.79, nameX: 290, rowY: 22, pitch: 28, axisY: 266, tickY: 296, ticks: Object.freeze([0.80, 0.85]), noteY: Object.freeze([344, 376, 424]) });
+
+  // The paper's Table 3 as bars: Qwen3-32B's miss rate in each of the seven models that
+  // wrote the traces, with the line at 0.5 that the fixed rule draws. One series, one
+  // encoding: a bar's length. The models are those that wrote the traces (the paper's
+  // "subject models", a word the talk does not use), which the chart's head says. Qwen3-8B's
+  // rates are not drawn; its count stands in words under the chart, with what the rule then
+  // says of it ('p3.qwen8_outcome').
+  const MISS = Deck.fact('alarm.miss').value;
+  const MR = Object.freeze({
+    width: 856, height: 276, nameX: 452, x0: 468, perUnit: 320, rowY: 52, pitch: 28, barH: 16,
+    headY: 22, ticks: Object.freeze([0, 0.5, 1]),
+    // Click 2, in ms: the rows one after the other, then the line and the count.
+    rowAt: 400, perRow: 180,
+  });
+  const mrX = (rate) => round3(MR.x0 + rate * MR.perUnit);
+  const mrRow = (i) => MR.rowY + i * MR.pitch;
+  const MISSED = Object.freeze({
+    line: v('alarm.most'),
+    qwen32: MISS.filter((row) => row.qwen32 >= v('alarm.most')).length,
+    qwen8: MISS.filter((row) => row.qwen8 >= v('alarm.most')).length,
+  });
+  const missChart = () => `
+    <svg class="p3-svg p3-mr" viewBox="0 0 ${MR.width} ${MR.height}" width="${MR.width}" height="${MR.height}">
+      <g class="p3-mr__frame">
+        <text class="p3-mr__what p3-end" x="${MR.width}" y="${MR.headY}">timing, by its verdict: miss rate on each model’s traces</text>
+        ${MR.ticks.map((tick) => `<text class="p3-num p3-mid" x="${mrX(tick)}" y="${mrRow(MISS.length) + 16}">${tick}</text>`).join('')}
+        <line class="p3-axis" x1="${mrX(0)}" x2="${mrX(1)}" y1="${mrRow(MISS.length) - 12}" y2="${mrRow(MISS.length) - 12}"/>
+      </g>
+      ${MISS.map((row, i) => `
+      <g class="p3-mr__row" data-model="${i}">
+        <text class="p3-mr__name p3-end" x="${MR.nameX}" y="${mrRow(i) + 8}">${row.model}</text>
+        <rect class="p3-mr__bar" x="${mrX(0)}" y="${mrRow(i) - MR.barH / 2}" width="${round3(row.qwen32 * MR.perUnit)}" height="${MR.barH}" rx="3"/>
+      </g>`).join('')}
+      <g class="p3-mr__most">
+        <line x1="${mrX(MISSED.line)}" x2="${mrX(MISSED.line)}" y1="${MR.rowY - 20}" y2="${mrRow(MISS.length) - 12}"/>
+      </g>
+    </svg>`;
+  // The check of the point of no return, as one bar: the followed traces whose K = 2 point
+  // of no return lies at or before r = 0.40, and the part of them that ends at the hinted
+  // answer in all 16 continuations at r = 0.5 (amber). The rest fails the definition: the
+  // one number of the check that is printed, beside the bar. The two counts behind the
+  // share ('pnr.early_traces', 'pnr.early_hold') are checked here and stay off the screen.
+  const CHECK = (() => {
+    const all = Deck.fact('pnr.early_traces');
+    const hold = Deck.fact('pnr.early_hold');
+    if (((hold.value / all.value) * 100).toFixed(1) !== String(hold.share) || `${(100 - hold.share).toFixed(1)}%` !== t('pnr.early_fail') || (100 - hold.share).toFixed(1) !== String(v('pnr.early_fail'))) throw new Error('the counts of slide 11’s check of the point of no return no longer give the shares it prints');
+    if (all.by !== TL.pnr) throw new Error('the trace of slide 11 no longer has its point of no return where the check draws its line');
+    return Object.freeze({ by: all.by.toFixed(2), fail: t('pnr.early_fail'), width: (hold.value / all.value) * 100 });
+  })();
+  // One threshold, many looks ('looks.per_look', 'looks.per_trace'): two bars on one scale,
+  // under whose rates they are and over which looks ('p3.looks_who').
+  const LOOKS = (() => {
+    const look = Deck.fact('looks.per_look');
+    const who = Deck.fact('p3.looks_who');
+    const [lo, hi] = v('looks.per_trace');
+    if (!(lo > look.value) || !/resisted hinted trace/.test(t('looks.negative'))) throw new Error('the false alarms of slide 11 are no longer more per trace than per look, on traces that resist');
+    // The ten looks are the monitor's reads up to r = 0.8: ten of the twelve of the picture.
+    if (TL.reads.filter((r) => r >= who.from && r <= who.to).length !== look.looks) throw new Error('the looks of slide 11 are no longer the reads from r = 0 to 0.8');
+    // The five are some of the nine readers, and the ten reads the first ten of the twelve.
+    if (!(who.value < READERS.length) || TL.reads.slice(0, look.looks).some((r) => r > who.to) || TL.reads[look.looks] <= who.to) throw new Error('the false alarms of slide 11 are no longer those of some of the nine readers over the first ten reads');
+    return Object.freeze({ look: look.text, count: look.looks, who: who.text, perUnit: 520, lo, hi });
+  })();
+  // One word for one thing: a "cut" is where continuations are sampled (six of them), a
+  // "read" is where the monitor reads the prefix (twelve; the paper's "looks" are the first
+  // ten of them). A caption can carry a second line in small print (parts/part3.css).
+  const ALARM_NOTES = Object.freeze({
+    pnr: Object.freeze([
+      // 'pnr.def', in the talk's words ("cut" for the paper's "position"). "As we define
+      // it": the name is also that of other work, and the definition is the paper's own
+      // ("We define the point of no return").
+      '<b>Point of no return (PNR), as we define it:</b> the earliest cut from which every continuation ends at the hinted answer, there and at every later cut.',
+      // Where the two continuations per cut come from ('task.resampled_models',
+      // 'task.sample_questions'); the picture has the two per cut and the six cuts.
+      `Data: all hinted traces, ${t('task.sample_questions')} questions × ${t('task.resampled_models')} models.`,
+    ]),
+    // 'alarm.when' and 'alarm.miss_def'; the verdict in plain words ('p3.verdict').
+    alarm: '<b>Alarm:</b> the monitor’s first read whose <b>verdict</b>, the answer it predicts, is the hinted answer. After the PNR, or never: a <b>miss</b>.',
+    rule: Object.freeze([
+      // 'alarm.most' and 'alarm.rule'.
+      `<b>The rule:</b> miss rate at least ${t('alarm.most')} in at least ${t('alarm.rule')} models: the monitor mostly alarms after the PNR.`,
+      // What the AUROC over the chart is ('reader.qwen32.within'); the chart's two heads say
+      // that it is of the score ('p3.score_px') and that the alarm uses the verdict.
+      `Its AUROC: within question, label 1, r = ${t('task.cut_r')}.`,
+    ]),
+    // 'pnr.biased_early', 'pnr.operational' and 'pnr.lateness'; the picture has the number.
+    early: `Two continuations often agree by chance, so the K = ${t('pnr.k')} PNR comes early: an operational threshold, not literal irreversibility. Part of the lateness may come from the PNR itself.`,
+    // 'looks.negative' and 'time.rec_budget'; whose rates they are ('p3.looks_who').
+    looks: '<b>False alarm:</b> an alarm on a trace that resists. A per-read budget hides the per-trace rate.',
+  });
+  // Under the recommendation: what its "reference" is in this work ('p3.reference'). The
+  // recommendation's words are the paper's and stand on slide 13 too ('motifs.recs').
+  const ALARM_LIMIT = 'Our reference: the PNR.';
+  Deck.register({
+    id: 'p3-alarm',
+    part: PART,
+    kicker: RESULTS,
+    // The first half is the paper's own general statement ('close.timing', 'time.not_auroc');
+    // the second its count for this monitor ('alarm.qwen32'). The slide prints how this
+    // monitor ranks ('reader.qwen32.within') beside how it times, and says no more of it.
+    // The monitor has the name that the chart of slide 12 gives it, so that it is not taken
+    // for the forced reader of the same model.
+    // The colon belongs to the half that is held back (click 2), so that until then the title
+    // is a whole sentence.
+    title: `Ranking is not timing<em>: ${t('reader.qwen32.name')} mostly alarms after the point of no return in ${t('alarm.qwen32')} models</em>`,
+    cues: [],
+    cite: [{ src: 'paper', where: 'Sec. 2, 5; Table 2-4' }],
+    figure: ['data', 'schematic'],
+    html: `
+      <div class="p3-res p3-al">
+        ${kit.resultHead(2, t('alarm.fixed'))}
+        <div class="p3-res__picture">
+          <div class="p3-al__left">
+            ${timeline()}
+            <div class="p3-al__check">
+              <p class="p3-al__line"><span class="dk-chip">${EXPLORATORY}</span>PNRs at or before r = ${CHECK.by},<br>re-checked with ${t('task.sample_k')} continuations:</p>
+              <p class="p3-al__fail"><span class="p3-al__bar"><i style="width:${CHECK.width.toFixed(1)}%"></i></span><span class="p3-al__said"><b>${CHECK.fail}</b> fail the definition</span></p>
+            </div>
+          </div>
+          <div class="p3-al__right">
+            <p class="p3-al__who">${kit.standing(t('reader.qwen32.name'))}<span class="p3-al__rank">ranking, by its score: AUROC <b>${t('reader.qwen32.within')}</b></span></p>
+            ${missChart()}
+            <p class="p3-al__count"><b>${t('alarm.qwen32')}</b> at or above ${t('alarm.most')}<span>${t('reader.qwen8.name')}: ${t('alarm.qwen8')}, ${t('p3.qwen8_outcome')}</span></p>
+            <div class="p3-al__looks">
+              <p class="p3-al__line p3-al__tier"><span class="dk-chip">${t('looks.tier')}</span></p>
+              <p class="p3-al__line p3-al__whose">False alarms, first ${LOOKS.count} reads, ${LOOKS.who} readers by score threshold</p>
+              <p class="p3-al__look"><span>per read</span><i style="width:${(Deck.fact('looks.per_look').value * LOOKS.perUnit).toFixed(1)}px"></i><b>${LOOKS.look}</b></p>
+              <p class="p3-al__look" data-look="trace"><span>per trace</span><i style="width:${(LOOKS.hi * LOOKS.perUnit).toFixed(1)}px"></i><b>${t('looks.per_trace')}</b></p>
+            </div>
+          </div>
+        </div>
+        ${captionHtml({ notes: ALARM_NOTES, rec: recOf(2), limit: ALARM_LIMIT })}
+      </div>`,
+    setup: (ctx) => {
+      const { fact, dur } = ctx;
+      // What is drawn is what is counted: the bars at or above the rule's line are as many
+      // as the paper counts for each monitor, and the rule asks for that many.
+      if (MISSED.qwen32 !== fact('alarm.qwen32').value || MISSED.qwen8 !== fact('alarm.qwen8').value || MISS.length !== fact('alarm.rule').of || fact('alarm.rule').value !== fact('alarm.qwen32').value) throw new Error('the miss rates of slide 11 no longer give the counts of models that the paper states');
+      if (fact('alarm.qwen32').text !== `${MISSED.qwen32} of ${MISS.length}` || !(MISSED.qwen8 < fact('alarm.rule').value) || MISS.length !== fact('task.resampled_models').value) throw new Error('the statement of slide 11 no longer holds for Qwen3-32B and fails for Qwen3-8B, in the seven resampled models');
+      // Every model of the chart is one of the task's subject models, by its full name.
+      const subjects = fact('task.model_names').text.split(', ');
+      if (MISS.some((row) => !subjects.includes(row.model))) throw new Error('a model of slide 11’s chart is not one of the task’s subject models');
+      // The title's first half rewords the paper's own statement that ranking is not timing,
+      // and the ranking the slide prints is this monitor's own: the reader of Table 4 that
+      // carries its model's name.
+      if (!/^Ranking is also not timing/.test(fact('close.timing').text) || !/AUROC does not measure this/.test(fact('time.not_auroc').text)) throw new Error('the paper no longer says that ranking is not timing, which the title of slide 11 rewords');
+      if (!fact('reader.qwen32.name').text.startsWith(fact('readers.name_qwen32').text) || fact('reader.qwen32.name').forced || !fact('reader.qwen8.name').text.startsWith(fact('readers.name_qwen8').text) || fact('reader.qwen8.name').forced) throw new Error('the AUROC that slide 11 prints is no longer that of the monitor whose alarms it shows, or the second monitor is no longer the small open one');
+      // Its score ranks and its verdict alarms: the two outputs of an open monitor.
+      if (!/letter probability of X/.test(fact('p3.score_px').text) || !/predicted letter/.test(fact('p3.verdict').text) || !fact('reader.qwen32.within').file.includes('Qwen3-32B P (X)')) throw new Error('the score and the verdict of slide 11’s monitor are no longer the ones the paper lists');
+      // The data line of the entrance: the task's six cuts in the seven resampled models.
+      if (fact('pnr.k').positions !== TL.cuts.length || MISS.length !== fact('task.resampled_models').value || !/20 seeded questions per model for the seven models/.test(fact('task.sample_questions').file)) throw new Error('the data line of slide 11 no longer says where its continuations come from');
+      // The captions reword these facts.
+      if (!/^We define the point of no return/.test(fact('pnr.def').file.split('"')[1]) || !/earliest position at which every continuation reaches the hinted answer/.test(fact('pnr.def').text) || !/not literal irreversibility/.test(fact('pnr.operational').text) || !/first read position at which its verdict names the hinted answer/.test(fact('alarm.when').text) || !/not at or before the PNR/.test(fact('alarm.miss_def').text)) throw new Error('the facts on the point of no return and the alarm no longer say what slide 11 rewords');
+      if (fact('pnr.k').value !== 2 || !/Two continuations often agree by chance/.test(fact('pnr.biased_early').file) || !/biased early/.test(fact('pnr.biased_early').text) || !/may therefore come from the PNR itself, not from the monitor/.test(fact('pnr.lateness').text) || !/budget per trace/.test(fact('time.rec_budget').text) || RECS[recOf(2) - 1].fact !== 'rec.3') throw new Error('the facts on the early point of no return and the recommendation no longer say what slide 11 rewords');
+      // The second monitor's count is one short of the rule, which then says nothing single
+      // of it; the false alarms are those of readers that alarm on a threshold of their
+      // score; and the reference under the recommendation is the point of no return.
+      if (MISSED.qwen8 !== fact('alarm.rule').value - 1 || !/one short of the rule/.test(fact('alarm.qwen8').file) || !/the rule gives no single statement/.test(fact('p3.qwen8_outcome').file)) throw new Error('the rule of slide 11 no longer leaves the second monitor one model short, without a single statement');
+      if (!/five continuous readers, a threshold set to a per-look rate/.test(fact('p3.looks_who').file) || fact('p3.looks_who').value !== 5) throw new Error('the false alarms of slide 11 are no longer those of five readers at a threshold of their score');
+      if (!/point of no return estimated by resampling/.test(fact('p3.reference').text) || !/against a stated reference/.test(RECS[recOf(2) - 1].rec) || !/against a reference defined by/.test(fact('time.rec_reference').text)) throw new Error('the reference under slide 11’s recommendation is no longer the point of no return');
+      if (fact('alarm.fixed').text !== 'fixed before the data' || fact('p3.pnr_check_tier').text !== EXPLORATORY || !/data already read/.test(fact('looks.tier').text)) throw new Error('the tiers of slide 11 are no longer the ones its chips print');
+      const cuts = ctx.qa('.p3-tl__cut');
+
+      // Enter: one followed trace from r = 0 to r = 1, cut at six positions; from each cut
+      // two continuations, the key of their endings, and the point of no return where both
+      // end at the hinted answer from then on.
+      const enter = ctx.step({ label: 'result 2 of 3: the point of no return' });
+      kit.enterResult(enter);
+      note(enter, 'pnr', { at: 300 });
+      enter.tween('.p3-tl__axis', { opacity: [0, 1] }, { at: 400 });
+      enter.tween(cuts, { opacity: [0, 1] }, { at: 1000, stagger: 220 });
+      enter.tween('.p3-tl__per', { opacity: [0, 1] }, { at: 1000 });
+      enter.tween('.p3-tl__key', { opacity: [0, 1] }, { at: 1000 + cuts.length * 220 });
+      enter.tween('[data-says-line="pnr:1"]', { opacity: [0, 1] }, { at: 1000 + cuts.length * 220, dur: dur.enter });
+      enter.tween('.p3-tl__pnr', { opacity: [0, 1] }, { at: 1000 + cuts.length * 220 + 700 });
+      enter.hold(300);
+
+      // Click 1: the monitor reads the growing prefix, read after read, in a row of its
+      // own; the key gets its squares. Its first verdict for the hinted answer is its
+      // alarm, ringed, here after the point of no return.
+      const alarm = ctx.step({ label: 'the alarm, and a miss' });
+      note(alarm, 'alarm', { leaves: 'pnr' });
+      alarm.tween('.p3-tl__reads-name', { opacity: [0, 1] }, { at: 300 });
+      alarm.tween('.p3-tl__key-read', { opacity: [0, 1] }, { at: 300 });
+      // The point of no return's line reaches down through the row of the reads.
+      alarm.tween('.p3-tl__pnr-on', { opacity: [0, 1] }, { at: 300 });
+      alarm.tween('.p3-tl__reads > .p3-tl__read', { opacity: [0, 1] }, { at: 600, stagger: 140, dur: dur.micro });
+      const rang = 600 + TL.reads.indexOf(TL.alarm) * 140;
+      alarm.tween('.p3-tl__read.is-alarm', { scale: [2.2, 1] }, { at: rang, dur: dur.enter });
+      alarm.tween('.p3-tl__alarm', { opacity: [0, 1] }, { at: rang + 200 });
+      alarm.hold(300);
+
+      // Click 2: how this monitor ranks, then how it times: the measured miss rates, model
+      // by model, the rule's line and the count; the title gets its second half.
+      const rates = ctx.step({ label: 'the statement fixed before the data holds in 5 of 7 models' });
+      note(rates, 'rule', { leaves: 'alarm' });
+      rates.tween('.p3-al__who', { opacity: [0, 1] }, { at: 200 });
+      rates.tween('.p3-mr__frame', { opacity: [0, 1] }, { at: 300 });
+      MISS.forEach((row, i) => {
+        const when = MR.rowAt + i * MR.perRow;
+        rates.tween(`[data-model="${i}"] text`, { opacity: [0, 1] }, { at: when, dur: dur.micro });
+        rates.tween(`[data-model="${i}"] .p3-mr__bar`, { opacity: [0, 1], 'attr:width': [0, round3(row.qwen32 * MR.perUnit)] }, { at: when, dur: dur.move });
+      });
+      const counted = MR.rowAt + MISS.length * MR.perRow + dur.move;
+      rates.tween('.p3-mr__most', { opacity: [0, 1] }, { at: counted });
+      rates.tween('.p3-al__count', POP, { at: counted + 600, dur: dur.enter, ease: 'back' });
+      rates.tween('[data-says-line="rule:1"]', { opacity: [0, 1] }, { at: counted + 600, dur: dur.enter });
+      revealTitle(ctx, rates, counted + 900);
+      rates.hold(300);
+
+      // Click 3: the reference itself. Under the trace, the followed traces whose point of
+      // no return lies at or before r = 0.40 as one bar: the part that still ends at the
+      // hinted answer when 16 continuations are drawn in place of 2 fills it, and the rest
+      // is the share that fails the definition, printed beside it.
+      const early = ctx.step({ label: 'the point of no return comes too early' });
+      note(early, 'early', { leaves: 'rule' });
+      early.show('.p3-al__check .p3-al__line', { at: 300, rise: 0 });
+      early.tween('.p3-al__bar', { opacity: [0, 1] }, { at: 700 });
+      early.tween('.p3-al__bar i', { '--p3-grow': ['0%', '100%'] }, { at: 900, dur: dur.reveal, ease: 'inOut' });
+      early.tween('.p3-al__said', POP, { at: 900 + dur.reveal, dur: dur.enter, ease: 'back' });
+      early.hold(300);
+
+      // Click 4: one threshold, many looks. The check of click 3 has been read and leaves
+      // with its caption, so that the false alarms are the one new block on the screen.
+      const looks = ctx.step({ label: 'a budget per look, a rate per trace' });
+      note(looks, 'looks', { leaves: 'early' });
+      looks.tween('.p3-al__check', { opacity: [1, 0] }, { dur: dur.micro });
+      looks.tween('.p3-al__count', { opacity: [1, 0] }, { dur: dur.micro });
+      looks.show('.p3-al__looks .p3-al__line', { at: 300, rise: 0 });
+      looks.show('.p3-al__look', { at: 700, stagger: 900, rise: 0 });
+      looks.tween('.p3-al__look[data-look="trace"] i', { '--p3-grow': ['0%', '100%'] }, { at: 1600, dur: dur.move, ease: 'inOut' });
+      looks.hold(300);
+
+      // Click 5: the recommendation, and under it what its reference is here.
+      conclude(ctx.step({ label: 'recommendation 3 of 4' }), { leaves: 'looks', limit: true });
+    },
+  });
+
+  // ---------------------------------------------------------------- slide 12: result 3, what comparisons can resolve
+  // Nine readers were scored and three are set aside after their counts had been seen: all
+  // nine are shown, each with the interval Table 4 prints for it, before the three step
+  // back. Among the six that stay there are fifteen pairs, drawn as fifteen arcs between
+  // their rows, and the paper prints how many of the fifteen differences a joint test
+  // resolves: none against the trace's own ending (click 1), four against a held-out
+  // continuation's (click 2), each the small open monitor below a frontier reader: those
+  // four arcs are drawn in the amber of that label. The intervals of the fifteen
+  // differences are in the paper's appendix, which this deck does not read, so no interval
+  // of a difference is drawn.
+  // A control for prefix length moves the count as the label does (click 3): with only
+  // pairs of traces of similar prefix length scored, the four are none; the arcs stay as
+  // the held-out label left them. The paper's second control (the length regressed out) leaves the four
+  // and is not on the slide. Then what the design could detect, on each label, and the
+  // questions it would take against the questions there were (click 4); the title gets its
+  // second half. Then the recommendation (click 5).
+  // All that is said about the three readers set aside stands on the entrance, in one
+  // place, under the rows that step back: one sentence that says when they were set aside
+  // (post hoc: after the results had been seen) and why (two fail a preset check of their
+  // computation, 'p3.forced_check' and 'p3.forced_check_what'; the tolerance itself is not
+  // on the slide; one was never checked),
+  // and in small print under it which two fail, that they score highest and that with the
+  // three kept a few more differences are resolved ('p3.resolved_all_own', '_held'). The slide does not
+  // argue for the choice, and it does not say that the choice leaves the result as it is.
+  // The head asks the question of the motivation slide for readers: from slide 6 on, what
+  // is scored is a reader, and a monitor is one kind.
+  const RESOLVE_ASK = 'Can the data tell two readers apart?';
+  if (CHOICES[2].ask.replace(/\bmonitors\b/, 'readers') !== RESOLVE_ASK) throw new Error('the head of slide 12 no longer asks the third question of the talk, for readers');
+  const RS = (() => {
+    const own = v('test.resolved_own');
+    const held = v('test.resolved_held_max');
+    // The counts, one row each: the two labels, then the held-out label once more with
+    // pairs of traces matched in prefix length.
+    const rows = Object.freeze([
+      Object.freeze({ key: 'own', chip: labelChip('own'), count: own }),
+      Object.freeze({ key: 'held', chip: labelChip('held'), count: held }),
+      Object.freeze({ key: 'matched', chip: '<span class="dk-chip" data-tone="hidden">label 2, length-matched</span>', count: v('test.length_held_matched') }),
+    ]);
+    return Object.freeze({ rows, pairs: v('test.pairs_kept') });
+  })();
+  // The nine readers, the six that stay first and the three forced readers apart, as Table
+  // 4 lists them: each with its within-question AUROC against the trace's own ending and
+  // its 95% interval. At the right of the six, one arc for each pair of them.
+  const RD = (() => {
+    const forced = READERS.filter((key) => !KEPT.includes(key));
+    const rowY = 16;
+    const pitch = 32;
+    const asideY = rowY + KEPT.length * pitch + 20;
+    const yOf = (key) => (KEPT.includes(key) ? rowY + KEPT.indexOf(key) * pitch : asideY + 20 + forced.indexOf(key) * pitch);
+    const axisY = yOf(forced[forced.length - 1]) + 20;
+    return Object.freeze({
+      forced, yOf, asideY, axisY, tickY: axisY + 28, titleY: axisY + 60,
+      width: 680, height: axisY + 68, nameX: 292, x0: 312, perUnit: 1700, from: 0.75, to: 0.88,
+      ticks: Object.freeze([0.75, 0.80, 0.85]), spine: 556, bulge: 22,
+    });
+  })();
   const rdX = (value) => round3(RD.x0 + (value - RD.from) * RD.perUnit);
-  const readerDots = () => `
+  if (READERS.some((key) => v(`p3.within_ci.${key}`)[0] < RD.from || v(`p3.within_ci.${key}`)[1] > RD.to || !(v(`p3.within_ci.${key}`)[0] < v(`reader.${key}.within`) && v(`reader.${key}.within`) < v(`p3.within_ci.${key}`)[1]))) throw new Error('an interval of slide 12 no longer lies on its axis, around its reader’s AUROC');
+  // The pairs of the six, as arcs between their rows; `held`: a difference that the joint
+  // test resolves against the held-out label, "each Qwen3-8B below a frontier reading"
+  // ('test.resolved_held_who'). Both sides are read from the facts: the small open monitor
+  // is the reader that carries that model's name, and a frontier reader is one of the six
+  // that is not an open monitor's.
+  const OPEN_MODELS = Object.freeze(['readers.name_qwen8', 'readers.name_qwen32'].map(t));
+  const readerOf = (model) => KEPT.filter((key) => t(`reader.${key}.name`).startsWith(`${model} `));
+  const SMALL = readerOf((/each (\S+) below a frontier reading/.exec(t('test.resolved_held_who')) ?? [])[1]);
+  const FRONTIER = Object.freeze(KEPT.filter((key) => !OPEN_MODELS.some((model) => readerOf(model).includes(key))));
+  if (SMALL.length !== 1 || SMALL[0] !== readerOf(t('readers.name_qwen8'))[0] || FRONTIER.slice().sort().join() !== HELD_ABOVE.slice().sort().join()) throw new Error('the differences that the held-out label resolves on slide 12 are no longer the small open monitor against each frontier reader');
+  // The models behind the frontier readers, each once, and the two forced readers that fail
+  // the check, by name: the captions name both.
+  const FRONTIER_MODELS = Object.freeze([...new Set(FRONTIER.map((key) => t(`reader.${key}.name`).replace(/ (AP|IN)$/, '')))]);
+  const FAILED = Object.freeze(RD.forced.filter((key) => key !== UNCHECKED).map((key) => t(`reader.${key}.name`)));
+  if (FRONTIER_MODELS.length !== 2 || !FRONTIER_MODELS.includes(t('readers.name_opus')) || FAILED.length !== 2) throw new Error('the captions of slide 12 no longer name two frontier models and the two forced readers that fail the check');
+  const PAIRS = Object.freeze(KEPT.flatMap((a, i) => KEPT.slice(i + 1).map((b, n) => Object.freeze({
+    a, b, span: n + 1, held: (SMALL.includes(a) && FRONTIER.includes(b)) || (SMALL.includes(b) && FRONTIER.includes(a)),
+  }))));
+  const arc = (pair, cls) => {
+    const y1 = RD.yOf(pair.a);
+    const y2 = RD.yOf(pair.b);
+    return `<path class="p3-rd__arc${cls}" d="M ${RD.spine} ${y1} A ${RD.bulge * pair.span} ${(y2 - y1) / 2} 0 0 1 ${RD.spine} ${y2}"/>`;
+  };
+  const readerRow = (key) => {
+    const [lo, hi] = v(`p3.within_ci.${key}`);
+    const y = RD.yOf(key);
+    return `
+        <g class="p3-rd__row${KEPT.includes(key) ? '' : ' is-forced'}" data-reader="${key}">
+          <text class="p3-end" x="${RD.nameX}" y="${y + 8}">${t(`reader.${key}.name`)}</text>
+          <line x1="${rdX(lo)}" x2="${rdX(hi)}" y1="${y}" y2="${y}"/>
+          <circle cx="${rdX(v(`reader.${key}.within`))}" cy="${y}" r="7"/>
+        </g>`;
+  };
+  const readerRows = () => `
     <svg class="p3-svg p3-rd" viewBox="0 0 ${RD.width} ${RD.height}" width="${RD.width}" height="${RD.height}">
       <g class="p3-rd__frame">
-        <line class="p3-axis" x1="${RD.x0}" x2="${rdX(0.855)}" y1="${RD.axisY}" y2="${RD.axisY}"/>
+        <line class="p3-axis" x1="${RD.x0}" x2="${rdX(RD.to)}" y1="${RD.axisY}" y2="${RD.axisY}"/>
         ${RD.ticks.map((tick) => `
-          <line class="p3-grid" x1="${rdX(tick)}" x2="${rdX(tick)}" y1="8" y2="${RD.axisY}"/>
+          <line class="p3-grid" x1="${rdX(tick)}" x2="${rdX(tick)}" y1="0" y2="${RD.axisY}"/>
           <text class="p3-num p3-mid" x="${rdX(tick)}" y="${RD.tickY}">${two(tick)}</text>`).join('')}
-        <text class="p3-end" x="${RD.nameX}" y="${RD.tickY}">AUROC</text>
+        <text class="p3-mid" x="${(RD.x0 + rdX(RD.to)) / 2}" y="${RD.titleY}">AUROC, label 1, ${t('test.interval_level')} interval</text>
       </g>
-      ${READERS.map((key, i) => `
-        <g class="p3-rd__row${KEPT.includes(key) ? '' : ' is-forced'}" data-reader="${key}">
-          <text class="p3-end" x="${RD.nameX}" y="${RD.rowY + i * RD.pitch + 8}">${t(`reader.${key}.name`)}</text>
-          <circle cx="${rdX(v(`reader.${key}.within`))}" cy="${RD.rowY + i * RD.pitch}" r="7"/>
-        </g>`).join('')}
-      <g class="p3-rd__kept">
-        <circle class="p3-rd__glyph" cx="20" cy="${RD.noteY[0] - 8}" r="7"/>
-        <text x="40" y="${RD.noteY[0]}">Six readers (${t('test.pairs_kept')} pairs), within question:</text>
-        <text class="p3-rd__range p3-num" x="40" y="${RD.noteY[1]}">${t('readers.within_min')} to ${t('readers.within_max_kept')}</text>
+      ${KEPT.map(readerRow).join('')}
+      <text class="p3-rd__aside p3-end" x="${RD.nameX}" y="${RD.asideY}">set aside, post hoc:</text>
+      ${RD.forced.map(readerRow).join('')}
+      <g class="p3-rd__pairs">
+        ${PAIRS.map((pair) => arc(pair, '')).join('')}
+        ${KEPT.map((key) => `<circle class="p3-rd__node" cx="${RD.spine}" cy="${RD.yOf(key)}" r="4"/>`).join('')}
       </g>
-      <g class="p3-rd__aside">
-        <circle class="p3-rd__glyph is-forced" cx="20" cy="${RD.noteY[2] - 8}" r="7"/>
-        <text x="40" y="${RD.noteY[2]}">set aside, post hoc</text>
-      </g>
+      <g class="p3-rd__held">${PAIRS.filter((pair) => pair.held).map((pair) => arc(pair, ' is-held')).join('')}</g>
     </svg>`;
   // "80% power" in the talk's words: 4 times in 5.
   const timesIn = (power) => {
@@ -1140,55 +933,44 @@
     return `${power / unit} times in ${100 / unit}`;
   };
   const NEED = Object.freeze({ had: v('test.questions_had'), needed: v('test.questions_needed') });
-  // Click 3, in ms after the click: the second stack starts, and the room has been told.
+  // Click 4, in ms after the click: the two lengths, the stacks of tiles, and when the room
+  // has been told.
   const NEED_AT = (() => {
-    const needed = FX.tilesAt + FX.neededAfter;
-    return Object.freeze({ needed, told: needed + NEED.needed * FX.perTile + 300 });
+    const rulerAt = 500;
+    const tilesAt = 2000;
+    const perTile = 10;
+    const needed = tilesAt + 700;
+    return Object.freeze({ rulerAt, tilesAt, perTile, needed, told: needed + NEED.needed * perTile + 300 });
   })();
+  const DETECT = Object.freeze({ perUnit: 5600 });
   const tiles = (n) => util.range(n).map(() => '<i></i>').join('');
   // A caption of this slide can carry a second line in small print (parts/part3.css). Only
-  // the entrance has one: all that is said about the three readers set aside stands there,
-  // in one place, beside the dots that step back.
+  // the entrance has one.
   const RESOLVE_NOTES = Object.freeze({
     aside: Object.freeze([
-      // 'readers.forced_aside' and 'p3.forced_check', in the talk's words, as one sentence:
-      // when the three were set aside (after the counts with them had been read: post hoc)
-      // and why (two fail a numerical tolerance that was fixed before the subject readings;
-      // the third was never checked against it). The sixth cold read had "after we saw the
-      // counts" on the entrance and "a check fixed in advance" a click later, and took the
-      // two for a contradiction. A no-break space keeps "post hoc" on one line.
-      'Three forced-answer readers are set aside after we saw the results (post\u00a0hoc): two fail a numerical check we fixed in advance, one was never checked.',
-      // What the choice costs, right behind it: the two that fail the check have the highest
-      // scores of the nine, and with the three kept more differences are resolved under
-      // either label ('p3.resolved_all_own': 1 of 36 against 0 of 15; 'p3.resolved_all_held':
-      // 6 to 9 of 36 against at most 4 of 15). The counts themselves are not on screen (the
-      // sixth cold read could not retell them); the setup checks the sentence against them.
-      // The slide does not say that setting the three aside leaves the result as it is. What
-      // "a few more" counts is in the title over it: reader differences.
-      'The two score highest. With them, a few more are resolved.',
+      // 'readers.forced_aside', 'p3.forced_check' and 'p3.forced_check_what', in the talk's
+      // words, as one sentence: the check is preset and is of how the two are computed (the
+      // paper's Sec. 7.3: read along the trace against a one-shot recomputation).
+      'Three forced-answer readers are set aside after we saw the results: two fail a preset check of their computation, one was never checked.',
+      // What the choice costs, right behind it: the two that fail the check, by name, have
+      // the highest scores of the nine, and with the three kept more differences are
+      // resolved under either label; the setup checks the sentence against the counts.
+      `The two that fail (${FAILED.join('; ')}) score highest. With all three, a few more are resolved.`,
     ]),
-    // The paper states its counts with the joint test over all 36 pairs of the nine
-    // readers, also for the 15 pairs of the six (paper/tmlr/appendix/k_inference.tex:187-189).
     // What the joint test is for: one pair at a time, 'p3.chance_resolved' of the 36
-    // intervals would exclude zero if the readers were equal. It opens on the words of the
-    // key; what the joint test does about it, and what the 36 are, stands in the key.
-    joint: `Checked one by one, ${t('p3.chance_resolved')} of ${t('test.pairs_all')} differences would look resolved even if the readers were equal.`,
-    // Which four ('p3.resolved_held_pairs') is on the picture: the rows with a mark carry
-    // their readers' names. The count beside the chip is "4 of 15", the joint test's count
-    // and the title's 4; the paper says "at most 4", since two stricter checks give fewer,
-    // the critical value calibrated for this label ('p3.resolved_held_stricter': 3 or 4, by
-    // bootstrap run) and the control for prefix length ('p3.resolved_held_matched': 0). They
-    // are not on screen (the sixth cold read could not retell "one stricter check resolves 3
-    // or 4, another 0"), and neither is "at most", which nothing on screen would explain;
-    // the setup still checks that 4 is the largest of the three.
-    held: `Held-out label: ${v('test.resolved_held_max')} joint intervals exclude zero.`,
-    // What the ruler's word "detectable" means; its value stands on the ruler over the caption.
-    power: `Detectable (own-ending label): smallest difference this design would catch ${timesIn(v('test.power'))}.`,
+    // intervals (the pairs of all nine readers) would exclude zero if the readers were
+    // equal; tested jointly, the intervals are wider and even one such difference is rare
+    // ('p3.joint_level', 'p3.joint_chance').
+    joint: `One pair at a time, chance would resolve ${t('p3.chance_resolved')} of all ${t('test.pairs_all')} pairs (${READERS.length} readers). So we test <b>jointly</b>: wider intervals, so chance rarely resolves even one.`,
+    // 'test.resolved_held_who': the four arcs say which readers, the caption which models.
+    held: `<b>Label 2:</b> ${v('test.resolved_held_max')} are resolved, each ${t('reader.qwen8.name')} below a ${FRONTIER_MODELS.join(' or ')} reader.`,
+    // Why the control ('p3.cut_leaks', in slide 10's words: the cut "gives away" length;
+    // 'm.length_alone'); 'test.length_match' says what the control is;
+    // 'test.label_and_length' what it shows.
+    length: `<b>Length-matched</b> (the cut gives away length): score only follower-resister pairs ${t('test.length_match')}. The label or a length control changes the count as much as the readers do.`,
+    // What "detectable" means ('test.power'), 'test.most_smaller' and 'test.not_equality'.
+    power: `<b>Detectable difference:</b> the smallest one this design would catch ${timesIn(v('test.power'))}. Most observed differences are smaller: not resolved means too small a test, not that the readers are equal.`,
   });
-  // 'test.not_equality', in the talk's words. The title's second half says the same from
-  // click 3 on, so the line does without "to tell" behind "too small" (the two words pay
-  // for the title's).
-  const RESOLVE_LIMIT = 'Not resolved means the test was too small, not that the readers are equal.';
 
   Deck.register({
     id: 'p3-resolve',
@@ -1196,95 +978,93 @@
     kicker: RESULTS,
     // The count of each label, the labels first: 'test.resolved_own' against the trace's own
     // ending, and against a held-out continuation's the joint test's count, the value of
-    // 'test.resolved_held_max' (paper/tmlr/sections/10_conclusion.tex:4-5). That fact's text
-    // is "at most 4" (two stricter checks give fewer); "at most" has nothing on screen to
-    // explain it, so the title and the chip of click 2 print the value alone, the same 4
-    // (the chip said "at most 4 of 15" until SPEC.md, section 7.12). The setup checks both
-    // counts.
-    title: `By either label, only ${t('test.resolved_own')} or ${v('test.resolved_held_max')} of ${t('test.pairs_kept')} reader differences are resolved, <em>and that does not make them equal</em>`,
-    cues: [
-      // A no-break space keeps the cue's last two words on one line.
-      { text: `Own-ending label: all ${t('test.pairs_kept')} intervals contain\u00a0zero`, step: 1, at: FX.barAt + PAIRS.length * FX.perBar },
-    ],
-    cite: [{ src: 'paper', where: 'Sec. 3.2, 4; Table 2-3; App. J' }],
+    // 'test.resolved_held_max'. That fact's text is "at most 4" (two stricter checks give
+    // fewer); "at most" has nothing on screen to explain it, so the title and the count
+    // print the value alone. The setup checks both counts.
+    // The comma belongs to the half that is held back (click 4), as on slide 10.
+    title: `By either label, only ${t('test.resolved_own')} or ${v('test.resolved_held_max')} of ${t('test.pairs_kept')} reader differences are resolved<em>, and that does not make them equal</em>`,
+    cues: [],
+    cite: [{ src: 'paper', where: 'Sec. 2.2, 6.1; Table 4-5' }],
     figure: ['data', 'schematic'],
     html: `
       <div class="p3-res p3-resolve">
-        ${kit.resultHead(3, EXPLORATORY)}
+        ${kit.resultHead(3, EXPLORATORY).replace(CHOICES[2].ask, RESOLVE_ASK)}
         <div class="p3-res__picture">
-          ${readerDots()}
-          <div class="p3-resolve__mid">
-            <div class="p3-resolve__counts">
-              <p class="p3-resolve__count" data-count="own">${labelChip('own')}<b>${t('test.resolved_own')} of ${t('test.pairs_kept')} resolved</b></p>
-              <p class="p3-resolve__count" data-count="held">${labelChip('held')}<b>${v('test.resolved_held_max')} of ${t('test.pairs_kept')}</b></p>
+          ${readerRows()}
+          <div class="p3-rs">
+            <p class="p3-rs__what">${t('test.pairs_kept')} pairs of ${KEPT.length} readers, resolved jointly:</p>
+            ${RS.rows.map((row) => `
+            <p class="p3-rs__row" data-row="${row.key}">${row.chip}<b>${row.count}</b></p>`).join('')}
+            <div class="p3-rs__detect">
+              <p class="p3-rs__what">detectable difference</p>
+              <p class="p3-rs__bar" data-row="own"><span>label 1</span><i style="width:${(v('test.detectable_own') * DETECT.perUnit).toFixed(1)}px"></i><b>${t('test.detectable_own')}</b></p>
+              <p class="p3-rs__bar" data-row="held"><span>label 2</span><i style="width:${(v('test.detectable_held') * DETECT.perUnit).toFixed(1)}px"></i><b>${t('test.detectable_held')}</b></p>
             </div>
-            ${forest()}
           </div>
           <div class="p3-need">
-            <p class="p3-need__head">questions per model</p>
             <div class="p3-need__stack" data-stack="had">
               <p class="p3-need__n"><b>${t('test.questions_had')}</b></p>
-              <p class="p3-need__what">we had</p>
+              <p class="p3-need__what">questions per model we had</p>
               <div class="p3-need__tiles">${tiles(NEED.had)}</div>
             </div>
             <div class="p3-need__stack" data-stack="needed">
               <p class="p3-need__n"><span>about</span><b class="p3-need__count"></b></p>
-              <p class="p3-need__what">to detect ${t('test.smallest_target')}</p>
+              <p class="p3-need__what">questions per model to detect ${t('test.smallest_target')} (label 1)</p>
               <div class="p3-need__tiles">${tiles(NEED.needed)}</div>
             </div>
           </div>
         </div>
-        ${captionHtml({ notes: RESOLVE_NOTES, rec: 3, limit: RESOLVE_LIMIT })}
+        ${captionHtml({ notes: RESOLVE_NOTES, rec: recOf(3) })}
       </div>`,
     setup: (ctx) => {
       const { fact, dur } = ctx;
-      if (HELD_ROWS.length !== fact('test.resolved_held_max').value || HELD_ROWS[HELD_ROWS.length - 1] - HELD_ROWS[0] !== HELD_ROWS.length - 1) {
-        throw new Error('the rows that the held-out label resolves are no longer the four in a block that the count names');
-      }
-      // The cue counts the intervals; they are the pairs of the six readers that are kept
-      // (the rows say which: five names under "each minus Qwen3-8B AP", then the other ten).
-      if (KEPT.length !== 6 || fact('readers.kept').value !== KEPT.length || (KEPT.length * (KEPT.length - 1)) / 2 !== PAIRS.length || PAIRS.length !== fact('test.pairs_kept').value) throw new Error('the intervals of slide 12 are no longer one per pair of six readers');
-      // What is drawn is what is counted. Against the trace's own ending every interval
-      // contains zero, alone and jointly; against the held-out label the rows are the same
-      // pairs, the joint interval excludes zero on the four rows that carry a mark and on
-      // no other, and one by one as many exclude it as the results file counts.
-      if (PAIRS.some((pair) => excludesZero(pair) || excludesZero(fxWide(pair)))) throw new Error('an interval against the own ending no longer contains zero');
-      if (HELD.length !== PAIRS.length || HELD.some((pair, i) => pair.a !== PAIRS[i].a || pair.b !== PAIRS[i].b)) throw new Error('the held-out intervals are no longer the pairs of the bars, in their order');
-      const heldJoint = HELD.map((pair, i) => (excludesZero(pair.wide) ? i : -1)).filter((i) => i >= 0);
-      if (heldJoint.join() !== HELD_ROWS.join()) throw new Error('the joint intervals against the held-out label no longer exclude zero on the four marked rows only');
-      if (HELD.filter(excludesZero).length !== fact('p3.pairs_held').alone) throw new Error('one by one, the held-out intervals no longer exclude zero as often as the results file counts');
-      if (!fact('p3.resolved_held_stricter').value.includes(fact('test.resolved_held_max').value) || fact('p3.resolved_held_matched').value >= fact('test.resolved_held_max').value) throw new Error('the held-out label\'s count on slide 12 is no longer the largest of its counts (the joint test, the calibrated one, the one matched by length)');
-      // The title gives the count of each label, "0 or 4", the own ending's first, and the
-      // chip of click 2 the same 4: the held-out label's has to be the largest of its counts,
-      // its fact's "at most" (the paper's wording, printed nowhere), and the own ending's has
-      // to be below it.
-      if (fact('test.resolved_held_max').text !== `at most ${fact('test.resolved_held_max').value}` || fact('test.resolved_own').value >= fact('test.resolved_held_max').value) throw new Error('the two counts in the title of slide 12 are no longer the own ending\'s and, above it, the held-out label\'s largest');
-      // The chip of click 2 and the title print one count for the held-out label, the fact's
-      // value without its "at most" (SPEC.md, section 7.12).
-      const heldCount = `${fact('test.resolved_held_max').value} of ${fact('test.pairs_kept').text}`;
-      if (ctx.q('.p3-resolve__count[data-count="held"] b').textContent !== heldCount || !ctx.q('.dk-title').textContent.includes(` or ${heldCount} `)) throw new Error('the chip of click 2 and the title of slide 12 no longer print the same count for the held-out label');
-      // The first group of bars is named row by row, under "each minus Qwen3-8B AP"; the
-      // second by its size ("the other ten pairs"). The marked rows are among the named ones.
-      if (PAIRS.some((pair, i) => (pair.a === 'qwen8') !== (i < FX_NAMED)) || PAIRS.length - FX_NAMED !== 10) throw new Error('the bars are no longer the pairs with Qwen3-8B, then ten others');
-      if (HELD_ROWS.some((i) => i >= FX_NAMED)) throw new Error('a row that the held-out label resolves no longer carries a name');
-      // The key says at what level the joint intervals hold: the level of every interval of the talk.
+      // The arcs are the pairs of the six readers that are kept, and the head counts them.
+      if (KEPT.length !== 6 || fact('readers.kept').value !== KEPT.length || (KEPT.length * (KEPT.length - 1)) / 2 !== RS.pairs || PAIRS.length !== RS.pairs || (READERS.length * (READERS.length - 1)) / 2 !== fact('test.pairs_all').value) throw new Error('the arcs of slide 12 are no longer one per pair of six readers, of the 36 pairs of nine');
+      // The four that the held-out label resolves are the small open monitor against each
+      // of the four frontier readers, all among the six: the four amber arcs.
+      if (HELD_ABOVE.length !== fact('test.resolved_held_max').value || HELD_ABOVE.some((key) => !KEPT.includes(key)) || !KEPT.includes(SMALL[0]) || !/each Qwen3-8B below a frontier reading/.test(fact('test.resolved_held_who').text)) throw new Error('the four differences that the held-out label resolves are no longer Qwen3-8B below each frontier reader');
+      if (PAIRS.filter((pair) => pair.held).length !== fact('test.resolved_held_max').value || ctx.qa('.p3-rd__arc.is-held').length !== fact('test.resolved_held_max').value) throw new Error('the amber arcs of slide 12 are no longer the differences that the held-out label resolves');
+      // The title gives the count of each label, "0 or 4", the own ending's first: the
+      // held-out label's has to be the largest of its counts, its fact's "at most" (the
+      // paper's wording, printed nowhere), and the own ending's has to be below it.
+      if (fact('test.resolved_held_max').text !== `at most ${fact('test.resolved_held_max').value}` || fact('test.resolved_own').value >= fact('test.resolved_held_max').value) throw new Error('the two counts in the title of slide 12 are no longer the own ending’s and, above it, the held-out label’s largest');
+      if (!fact('p3.resolved_held_stricter').value.includes(fact('test.resolved_held_max').value) || fact('test.length_held_matched').value >= fact('test.resolved_held_max').value) throw new Error('the held-out label’s count on slide 12 is no longer the largest of its counts (the joint test, the calibrated one, the one matched in length)');
+      // The count that the held-out row prints is the title's.
+      const heldCount = ctx.q('.p3-rs__row[data-row="held"] b').textContent;
+      if (heldCount !== String(fact('test.resolved_held_max').value) || !ctx.q('.dk-title').textContent.includes(` or ${heldCount} of ${fact('test.pairs_kept').text} `)) throw new Error('the count of click 2 and the title of slide 12 no longer print the same count for the held-out label');
+      // The intervals are at the level of every interval of the talk, the joint ones too.
       if (fact('p3.joint_level').value !== fact('test.interval_level').value) throw new Error('the joint intervals of slide 12 are no longer at the level of the other intervals');
-      // The key names the family of the joint test; the bars widen by that family's factor.
-      if (fact('test.joint_widening').family !== fact('test.pairs_all').value) throw new Error('the joint test of slide 12 is no longer the one over all pairs of the nine readers');
-      // The entrance says "three", "two fail a check" and "one was never checked": the three
-      // forced readers, of which the paper names the one never checked ('readers.forced_aside').
-      if (READERS.length - KEPT.length !== fact('readers.forced_aside').value || fact('readers.forced_aside').value !== 3) throw new Error('the readers set aside on slide 12 are no longer three');
+      // "Chance rarely resolves even one": with equal readers the joint test resolves at
+      // least one difference in at most about one dataset in twenty.
+      if (Math.max(...fact('p3.joint_chance').value) > 0.1 || !(fact('p3.chance_resolved').value > 1)) throw new Error('the joint test of slide 12 no longer makes a chance difference rare, where one pair at a time gives about two');
+      // The entrance says "three", "two fail a preset check of their computation" and "one
+      // was never checked": the three forced readers, of which the paper names the one never
+      // checked ('readers.forced_aside').
+      if (READERS.length - KEPT.length !== fact('readers.forced_aside').value || fact('readers.forced_aside').value !== 3 || !RD.forced.includes(UNCHECKED)) throw new Error('the readers set aside on slide 12 are no longer three');
       if (!/^Two forced readers fail the tolerance and Qwen3-32B forced was never checked/.test(fact('readers.forced_aside').text) || !/post hoc, after reading the counts with them/.test(fact('readers.forced_aside').text)) throw new Error('readers.forced_aside no longer says what the entrance of slide 12 rewords');
-      if (!/numerical tolerance fixed before the subject readings/.test(fact('p3.forced_check').text)) throw new Error('p3.forced_check no longer says that the tolerance was fixed before the subject readings');
+      if (!/numerical tolerance fixed before the subject readings/.test(fact('p3.forced_check').text)) throw new Error('the fact on the check of the forced readers no longer says that it is a numerical tolerance, fixed before the subject readings');
+      if (!/fail a preset numerical check/.test(fact('p3.forced_check_what').file) || !/compares those letter probabilities with a one-shot recomputation/.test(fact('p3.forced_check_what').file)) throw new Error('the check of the forced readers is no longer a preset check of their computation, which the entrance of slide 12 says');
+      // The length control answers what slide 10 said of the cut: it gives the length away,
+      // and prefix length alone ranks traces above chance.
+      if (!/leaks that length, and our positions leak it too/.test(fact('p3.cut_leaks').text) || !/gives away how long/.test(CEILING_NOTES.cut) || !(fact('m.length_alone').value > 0.5)) throw new Error('the length control of slide 12 no longer answers a cut that gives the length away, as slide 10 says it');
       // Its small print says that the two which fail the check score highest: the two
       // readers at the top are forced readers, and neither is the one never checked.
       const ranked = READERS.slice().sort((a, b) => fact(`reader.${b}.within`).value - fact(`reader.${a}.within`).value);
       if (ranked.slice(0, 2).some((key) => KEPT.includes(key) || key === UNCHECKED) || !KEPT.includes(ranked[2])) throw new Error('the two readers that score highest are no longer the two set aside for failing the check');
       // And that with the three kept more differences are resolved, under either label.
       if (fact('p3.resolved_all_own').value <= fact('test.resolved_own').value || Math.min(...fact('p3.resolved_all_held').value) <= fact('test.resolved_held_max').value) throw new Error('with all nine readers, no more differences are resolved than without the three set aside');
+      // The captions reword these facts.
+      if (!/change which differences are resolved about as much as the readers do/.test(fact('test.label_and_length').text) || fact('test.length_match').text !== `within ${fact('test.length_match').value}% in prefix length` || !/most observed differences are smaller/.test(fact('test.most_smaller').text) || !/not about equality/.test(fact('test.not_equality').text) || RECS[recOf(3) - 1].fact !== 'rec.4') throw new Error('the facts on the length control, the power and the recommendation no longer say what slide 12 rewords');
+      if (!(fact('test.detectable_held').value < fact('test.detectable_own').value) || !(fact('test.questions_needed_held').value < NEED.needed) || !(NEED.had < fact('test.questions_needed_held').value)) throw new Error('the detectable differences and the questions needed on slide 12 are no longer smaller with the held-out label, and above the questions there were');
       const forced = ctx.qa('.p3-rd__row.is-forced');
+      // A count lands: its label, then its number.
+      const land = (step, row, when) => {
+        step.tween(`.p3-rs__row[data-row="${row}"] .dk-chip`, { opacity: [0, 1] }, { at: when - 500 });
+        step.tween(`.p3-rs__row[data-row="${row}"] b`, POP, { at: when, dur: dur.enter, ease: 'back' });
+      };
 
-      // Enter: all nine readers, then the three forced readers step back.
+      // Enter: all nine readers with their intervals, then the three forced readers step
+      // back under their line.
       const enter = ctx.step({ label: 'result 3 of 3: six readers' });
       kit.enterResult(enter);
       enter.tween('.p3-rd__frame', { opacity: [0, 1] }, { at: 400 });
@@ -1294,174 +1074,92 @@
       enter.tween(forced, { opacity: [1, 0.5] }, { at: asideAt, stagger: 200 });
       enter.cls(forced, 'is-aside', { at: asideAt, stagger: 200 });
       enter.tween('.p3-rd__aside', { opacity: [0, 1] }, { at: asideAt + forced.length * 200 });
-      enter.tween('.p3-rd__kept', { opacity: [0, 1] }, { at: asideAt + forced.length * 200 + 500 });
-      enter.tween('[data-says-line="aside:1"]', { opacity: [0, 1] }, { at: asideAt + forced.length * 200 + 500 + FX.smallAfter, dur: dur.enter });
+      enter.tween('[data-says-line="aside:1"]', { opacity: [0, 1] }, { at: asideAt + forced.length * 200 + 900, dur: dur.enter });
       enter.hold(300);
 
-      // Click 1: the fifteen differences of the six, each with its interval; every one
-      // crosses zero. Tested jointly they only get wider, and the count lands.
-      const diff = ctx.step({ label: 'fifteen differences, none resolved' });
-      note(diff, 'joint', { leaves: 'aside' });
-      diff.tween('.p3-fx__frame', { opacity: [0, 1] }, { at: 200 });
-      const widenAt = FX.barAt + PAIRS.length * FX.perBar + FX.widenAfter;
-      const held = ctx.step({ label: 'another label, another count' });
-      const power = ctx.step({ label: 'what the design could detect' });
-      // A row under one label and under the other: where its bar, its point, its joint line
-      // and the two caps of that line stand. The caps are drawn at the ends of the bar
-      // against the own ending and moved from there.
-      const own = PAIRS.map((pair) => ({ ...pair, wide: fxWide(pair) }));
-      const shape = (pair, base) => ({
-        bar: { 'attr:x': fxX(pair.lo), 'attr:width': round3(fxX(pair.hi) - fxX(pair.lo)) },
-        point: { 'attr:cx': fxX(pair.d) },
-        joint: { 'attr:x1': fxX(pair.wide.lo), 'attr:x2': fxX(pair.wide.hi) },
-        lo: { x: round3(fxX(pair.wide.lo) - fxX(base.lo)) },
-        hi: { x: round3(fxX(pair.wide.hi) - fxX(base.hi)) },
-      });
-      const between = (from, to) => Object.fromEntries(Object.keys(from).map((name) => [name, [from[name], to[name]]]));
-      PAIRS.forEach((pair, i) => {
-        const row = ctx.q(`[data-pair="${i}"]`);
-        const at = FX.barAt + i * FX.perBar;
-        const wide = own[i].wide;
-        const widen = { at: widenAt, dur: dur.move, ease: 'inOut' };
-        const parts = {
-          bar: row.querySelector('.p3-fx__bar'), point: row.querySelector('.p3-fx__point'), joint: row.querySelector('.p3-fx__joint'),
-          lo: row.querySelector('[data-end="lo"]'), hi: row.querySelector('[data-end="hi"]'),
-        };
-        diff.tween(parts.bar, { opacity: [0, 1], 'attr:x': [fxX(pair.d), fxX(pair.lo)], 'attr:width': [0, round3(fxX(pair.hi) - fxX(pair.lo))] }, { at, dur: dur.enter });
-        diff.tween(parts.point, { opacity: [0, 1] }, { at, dur: dur.micro });
-        diff.tween([parts.joint, parts.lo, parts.hi], { opacity: [0, 1] }, { at: widenAt, dur: dur.micro });
-        diff.tween(parts.joint, { 'attr:x1': [fxX(pair.lo), fxX(wide.lo)], 'attr:x2': [fxX(pair.hi), fxX(wide.hi)] }, widen);
-        diff.tween(parts.lo, { x: [0, round3(fxX(wide.lo) - fxX(pair.lo))] }, widen);
-        diff.tween(parts.hi, { x: [0, round3(fxX(wide.hi) - fxX(pair.hi))] }, widen);
-        // Click 2 moves the row to its interval against the held-out label, click 3 back.
-        const there = shape(HELD[i], pair);
-        const here = shape(own[i], pair);
-        const move = { at: FX.moveAt, dur: dur.move, ease: 'inOut' };
-        Object.keys(parts).forEach((name) => {
-          held.tween(parts[name], between(here[name], there[name]), move);
-          power.tween(parts[name], between(there[name], here[name]), move);
-        });
-      });
-      diff.tween('[data-key="alone"]', { opacity: [0, 1] }, { at: FX.barAt });
-      diff.tween('[data-key="joint"]', { opacity: [0, 1] }, { at: widenAt });
-      diff.tween('[data-count="own"]', POP, { at: widenAt + dur.move + 300, dur: dur.enter, ease: 'back' });
-      diff.hold(300);
+      // Click 1: the fifteen pairs of the six, an arc each, and the count against the
+      // trace's own ending: none.
+      const own = ctx.step({ label: 'label 1: none of fifteen differences resolved' });
+      note(own, 'joint', { leaves: 'aside' });
+      own.tween('.p3-rd__node', { opacity: [0, 1] }, { at: 200, dur: dur.micro });
+      own.tween('.p3-rd__pairs .p3-rd__arc', { opacity: [0, 1] }, { at: 300, stagger: 60, dur: dur.micro });
+      own.show('.p3-rs > .p3-rs__what', { at: 300 + PAIRS.length * 60, rise: 0 });
+      land(own, 'own', 300 + PAIRS.length * 60 + 900);
+      own.hold(300);
 
-      // Click 2: the other label. The rows step back, take the amber of that label's chip
-      // and move to their intervals against it; the bar of a pair alone stays behind its
-      // joint line, which is what the count reads. Then the count, and a mark on the four
-      // rows of Qwen3-8B whose joint interval excludes zero. The first count steps well
-      // back: the chip at full strength is the label of the bars.
-      const stepBack = { at: FX.moveAt - dur.micro, dur: dur.micro };
-      const comeBack = { at: FX.moveAt + dur.micro, dur: dur.enter };
+      // Click 2: the other label, in the amber of its chip: four of the fifteen, and their
+      // four arcs.
+      const held = ctx.step({ label: 'label 2: four of fifteen' });
       note(held, 'held', { leaves: 'joint' });
-      held.tween('[data-count="own"]', { opacity: [1, FX.otherCount] }, { at: 200 });
-      held.tween('.p3-fx__bars', { opacity: [1, 0.2] }, stepBack);
-      held.cls('.p3-fx__bars', 'is-held', { at: FX.moveAt });
-      held.tween('.p3-fx__bars', { opacity: [0.2, 1] }, comeBack);
-      held.tween('.p3-fx__bar', { opacity: [1, 0.5] }, stepBack);
-      held.tween('[data-count="held"]', POP, { at: FX.moveAt + dur.move - 200, dur: dur.enter, ease: 'back' });
-      held.tween('.p3-fx__held', { opacity: [0, 1] }, { at: FX.marksAt, stagger: FX.perMark, dur: dur.micro });
+      held.tween('.p3-rd__arc.is-held', { opacity: [0, 1] }, { at: 700, stagger: 150 });
+      land(held, 'held', 800);
       held.hold(300);
 
-      // Click 3: what the design could detect, on the label of the title: the rows move
-      // back to their intervals against the trace's own ending, the marks go, the first
-      // count comes forward and the other label's count leaves, so that one chip is on
-      // screen, the label of the bars. Then the two lengths on the scale of the bars, and the
-      // questions there were against the questions it would take; the second half of the
-      // title arrives with the tiles, and under it the limit in full.
-      note(power, 'power', { leaves: 'held' });
-      power.tween('.p3-fx__held', { opacity: [1, 0] }, { dur: dur.micro });
-      power.tween('[data-count="held"]', { opacity: [1, 0] }, { at: 200 });
-      power.tween('[data-count="own"]', { opacity: [FX.otherCount, 1] }, { at: 200 });
-      power.tween('.p3-fx__bars', { opacity: [1, 0.2] }, stepBack);
-      power.cls('.p3-fx__bars', 'is-held', { at: FX.moveAt, on: false });
-      power.tween('.p3-fx__bars', { opacity: [0.2, 1] }, comeBack);
-      power.tween('.p3-fx__bar', { opacity: [0.5, 1] }, comeBack);
-      ctx.qa('.p3-fx__ruler').forEach((ruler, i) => {
-        const bar = ruler.querySelector('rect');
-        power.tween(ruler, { opacity: [0, 1] }, { at: FX.rulerAt + i * FX.perRuler, dur: dur.micro });
-        power.tween(bar, { 'attr:width': [0, Number(bar.getAttribute('width'))] }, { at: FX.rulerAt + i * FX.perRuler, dur: dur.move });
+      // Click 3: the control for prefix length, a row of its own: the four are none.
+      const length = ctx.step({ label: 'a control for prefix length moves the count too' });
+      note(length, 'length', { leaves: 'held' });
+      land(length, 'matched', 800);
+      length.hold(300);
+
+      // Click 4: what the design could detect, on each label, and the questions there were
+      // against the questions it would take; the second half of the title arrives with the
+      // tiles, under the caption that says what "not resolved" means.
+      const power = ctx.step({ label: 'what the design could detect' });
+      note(power, 'power', { leaves: 'length' });
+      power.show('.p3-rs__detect > .p3-rs__what', { at: NEED_AT.rulerAt - 200, rise: 0 });
+      ctx.qa('.p3-rs__bar').forEach((bar, i) => {
+        power.tween(bar, { opacity: [0, 1] }, { at: NEED_AT.rulerAt + i * 500, dur: dur.micro });
+        power.tween(bar.querySelector('i'), { '--p3-grow': ['0%', '100%'] }, { at: NEED_AT.rulerAt + i * 500, dur: dur.move });
       });
-      power.show('.p3-need__head', { at: FX.tilesAt - 300, rise: 0 });
-      power.show('[data-stack="had"] p', { at: FX.tilesAt, rise: 0 });
-      power.tween('[data-stack="had"] .p3-need__tiles i', { opacity: [0, 1] }, { at: FX.tilesAt, stagger: FX.perTile, dur: dur.micro });
+      power.show('[data-stack="had"] p', { at: NEED_AT.tilesAt, rise: 0 });
+      power.tween('[data-stack="had"] .p3-need__tiles i', { opacity: [0, 1] }, { at: NEED_AT.tilesAt, stagger: NEED_AT.perTile, dur: dur.micro });
       power.show('[data-stack="needed"] p', { at: NEED_AT.needed, rise: 0 });
-      power.tween('[data-stack="needed"] .p3-need__tiles i', { opacity: [0, 1] }, { at: NEED_AT.needed, stagger: FX.perTile, dur: dur.micro });
-      kit.countTo(power, '.p3-need__count', 'test.questions_needed', { from: NEED.had, at: NEED_AT.needed, dur: NEED.needed * FX.perTile, ease: 'linear' });
+      power.tween('[data-stack="needed"] .p3-need__tiles i', { opacity: [0, 1] }, { at: NEED_AT.needed, stagger: NEED_AT.perTile, dur: dur.micro });
+      kit.countTo(power, '.p3-need__count', 'test.questions_needed', { from: NEED.had, at: NEED_AT.needed, dur: NEED.needed * NEED_AT.perTile, ease: 'linear' });
       revealTitle(ctx, power, NEED_AT.told);
-      power.show('.p3-res__limit', { at: NEED_AT.told + 500, rise: 0 });
       power.hold(300);
 
-      // Click 4: the third recommendation; the limit stays under it. The picture steps back
-      // but for the key of the two marks: it says what the recommendation's "jointly" means.
-      conclude(ctx.step({ label: 'recommendation 3' }), {
-        leaves: 'power', limit: false,
-        dims: '.p3-rd, .p3-resolve__counts, .p3-fx__frame, .p3-fx__bars, .p3-fx__ruler, .p3-need',
-      });
+      // Click 5: the last recommendation.
+      conclude(ctx.step({ label: 'recommendation 4 of 4' }), { leaves: 'power', limit: false });
     },
   });
 
   // ---------------------------------------------------------------- slide 13: conclusion and open question
-  // The paper's conclusion in the talk's words ('close.levels'): it does not say that
-  // scoring reorders the readers. Under it the scope line of the motivation slide; then the
-  // three recommendations as slides 10 to 12 ended on them, and the limits as one quiet row;
-  // both stay as they are to the last state, the recommendations at full strength: they are
-  // what the room takes home. Then the open question, with the pilot's count as a strip in
-  // which one cell stands for one trace that followed the hint. The pilot's line first says
-  // what the question has to do with evaluating a monitor (it takes traces that follow a
-  // hint and never mention it), then that the pilot found few, and in brackets that it is
-  // not the main task ('p3.pilot_other'): another model, QwQ-32B, and another hint, in the
-  // question's metadata ('p3.pilot_hint'). Without the two "another", its 37 of 1,120 were
-  // read against the main task's traces, of which nearly all restate the hint (slide 4),
-  // and "open reasoning model" are slide 4's words for the main task's eight models.
-  // Between the recommendations and the limits stands one sentence on published work: we
-  // re-scored nine published conclusions from three papers by rules fixed in advance, the
-  // rules rewrite one of them, and we judge that rewrite not credible ('p3.rescored' and the
-  // facts beside it; the three papers are in the slide's cite). It arrives on click 1, after
-  // the recommendations and ahead of the limits, in text color: it is a result, where the
-  // limits are quiet.
+  // The paper's conclusion in the talk's words, one clause for each result
+  // ('close.conditions', 'close.timing', 'close.power'). Under it the scope line of the
+  // motivation slide; then the four recommendations, the first as slide 7 ended on it and
+  // the others as slides 10 to 12 did, numbered under one tag, and the limits as quiet rows, the last of them a
+  // hypothesis the paper states and does not test ('limit.hint_not_decision'). All of it
+  // stays to the last state, the recommendations at full strength: they are what the room
+  // takes home. Then the open question, alone: the paper's pilot count behind it ('open.silent'
+  // of 'open.followed' traces, another model and another hint than the main task's) is not
+  // on the slide, which closes on the question and not on a new setup with new numbers.
   // The statement moves once. From the entrance it stands where the recommendations and the
   // limits will leave it, a little above the middle of the stage, so that click 1 adds them
   // under it and moves nothing; click 2 lifts all of it to make room for the open question.
   const CLOSE = Object.freeze({
-    // 'close.levels', in the talk's words. The paper's "levels" are a monitor's number
-    // (result 1) and the reference it is held against (result 2: the reference rises and
-    // the reader's own AUROC does not move), so the statement names both.
-    says: 'On this task, scoring choices move a prefix monitor’s number or its reference as much as monitors differ.',
-    // 'task.degenerate', 'scope.exploratory', 'readers.forced_aside' and 'second.limited'.
-    // The last one gives the second task's result with its limit: slide 4 introduces that
-    // task as a limited check, and no slide said what the check found. Four of the six
-    // checks frozen before its traces were downloaded passed ('second.checks',
-    // 'p3.second_frozen'), and that can hardly confirm or refute that the results carry
-    // over ('second.power', in slide 4's words for it). The setup checks the facts it rewords.
+    // The third clause is 'close.power' without the word "power", which no slide has
+    // explained: slide 12 has shown the 20 questions per model we had against the about
+    // 134 it would take.
+    says: 'A resampling ceiling holds only under conditions, ranking is not timing, and we had too few questions to tell our readers apart.',
+    // 'task.degenerate', 'scope.exploratory', 'readers.forced_aside' and 'second.limited'
+    // (slide 4 says what the second task's limit is).
     limits: Object.freeze([
-      'one task with one hint, which nearly every trace restates',
+      'one task, one hint, which nearly every trace restates',
       'most analyses exploratory',
       'three readers set aside post hoc',
-      `second task, a limited check: ${t('second.checks')} checks ${t('p3.second_frozen')} passed; it can hardly confirm or refute that results carry over`,
+      'second task: a limited check',
     ]),
-    // The paper's sentence on the published conclusions it re-scored, in the talk's words
-    // ("Our frozen rules rewrite one of the nine published conclusions we re-scored [three
-    // papers], three with a secondary detector, none a monitor AUROC claim, and we judge
-    // that rewrite not credible", paper/tmlr/sections/01_intro.tex:35-37). "Fixed in
-    // advance" stands for "frozen", as in the last limit and on slide 12. That three of the
-    // nine would be rewritten with a secondary detector and that none of the nine is a
-    // monitor AUROC claim are not on the slide: with them the sentence takes a second line
-    // in the wider faces, for which the last state has no room. The setup checks the facts
-    // the sentence rewords.
-    rescored: `We re-scored ${t('p3.rescored')} published conclusions from ${t('p3.rescored_papers')} papers by rules fixed in advance: they rewrite only ${t('p3.rescored_rewritten')}, and we judge that rewrite not credible.`,
+    // 'limit.hint_not_decision': the paper's "the decision" is the model's, to follow the
+    // hint or not, and the slide says so.
+    hypothesis: 'An untested hypothesis, not a finding: monitors may read the hint, not what the model decides.',
     // 'open.question', in plain words.
     ask: 'Is influence that the reasoning never mentions common enough to evaluate monitors on?',
-    cols: 140, seed: 37,
-    // The three papers whose conclusions were re-scored stand in the footer behind the
-    // paper, by their short names alone: the sentence on the slide says what they are.
-    cite: Object.freeze([{ src: 'paper', where: 'Sec. 1, 6.2, 8, 9; App. G, I' }, ...Object.keys(RESCORED).map((src) => ({ src, where: '' }))]),
+    cite: Object.freeze([{ src: 'paper', where: 'Sec. 1, 10, 11' }]),
     // The row of the course block over the stage, in stage pixels (parts/part3.css).
     kickerRow: 40,
-    // Click 1, in ms: the recommendations one after the other, then the sentence on the
-    // published conclusions (`rescoredAfter` the last of them), then the limits.
-    recAt: 700, perRec: 450, rescoredAfter: 300, limitsAfter: 600, askAt: 700, perCell: 30,
+    // Click 1, in ms: the recommendations one after the other, then the limits.
+    recAt: 700, perRec: 450, limitsAfter: 500, askAt: 700,
   });
 
   Deck.register({
@@ -1479,17 +1177,17 @@
             <h2 class="p3-close__say">${CLOSE.says}</h2>
             ${kit.scope({ size: 2 })}
           </div>
-          <div class="p3-close__recs">${CHOICES.map((_, i) => kit.rec(i + 1)).join('')}</div>
+          <div class="p3-close__recs"><span class="p3-close__tag">Recommendations</span>${RECS.map((_, i) => kit.rec(i + 1, { short: true })).join('')}</div>
           <div class="p3-close__limits">
-            <p class="p3-close__rescored">${CLOSE.rescored}</p>
             <span class="p3-close__tag">Limits</span>
-            ${CLOSE.limits.map((limit) => `<span class="p3-close__limit">${limit}</span>`).join('')}
+            <div class="p3-close__rows">
+              ${CLOSE.limits.map((limit) => `<span class="p3-close__limit">${limit}</span>`).join('')}
+              <span class="p3-close__limit p3-close__guess">${CLOSE.hypothesis}</span>
+            </div>
           </div>
         </div>
         <div class="p3-close__open">
           <p class="p3-close__ask"><span class="p3-close__tag">Open question</span><span class="p3-close__asks">${CLOSE.ask}</span></p>
-          <p class="p3-close__pilot">That takes traces that follow a hint and never mention it. A pilot found few: ${t('open.silent')} of ${t('open.followed')} that followed (another model, ${t('open.model')}; another hint, in the question’s metadata).</p>
-          <div class="p3-close__strip">${kit.grid({ key: 'pilot', n: v('open.followed'), cols: CLOSE.cols, tone: 'hidden' })}</div>
         </div>
       </div>`,
     setup: (ctx) => {
@@ -1502,28 +1200,18 @@
       const middle = (el) => { const r = el.getBoundingClientRect(); return (r.top + r.height / 2) * perPixel; };
       const center = middle(ctx.stage) + CLOSE.kickerRow / 2;
       const group = Math.round(center - middle(ctx.q('.p3-close__body')));
-      const silent = util.shuffled(ctx.qa('.p3-close__strip [data-cell]'), CLOSE.seed).slice(0, fact('open.silent').value);
-      // The pilot's line says "another model" and "another hint" ('p3.pilot_other'): its
-      // model may not be one of the main task's, nor its hint the main task's.
-      if (fact('task.model_names').text.includes(fact('open.model').text)) throw new Error('the pilot of slide 13 no longer runs on another model than the main task');
-      if (/metadata/i.test(fact('task.hint_template').text) || !/metadata/i.test(fact('p3.pilot_hint').text)) throw new Error('the pilot of slide 13 no longer uses another hint than the main task');
-      // The last limit rewords three facts of the second task: the paper's "limited check",
-      // its "4 of 6" and "almost no power to confirm or refute transfer".
-      if (!/limited check/.test(fact('second.limited').text) || fact('second.checks').text !== `${fact('second.checks').value} of 6` || !/almost no power to confirm or refute transfer/.test(fact('second.power').text)) {
-        throw new Error('second.limited, second.checks or second.power no longer says what the last limit of slide 13 rewords');
-      }
-      // The sentence on the re-scored conclusions rewords the paper's: the nine are those of
-      // the three papers in the slide's cite, the rules were frozen in advance, one of the
-      // nine is rewritten (fewer than with the secondary detector) and that rewrite is
-      // judged not credible; and none of the nine is a monitor AUROC claim, so the sentence
-      // may not call them monitors' scores.
-      const rescored = fact('p3.rescored_papers').by;
-      const cited = CLOSE.cite.map((c) => c.src);
-      if (Object.values(rescored).reduce((sum, n) => sum + n, 0) !== fact('p3.rescored').value || Object.keys(rescored).length !== fact('p3.rescored_papers').value) throw new Error('the re-scored conclusions of slide 13 are no longer the nine of three papers');
-      if (Object.keys(rescored).some((src) => !cited.includes(src))) throw new Error('slide 13 no longer cites each paper whose conclusions were re-scored');
-      if (!/frozen in advance/.test(fact('p3.rescored_frozen').text) || !/not credible/.test(fact('p3.rescored_judged').text) || !/^none a monitor AUROC claim$/.test(fact('p3.rescored_no_auroc').text)) throw new Error('p3.rescored_frozen, p3.rescored_judged or p3.rescored_no_auroc no longer says what the sentence on re-scored conclusions of slide 13 rewords');
-      if (fact('p3.rescored_rewritten').value !== 1 || fact('p3.rescored_rewritten').value >= fact('p3.rescored_second_detector').value || fact('p3.rescored_second_detector').value >= fact('p3.rescored').value) throw new Error('the counts of rewritten conclusions on slide 13 are no longer one of nine, and three with the secondary detector');
-      if (/monitor|AUROC/i.test(CLOSE.rescored)) throw new Error('the sentence on re-scored conclusions of slide 13 speaks of monitors or AUROCs: none of the nine conclusions is a monitor AUROC claim');
+      // The statement rewords the three sentences of the paper's conclusion; its third
+      // clause says "limited by power" as slide 12 showed it: fewer questions per model
+      // than the smallest difference of interest would take.
+      if (!/bounds prefix monitors only under conditions/.test(fact('close.conditions').text) || !/^Ranking is also not timing/.test(fact('close.timing').text) || !/comparisons are limited by power/.test(fact('close.power').text) || !(fact('test.questions_had').value < fact('test.questions_needed_held').value)) throw new Error('the paper’s conclusion no longer says what the statement of slide 13 rewords');
+      // The four recommendations are the paper's four, in its order.
+      if (RECS.length !== 4 || RECS.some((rec, i) => rec.fact !== `rec.${i + 1}`)) throw new Error('the recommendations of slide 13 are no longer the paper’s four, in its order');
+      // The open question is the paper's.
+      if (!/unverbalized influence common enough to evaluate monitors on/.test(fact('open.question').file)) throw new Error('open.question no longer asks what the last line of slide 13 rewords');
+      // The fourth limit is the paper's "limited check".
+      if (!/limited check/.test(fact('second.limited').text)) throw new Error('second.limited no longer says what the fourth limit of slide 13 rewords');
+      // The last one is the paper's hypothesis, and says that it is one.
+      if (!/may read the hint, not the decision/.test(fact('limit.hint_not_decision').text) || !/untested hypothesis, not a finding/.test(fact('limit.hint_not_decision').text)) throw new Error('limit.hint_not_decision no longer says what the last limit of slide 13 rewords');
 
       const enter = ctx.step({ label: 'the conclusion' });
       enter.show('.p3-close__kicker', { at: 100, rise: 0 });
@@ -1531,19 +1219,15 @@
       enter.show('.dk-scope', { at: 1300 });
       enter.hold(300);
 
-      const recs = ctx.step({ label: 'three recommendations, and the limits' });
-      const rescoredAt = CLOSE.recAt + CHOICES.length * CLOSE.perRec + CLOSE.rescoredAfter;
+      const recs = ctx.step({ label: 'four recommendations, and the limits' });
+      recs.show('.p3-close__recs .p3-close__tag', { at: CLOSE.recAt - 300, rise: 0 });
       recs.show('.p3-close__recs .dk-rec', { at: CLOSE.recAt, stagger: CLOSE.perRec });
-      recs.show('.p3-close__rescored', { at: rescoredAt, rise: 0 });
-      recs.show(ctx.qa('.p3-close__limits > :not(.p3-close__rescored)'), { at: rescoredAt + CLOSE.limitsAfter, rise: 0 });
+      recs.show(ctx.qa('.p3-close__limits > *'), { at: CLOSE.recAt + RECS.length * CLOSE.perRec + CLOSE.limitsAfter, rise: 0 });
       recs.hold(300);
 
       const open = ctx.step({ label: 'the open question' });
       open.tween('.p3-close__body', { y: [group, 0] }, { dur: dur.move, ease: 'inOut' });
       open.tween('.p3-close__ask', POP, { at: CLOSE.askAt, dur: dur.enter, ease: 'back' });
-      open.show('.p3-close__pilot', { at: CLOSE.askAt + 800, rise: 0 });
-      open.tween('.p3-close__strip', { opacity: [0, 1] }, { at: CLOSE.askAt + 1200 });
-      open.cls(silent, 'is-on', { at: CLOSE.askAt + 1700, stagger: CLOSE.perCell });
       open.hold(300);
     },
   });

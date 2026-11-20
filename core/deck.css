@@ -38,7 +38,8 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; text-
   list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--sp-12);
   height: calc(var(--lh-1) * 2); overflow: hidden;
 }
-.dk-cue { position: relative; padding-left: var(--sp-8); font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); }
+/* A cue that takes two lines breaks near its middle, so no single word is left on the second. */
+.dk-cue { position: relative; padding-left: var(--sp-8); font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); text-wrap: balance; }
 .dk-cue::before {
   content: ""; position: absolute; left: 0; top: 14px; width: 12px; height: 12px; border-radius: 50%;
   background: var(--c-read);
@@ -139,11 +140,12 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; text-
 .dk-tags__list li { display: contents; }
 .dk-tags__list .dk-figure-tag { justify-self: start; }
 .dk-tags__means { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); }
-/* Under the footer tags, in a row of its own: a tag that stands beside a result and in no
-   footer, as the chip the slides show, with what it means. */
+/* Under the footer tags, a row each: the tags that stand beside a result and in no footer,
+   as the chips the slides show, with what each means. They have a grid of their own, so
+   that the longest chip does not widen the column of the footer tags. */
+.dk-tags__marks { grid-column: 1 / -1; display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: var(--sp-4); row-gap: var(--sp-2); align-items: center; }
 .dk-tags__mark { display: contents; }
 .dk-tags__mark .dk-chip { justify-self: start; line-height: var(--lh-0); white-space: nowrap; }
-.dk-tags__mark .dk-tags__means { grid-column: 2 / -1; }
 
 /* --- text helpers --- */
 .c-read { color: var(--c-read); } .c-hidden { color: var(--c-hidden); } .c-alarm { color: var(--c-alarm); }

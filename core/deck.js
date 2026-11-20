@@ -51,7 +51,10 @@
     return new Error(message);
   };
 
-  const words = (html) => String(html).replace(/<[^>]*>/g, ' ').trim().split(/\s+/).filter(Boolean);
+  // The text of a piece of markup, for a label or a list: a tag stands for a space, but not
+  // before a punctuation mark, so that "hint<em>, and</em>" reads "hint, and".
+  const plain = (html) => String(html).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').replace(/ ([,;:.!?])/g, '$1').trim();
+  const words = (html) => plain(html).split(' ').filter(Boolean);
 
   // What every part gives: `name`, which the kicker reads. The deck gives `authors`, the
   // names the title slide lists with an equal-contribution mark; no part belongs to a name.
@@ -376,7 +379,7 @@
 
   Object.assign(D, {
     STAGE, LIMITS, flags, util, color, figureTags, tagsOf, tagsInUse, tagLegend,
-    configure, addSources, addFacts, fact, register, storyboard, mount, fail, citeText, namedAs,
+    configure, addSources, addFacts, fact, register, storyboard, mount, fail, citeText, namedAs, plain,
   });
   // Live read-only views of the registries (Object.assign would copy a snapshot).
   const expose = (name, get) => Object.defineProperty(D, name, { get, enumerable: true });

@@ -1,12 +1,14 @@
 // Bibliography registry. A slide cites by key: cite: [{ src: 'paper', where: 'Table 2' }].
 // The footer prints `short, where`; the final Sources slide prints `authors. title. full ?? ref`.
-// Shared file. `paper` is this project's own paper: its text is final-project/paper/tmlr/
-// (sections/*.tex, appendix/*.tex; table and figure numbers as in paper.pdf there), and
-// SPEC.md section 7 has the audit of every number against it. It names no author: the
-// authors' names stand on the title slide alone. `talk1` is the special topic talk that this
-// talk's second slide takes up (the deck of the sibling worktree, special-topic/). Every other
-// entry is copied from final-project/paper/tmlr/references.bib (title, authors and arXiv id
-// as printed there, read on 2026-11-17); none of those papers was opened for this deck.
+// Shared file. `paper` is this project's own paper, read in its v2 draft: the PDF
+// sources/paper-v2-draft.pdf (main text and references; sources/README.md has its digest),
+// whose section, table and figure numbers the cites use. shared/facts.js names the page and
+// the words behind every fact, and SPEC.md section 7.13 records the change of source. It
+// names no author: the authors' names stand on the title slide alone. `talk1` is the special
+// topic talk that this talk's second slide takes up (the deck of the sibling worktree,
+// special-topic/). Every other entry is a paper of that PDF's reference list (pages 17 to
+// 21: title, authors and arXiv id as printed there, compared on 2026-11-19); none of those
+// papers was opened for this deck.
 // A part that needs another source registers it in its own file with Deck.addSources.
 Deck.addSources({
   paper: {
@@ -34,8 +36,7 @@ Deck.addSources({
     ref: 'arXiv:2610.24048',
   },
   // The paper's reference list has three entries of this author and year and prints this
-  // one as "Young (2026c)" (read in paper.pdf on 2026-11-18); Part 3 registers the one it
-  // prints as "Young (2026b)" (young2026divergence, parts/part3.js).
+  // one as "Young (2026c)" (page 21 of the PDF).
   young2026lie: {
     short: 'Young 2026c',
     authors: 'Young',

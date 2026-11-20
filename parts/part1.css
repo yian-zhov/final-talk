@@ -30,23 +30,20 @@
 /* ---------- slide 2: the bridge from the earlier talk, then one trace drawn in time ---------- */
 .p1-pre { position: absolute; inset: 0; }
 .p1-pre b { font-weight: 600; color: var(--c-read); }
-/* The bridge: the earlier talk's third recommendation as its closing slide showed it (the
-   tag, then the line, in that talk's violet), set off by a rule as a quotation. Under the
-   block, without the rule, what monitorability is, in this talk's words. */
+/* The bridge: the earlier talk's third recommendation, set off by a rule as a quotation.
+   It is that talk's and not one of this talk's four, so it has neither their numbered tag
+   nor their violet: a gray rule, the line in the color of plain text. Under the block,
+   without the rule, what monitorability is, in this talk's words. */
 .p1-pre__bridge {
-  position: absolute; left: 0; top: 80px; display: grid; row-gap: var(--sp-2);
-  padding-left: var(--sp-8); border-left: var(--stroke-2) solid var(--c-open);
+  position: absolute; left: 0; top: 56px; display: grid; row-gap: var(--sp-2);
+  padding-left: var(--sp-8); border-left: var(--stroke-2) solid var(--c-faint);
 }
 .p1-pre__from { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); }
-.p1-pre__tag {
-  margin-top: var(--sp-2); font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em;
-  text-transform: uppercase; color: var(--c-open);
-}
-.p1-pre__rec { font: 600 var(--fs-4)/var(--lh-4) var(--font-sans); color: var(--c-open); white-space: nowrap; }
+.p1-pre__rec { font: 600 var(--fs-4)/var(--lh-4) var(--font-sans); color: var(--c-text); white-space: nowrap; }
 /* "Track monitorability" is underlined from left to right (--p1-under, 0% to 100%) as the
    line for today arrives: tracking is what takes a score. */
 .p1-pre__track { background: linear-gradient(var(--c-read), var(--c-read)) no-repeat 0 100% / var(--p1-under, 0%) var(--stroke-2); }
-.p1-pre__gloss { position: absolute; left: 0; top: 272px; font: 400 var(--fs-2)/var(--lh-2) var(--font-sans); color: var(--c-dim); white-space: nowrap; }
+.p1-pre__gloss { position: absolute; left: 0; top: 200px; font: 400 var(--fs-2)/var(--lh-2) var(--font-sans); color: var(--c-dim); white-space: nowrap; }
 .p1-pre__gloss b { color: var(--c-text); }
 /* The line for today: under the bridge at first, the head of the stage from click 1 on. */
 .p1-pre__today { position: absolute; left: 0; top: 0; font: 400 var(--fs-2)/var(--lh-2) var(--font-sans); color: var(--c-text); white-space: nowrap; }
@@ -54,15 +51,16 @@
 .p1-pre__today em { font-style: normal; font-weight: 600; color: var(--c-read); }
 /* At the foot of the stage, while the bridge stands: what the tags in the footers mean, once
    and in a few words (the list is the sources slide's, core/deck.css), and under them the
-   tag that stands beside a result. One grid for all of it: the head, then four columns as
-   wide as their content, so a tag and its meaning stay together; the list and the row
-   under it give their cells to that grid, so the third row starts where the two above do. */
-.p1-pre__tags { position: absolute; left: 0; bottom: var(--sp-6); display: grid; grid-template-columns: repeat(5, max-content); column-gap: var(--sp-4); row-gap: var(--sp-2); align-items: center; }
+   tags that stand beside a result. One grid for the footer tags: the head, then four
+   columns as wide as their content, so a tag and its meaning stay together. The tags
+   beside a result have a grid of their own under it (a chip, then what it means), which
+   starts where the footer tags do: the longest chip would widen the footer tags' column. */
+.p1-pre__tags { position: absolute; left: 0; bottom: 0; display: grid; grid-template-columns: repeat(5, max-content); column-gap: var(--sp-4); row-gap: var(--sp-2); align-items: center; }
 .p1-pre__tags-head { grid-column: 1; grid-row: 1 / span 3; align-self: start; margin-right: var(--sp-4); font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-faint); white-space: nowrap; }
 .p1-pre__tags .dk-tags__list, .p1-pre__mark { display: contents; }
 .p1-pre__tags .dk-tags__means { margin-right: var(--sp-8); white-space: nowrap; }
+.p1-pre__marks { grid-column: 2 / -1; display: grid; grid-template-columns: max-content max-content; column-gap: var(--sp-4); row-gap: var(--sp-2); align-items: center; }
 .p1-pre__mark .dk-chip { justify-self: start; line-height: var(--lh-0); white-space: nowrap; }
-.p1-pre__mark .dk-tags__means { grid-column: 3 / -1; }
 
 /* The run: one trace from left to right. Everything in it is placed in stage pixels
    (parts/part1.js, PRE): the trace's definition over a brace, the row of pieces (the cut
@@ -95,7 +93,7 @@
   top: 252px; font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .04em; color: var(--c-hidden); white-space: nowrap;
 }
 .p1-pre__run > .p1-pre__prefix { top: 300px; text-align: right; }
-.p1-pre__run > .p1-pre__rest { top: 300px; color: var(--c-hidden); white-space: nowrap; }
+.p1-pre__run > .p1-pre__rest { top: 300px; color: var(--c-hidden); white-space: nowrap; transform-origin: 0 50%; }
 .p1-pre__run > .p1-pre__monitor { top: 372px; text-align: right; color: var(--c-text); }
 .p1-pre__score { position: absolute; top: 376px; display: grid; grid-template-columns: auto 400px auto; align-items: center; column-gap: var(--sp-3); }
 .p1-pre__score > span { font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); color: var(--c-dim); }
@@ -104,14 +102,14 @@
 .p1-pre__score .dk-meter__track { display: block; height: 32px; }
 .p1-pre__run > .p1-pre__between { top: 424px; white-space: nowrap; }
 
-/* ---------- slide 3: six scores, the panel of three dials, and the scope of the project ---------- */
+/* ---------- slide 3: six scores, the ceiling they are held against, three questions, and the scope ---------- */
 .p1-stk { position: absolute; inset: 0; }
 .p1-stk__lead { position: absolute; left: 0; top: 0; font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); white-space: nowrap; }
 /* The whole scale, from guessing to perfect. Everything on it is placed in stage pixels
    (parts/part1.js, AXIS): the line, its ticks and ends, the stretch that the magnifier
-   shows, the six scores, and, once the first dial has turned, two marks as long as the
-   ranges they stand for: an outline where the six stood (six dots on one spot of the scale
-   cannot be counted) and a filled bar where they stand pooled. */
+   shows, the six scores and, once the magnifier has closed, an outline as long as their
+   range (six dots on one spot of the scale cannot be counted) and the ceiling, a bar across
+   the line in the amber of what is built from continuations. */
 .p1-stk__axis { position: absolute; left: 0; top: 48px; width: 1728px; height: 80px; }
 .p1-stk__line { position: absolute; height: var(--stroke-1); margin-top: -1px; background: var(--c-faint); }
 .p1-stk__tick { position: absolute; width: var(--stroke-1); height: 16px; margin: -8px 0 0 -1px; background: var(--c-faint); }
@@ -122,24 +120,24 @@
 .p1-stk__window {
   position: absolute; height: 40px; margin-top: -20px; border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-1);
 }
-.p1-stk__dot, .p1-stk__ghost { position: absolute; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; }
+.p1-stk__dot { position: absolute; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; }
 .p1-stk__dot { background: var(--c-read); box-shadow: 0 0 0 var(--stroke-1) var(--c-bg); }
-.p1-stk__ghost { border: var(--stroke-1) solid var(--c-faint); }
-.p1-stk__dot--zoom, .p1-stk__ghost--zoom { width: 28px; height: 28px; margin: -14px 0 0 -14px; }
+.p1-stk__dot--zoom { width: 28px; height: 28px; margin: -14px 0 0 -14px; }
 .p1-stk__dot--zoom { box-shadow: 0 0 0 var(--stroke-1) var(--c-surface); }
-.p1-stk__stood, .p1-stk__moved { position: absolute; height: 20px; margin-top: -10px; border-radius: 999px; }
-.p1-stk__stood { border: var(--stroke-1) solid var(--c-faint); background: var(--c-bg); }
-.p1-stk__moved { background: var(--c-read); }
-/* The range of the six, once the magnifier has closed: under the scale, ending where the
-   outline ends, so that it stands between the ring's key and the outline and not under the bar. */
-.p1-stk__kept {
+.p1-stk__stood { position: absolute; height: 20px; margin-top: -10px; border-radius: 999px; }
+.p1-stk__stood { border: var(--stroke-1) solid var(--c-read); background: var(--c-bg); }
+.p1-stk__ceiling { position: absolute; width: 8px; height: 48px; margin: -24px 0 0 -4px; border-radius: 4px; background: var(--c-hidden); }
+/* Under the scale, on one row: the range of the six, ending where their outline ends, and
+   the ceiling's value, starting to the right of its bar. */
+.p1-stk__kept, .p1-stk__top {
   position: absolute; margin-top: var(--sp-3);
-  font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); color: var(--c-read); white-space: nowrap;
+  font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); white-space: nowrap;
 }
+.p1-stk__kept { color: var(--c-read); }
+.p1-stk__top { color: var(--c-hidden); }
 /* The magnifier: two lines fan out from the stretch on the scale to a strip that shows it
-   enlarged; in the strip the six scores, a brace over them and their range, a scale of its
-   own (a line at every 0.01, the first and the last numbered under the dots) and, from the
-   first dial's turn on, a key at the top right for the rings and the dots. */
+   enlarged; in the strip the six scores, a brace over them and their range, and a scale of
+   its own (a line at every 0.01, the first and the last numbered under the dots). */
 .p1-stk__fan { position: absolute; left: 0; top: 100px; display: block; fill: none; stroke: var(--c-line); stroke-width: 2; }
 .p1-stk__zoom {
   position: absolute; left: 0; top: 144px; width: 1728px; height: 216px;
@@ -158,50 +156,36 @@
   position: absolute; top: 62px; height: 12px; border: var(--stroke-1) solid var(--c-read); border-bottom: 0;
   border-radius: var(--radius-1) var(--radius-1) 0 0;
 }
-/* The key: two entries of the slide's own, over the strip's top right corner while the
-   strip is open and on the row under the scale once it has closed (parts/part1.js, KEY). */
-.p1-stk__key {
-  position: absolute; display: flex; align-items: center; column-gap: var(--sp-2);
-  font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); white-space: nowrap;
-}
-.p1-stk__key i { flex: none; width: 20px; height: 20px; border-radius: 50%; }
-.p1-stk__key[data-mark="ring"] i { border: var(--stroke-1) solid var(--c-faint); }
-.p1-stk__key[data-mark="dot"] i { background: var(--c-read); }
 .p1-stk__rail { position: absolute; left: var(--sp-6); right: var(--sp-6); height: var(--stroke-1); margin-top: -1px; background: var(--c-line); }
-/* Under the strip: the question the six scores raise, large, until the panel takes its
-   place (the cue of that click says what the panel is). */
-.p1-stk__ask {
-  position: absolute; left: 0; right: 0; top: 432px; text-align: center;
+/* Where the strip stood: what a ceiling is and how recent work gets one, then, large, the
+   reading it invites, until the panel of questions takes that line's place. */
+.p1-stk__ceil { position: absolute; left: 0; right: 0; top: 156px; display: grid; row-gap: var(--sp-2); }
+.p1-stk__ceil p { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); }
+.p1-stk__ceil b { font-weight: 600; color: var(--c-hidden); }
+.p1-stk__ceil .p1-stk__ask {
+  margin-top: var(--sp-12); text-align: center;
   font: 600 var(--fs-4)/var(--lh-4) var(--font-serif); color: var(--c-text);
 }
-/* The panel: three dials, each with the question it stands for, and under the panel what
-   the three have in common. */
-.p1-stk__settings { position: absolute; left: 0; right: 0; top: 388px; }
+/* The panel: the three questions, each behind its number in a ring, under two heads: the
+   two that the ceiling raises (the title's two), and, set off by a rule, what they mean for
+   comparing monitors. */
+.p1-stk__settings { position: absolute; left: 0; right: 0; top: 372px; }
 .p1-stk__panel {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--sp-8);
   padding: var(--sp-4) var(--sp-6); border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-2);
   background: var(--c-surface);
 }
-.p1-stk__choice { display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: var(--sp-4); align-items: center; min-height: 120px; }
-.p1-stk__dial { grid-area: 1 / 1; }
-.p1-stk__dial { position: relative; width: 96px; height: 96px; }
-.p1-stk__ticks { position: absolute; inset: 0; display: block; stroke: var(--c-faint); stroke-width: 2; stroke-linecap: round; }
+.p1-stk__group { padding-bottom: var(--sp-1); font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-dim); white-space: nowrap; }
+.p1-stk__panel [data-group="then"] { margin-left: calc(-1 * var(--sp-4)); padding-left: var(--sp-4); border-left: var(--stroke-1) solid var(--c-line); }
+.p1-stk__choice { display: grid; grid-template-columns: 64px minmax(0, 1fr); column-gap: var(--sp-4); align-items: center; min-height: 104px; }
 .p1-stk__knob {
-  position: absolute; inset: 16px; border: var(--stroke-1) solid var(--c-faint); border-radius: 50%;
-  background: var(--c-surface-2); color: var(--c-dim);
-}
-.p1-stk__hand { position: absolute; inset: 0; }
-.p1-stk__hand::before {
-  content: ""; position: absolute; left: 50%; top: 3px; width: 4px; height: 14px; margin-left: -2px; border-radius: 2px;
-  background: currentColor;
+  position: relative; width: 64px; height: 64px; border: var(--stroke-1) solid var(--c-faint); border-radius: 50%;
+  background: var(--c-surface-2);
 }
 .p1-stk__num { position: absolute; inset: 0; display: grid; place-items: center; font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); color: var(--c-text); }
-.p1-stk__dial.p1-is-set .p1-stk__knob { border-color: var(--c-read); color: var(--c-read); }
-.p1-stk__dial.p1-is-named .p1-stk__knob { border-color: var(--c-text); }
-.p1-stk__dial.p1-is-set.p1-is-named .p1-stk__knob { border-color: var(--c-read); }
-/* A dial's name: its place stays empty until the click that names the dials. */
-.p1-stk__name { grid-area: 1 / 2; font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); }
-.p1-stk__each { margin-top: var(--sp-2); font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); }
+.p1-stk__knob.p1-is-named { border-color: var(--c-open); }
+/* A question's words: their place stays empty until the click that asks the three. */
+.p1-stk__name { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); }
 /* In a frame, what the project is about and what it is not (the scope line, core/kit.js,
    scope: the closing slide shows the same frame); under it, its two limits. */
 .p1-stk__aim { position: absolute; left: 0; right: 0; bottom: 0; display: grid; row-gap: var(--sp-2); }
@@ -210,9 +194,9 @@
 /* ---------- slide 4: the task, two runs, the counts, how often the hint is restated, the second task ---------- */
 .p1-data { position: absolute; inset: 0; }
 .p1-data b { font-weight: 600; }
-/* The second half of the title waits for the count of click 3; it lands with a glow
-   (--p1-glow, 1 to 0). Slide 5 holds the second half of its title back the same way. */
-.p1-data__held, .p1-ran__held { text-shadow: 0 0 calc(var(--p1-glow, 0) * 32px) var(--c-read); }
+/* The second half of the title, from its comma on, waits for the count of click 3; it
+   lands with a glow (--p1-glow, 1 to 0). */
+.p1-data__held { text-shadow: 0 0 calc(var(--p1-glow, 0) * 32px) var(--c-read); }
 
 /* The example: the prompt, then two runs of it. The prompt is the question card of the
    earlier talk's hint slide (a name on its top border, the question, the options in one
@@ -228,9 +212,9 @@
   font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-faint);
 }
 /* The hint: an empty slot until it is typed; then a red rule at its left, the red of the
-   answer it names. Two lines in every font set. */
+   answer it names. The template's first sentence: one line in every font set. */
 .p1-data__hint {
-  min-height: calc(var(--lh-1) * 2); padding: 0 var(--sp-4); border: var(--stroke-1) dashed var(--c-line); border-radius: var(--radius-1);
+  min-height: var(--lh-1); padding: var(--sp-1) var(--sp-4); border: var(--stroke-1) dashed var(--c-line); border-radius: var(--radius-1);
   font: 600 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text);
 }
 .p1-data__hint.p1-is-hinted {
@@ -247,9 +231,6 @@
 .p1-data__ring { position: absolute; inset: 0 calc(-1 * var(--sp-3)); border: var(--stroke-1) solid var(--c-alarm); border-radius: 999px; }
 .p1-data__def, .p1-data__runs { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); }
 .p1-data__def b { color: var(--c-alarm); }
-/* Under the two runs: why this task, in one line (its outcome can be checked). */
-.p1-data__why { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); }
-.p1-data__why b { color: var(--c-read); }
 /* Two runs side by side, each as wide as its longest paragraph (--p1-chars), with two
    more outlines behind it: there are many runs. Under each, how it ended. */
 .p1-data__traces { display: grid; grid-template-columns: max-content max-content; justify-content: space-between; padding: var(--sp-1) var(--sp-3) 0 0; }
@@ -291,8 +272,8 @@
 .p1-data__split { position: relative; height: var(--lh-0); margin-top: var(--sp-1); }
 .p1-data__split span { position: absolute; top: 0; font: 600 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--tone); white-space: nowrap; }
 .p1-data__split b { display: inline-block; font-family: var(--font-mono); text-align: right; }
-/* The sample: its bar, to the scale of the bar above, and in two lines how it is drawn
-   (which models and questions; how many traces of each kind per question). */
+/* The sample: its bar, to the scale of the bar above, and in one line what it is (how
+   many traces, of which models). */
 .p1-data__sample { position: absolute; left: 0; top: 496px; display: flex; align-items: flex-start; column-gap: 20px; white-space: nowrap; }
 .p1-data__sub { flex: none; display: flex; column-gap: 2px; height: 24px; margin-top: var(--sp-2); }
 .p1-data__sub i { flex: 1 0 0; border-radius: 2px; background: var(--tone); }
@@ -318,27 +299,22 @@
 /* The first limit of the talk: a caption (core/kit.js, says) with its rule in amber. */
 .p1-data__limit { position: absolute; left: 0; right: 0; top: 328px; }
 .p1-data__limit em { font-style: normal; font-weight: 600; color: var(--c-hidden); }
-/* The second task: one card, three lines; beside them a few game states, each a pair of
-   traces, one honest and one deceptive. */
+/* The second task: one card, one line. */
 .p1-data__second {
-  position: absolute; left: 0; right: 0; top: 432px; display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: var(--sp-8);
-  align-items: center; padding: var(--sp-3) var(--sp-6); border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-2);
+  position: absolute; left: 0; right: 0; top: 432px;
+  padding: var(--sp-3) var(--sp-6); border: var(--stroke-1) solid var(--c-line); border-radius: var(--radius-2);
   background: var(--c-surface);
 }
-.p1-data__states { display: grid; row-gap: var(--sp-2); }
-.p1-data__state { display: flex; column-gap: var(--sp-2); }
-.p1-data__state i { width: 64px; height: 20px; border-radius: 6px; background: var(--tone); }
 .p1-data__second-says p { font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); }
 .p1-data__second-says b { color: var(--c-text); }
 
-/* ---------- slide 5: what we ran: three counts, their bars on one scale, and the dial each one serves ---------- */
+/* ---------- slide 5: what we ran: three counts, their bars on one scale, and what each lets us measure ---------- */
 .p1-ran { position: absolute; inset: 0; }
 .p1-ran b { font-weight: 600; }
 /* A row: at the left what we did and, under it, the count with what is counted (the count
    in the color of its thing: plain for traces, amber for continuations, teal for readers);
-   in the middle its bar and two lines about it; at the right, from the last click on, the
-   dial of the scoring choice that the count serves. Rows are placed in stage pixels
-   (parts/part1.js, RAN). */
+   beside it its bar, a line or two about it and, from the last click on, one more line:
+   what the count lets us measure. Rows are placed in stage pixels (parts/part1.js, RAN). */
 .p1-ran__row { position: absolute; left: 0; right: 0; height: 136px; }
 .p1-ran__verb { position: absolute; left: 0; top: 0; font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-dim); white-space: nowrap; }
 .p1-ran__count { position: absolute; left: 0; top: 40px; display: flex; align-items: baseline; column-gap: var(--sp-4); white-space: nowrap; }
@@ -359,9 +335,9 @@
 /* Under the first bar, each part's count under the place where the part starts. */
 .p1-ran__parts { position: relative; height: var(--lh-1); }
 .p1-ran__parts span { position: absolute; top: 0; }
-/* The dials of slide 3 (.p1-stk__dial), one at the end of each row, and over them what a dial is. */
-.p1-ran__dial { position: absolute; right: 0; top: 20px; }
-.p1-ran__head {
-  position: absolute; right: 0; top: 0; font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .08em;
-  text-transform: uppercase; color: var(--c-faint); white-space: nowrap;
+/* Under a row's lines, from the last click on: what its count lets us measure, behind a
+   small tag in the part's teal. */
+.p1-ran__for { font: 400 var(--fs-1)/var(--lh-1) var(--font-sans); color: var(--c-text); white-space: nowrap; }
+.p1-ran__for span {
+  margin-right: var(--sp-3); font: 600 var(--fs-0)/var(--lh-1) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-read);
 }

@@ -1,8 +1,9 @@
 // Part 1: The problem and the data. Slides 1-5 (Introduction, Motivation, Dataset).
 // SPEC.md section 3 describes each slide; parts/sample.js shows the registration API.
-// All five slides are built. Slides 1 to 4 keep the id, kicker, title, cues, cite and tags of
-// their storyboards, and one step per click with the storyboard's label; slide 5 ("what we
-// ran") was added after the sixth cold read and never had a storyboard.
+// All five slides are built. Slide 3 was rebuilt on 2026-11-19 for the paper's v2 draft (the
+// ceiling and the three questions; SPEC.md section 7.13), and slide 5's last click with it.
+// One word for one thing: a "prefix monitor" is the kind of tool (the title, slides 1 and 2);
+// the nine things we score are "readers", defined on slide 3 and again on slide 6.
 (() => {
   'use strict';
 
@@ -13,76 +14,85 @@
   const t = (key) => Deck.fact(key).text;
   const v = (key) => Deck.fact(key).value;
 
-  // The facts that only this part prints. 'p1.bridge_tag', read at its source on 2026-11-17:
-  // the tag in front of the third recommendation on the special topic deck's closing slide
-  // (keepTag(3) with three entries in KEEP). The others, read in the paper's source text on
-  // 2026-11-18 (`file` is relative to final-project/, as in shared/facts.js): plain words for
-  // what the paper says in its own terms, each with the sentence it stands on.
-  const TEX = 'paper/tmlr/sections';
-  const paper = (where, file, text) => ({ text, src: 'paper', where, file });
+  // The facts that only this part prints: plain words for what the paper says in its own
+  // terms, each with the page and the sentence of the v2 draft it stands on
+  // (sources/paper-v2-draft.pdf; the form of `file` is that of shared/facts.js, and
+  // tools/selftest.mjs looks every quotation up on its page).
+  const PDF = 'sources/paper-v2-draft.pdf';
+  const at = (page, quote) => `p.${page}: "${quote}"`;
+  const paper = (where, cites, text) => ({ text, src: 'paper', where, file: `${PDF}, ${[].concat(cites).join('; ')}` });
   Deck.addFacts({
-    'p1.bridge_tag': {
-      text: 'Recommendation 3 of 3',
-      src: 'talk1', where: 'closing slide, the tag of the third recommendation', file: 'special-topic/parts/part3.js:614-626 (sibling worktree)',
-    },
-    'p1.cot_gloss': paper('Sec. 1', `${TEX}/01_intro.tex:4-5 ("the chain of thought (CoT) of reasoning models ... the text written before an answer")`,
+    'p1.cot_gloss': paper('Sec. 1', at(1, 'Monitoring the chain of thought (CoT) of reasoning models is proposed for safety because the text written before an answer may show how it came about'),
       'the reasoning a model writes before it answers'),
-    'p1.outcome': paper('Sec. 1', `${TEX}/01_intro.tex:15-16 ("a trace follows the hint if it ends at that answer and resists it otherwise")`,
-      'the final answer shows whether a trace followed'),
-    'p1.sampled': paper('Sec. 3.1', `${TEX}/03_tasks.tex:11 ("temperature T = 0.6, top-p 0.95")`,
+    'p1.sampled': paper('Sec. 2.1', at(3, 'T = 0.6, top-p 0.95'),
       'sampling is random'),
-    'p1.benchmark_kind': paper('Sec. 3.1', `${TEX}/03_tasks.tex:7,10 ("A four-option question"; "300 subject-stratified MMLU-Redux 2.0 items")`,
-      'multiple-choice questions across subjects'),
-    'p1.unparsed_out': paper('Sec. 3.1; App. E', `${TEX}/03_tasks.tex:17-18 ("belong to neither group"); paper/tmlr/appendix/e_ceiling.tex:24-25 ("unparsed traces are not in the sample")`,
-      'left out'),
-    'p1.sample_scored': paper('Sec. 3.1; Sec. 4', `${TEX}/03_tasks.tex:21-25 ("On 20 seeded questions per model for the seven models"; "the 1,226 drawn hinted traces"); ${TEX}/04_readers.tex:125 ("against our 20")`,
-      'scored on a sample'),
-    // Read on 2026-11-18, after the second cold read. Why the sample has seven of the eight
-    // models: the paper gives no reason, only that the eighth was dropped before any data.
-    'p1.sample_models': paper('Sec. 3.1', `${TEX}/03_tasks.tex:13-14 ("Qwen3.8-27B was left out of all resampling before any data were read, so most of what follows is on seven models")`,
-      'chosen in advance'),
-    // How 20 questions of 7 models come to 1,226 traces and not to 20 traces each.
-    'p1.sample_draw': {
-      ...paper('Sec. 3.1; Sec. 4', `${TEX}/03_tasks.tex:22-24 ("a seeded draw of at most 6 followed, 6 resisted and 2 unhinted traces per resampled question (747, 479 and 280 traces"; "the 1,226 drawn hinted traces"); ${TEX}/04_readers.tex:146 ("at most 6 followed and 6 resisted traces per question")`,
-        '6'),
-      value: 6,
-    },
-    // What the hint moves the answer against: the same model's runs without the hint.
-    'p1.influence_vs': paper('Sec. 3.1', `${TEX}/03_tasks.tex:14-16 ("the questions the hint influences (hinted share of X at least 0.33 above the unhinted share, which is at most 0.25)")`,
-      'compared with no hint'),
-    // What a state of the second task's corpus is, without the paper's "cells".
-    'p1.second_state': paper('Sec. 3.3', `${TEX}/03_tasks.tex:53-55 ("environments in which deception is never prompted but pays"; "For each state they sample several trajectories and keep one honest and one deceptive")`,
-      'situations where deception pays'),
-    // Read on 2026-11-18, after the fourth cold read: what "exploratory" says of an analysis
-    // (the paper's tier X), for the legend at the entrance of slide 2.
-    'p1.exploratory': paper('Sec. 2; App. A', `${TEX}/02_definitions.tex:39,48-49 ("X, exploratory"; "followed every main-task result and are exploratory"); paper/tmlr/appendix/a_provenance.tex:85-86 ("exploratory: defined after the results had been read")`,
+    'p1.benchmark_kind': paper('Sec. 2.1', [at(3, 'A four-option question'), at(3, '300 subject-stratified MMLU-Redux 2.0 items')],
+      'multiple-choice questions'),
+    // What "exploratory" says of an analysis (the paper's tier X), for the legend at the
+    // entrance of slide 2.
+    'p1.exploratory': paper('Sec. 2.4; Sec. 10', [at(4, 'X, exploratory'), at(4, 'followed every main-task result and are exploratory'), at(15, 'most analyses were specified after the results had been read')],
       'defined after the results were read'),
-    // Slide 5, what we ran. Read on 2026-11-18. The traces without the hint, and all traces:
-    // the paper prints the two counts and no total, so the total is our sum of them (the
-    // slide refuses to draw if the three numbers disagree).
+    // The two other tags that stand beside a result (slide 11), for the same legend: the
+    // paper's tiers F and RS, and what "pre-specified" means in it.
+    'p1.standing_fixed': paper('Sec. 2.4', at(4, 'F, fixed before any monitoring sample was read'),
+      'before any sample was read'),
+    'p1.standing_prespecified': paper('Sec. 2.4', [at(4, 'registered on data already read'), at(4, 'written to version-controlled files before the analysis they govern')],
+      'written before its analysis'),
+    // Slide 3 defines a reader, the word for each of the nine things we score, in the words
+    // of slide 6's title; how its AUROC is computed is left to Part 2.
+    'p1.reader_gloss': paper('Sec. 1', at(2, 'A reader maps a prefix to a continuous score or a binary verdict.'),
+      'anything that turns a prefix into a score'),
+    // What resampling is, in the words slides 5 and 8 use for it.
+    'p1.resampling_gloss': paper('Sec. 1', at(2, 'A continuation is a fresh sample of the model’s reasoning from a prefix to its end, and K is the number drawn per prefix.'),
+      'the model finishes each prefix again'),
+    // Slide 4, which model-question pairs are kept: against the same question without the
+    // hint, the hint has to raise the share of the answer it names by a third of the traces.
+    'p1.influence': paper('Sec. 2.1', at(3, 'hinted share of X at least 0.33 above the unhinted share, which is at most 0.25'),
+      'adding the hint makes the hinted answer much more likely'),
+    // What the traces without the hint are: the share the hint's effect is measured against.
+    'p1.baseline': paper('Sec. 2.1', at(3, 'hinted share of X at least 0.33 above the unhinted share'),
+      'baseline'),
+    // Slide 5, what we ran. The traces without the hint, and all traces: the paper prints
+    // the two counts and no total, so the total is our sum of them (the slide refuses to
+    // draw if the three numbers disagree).
     'p1.unhinted': {
-      ...paper('Sec. 3.1', `${TEX}/03_tasks.tex:16-18 ("20 hinted and 8 unhinted traces each"; "as do 149 of the 5,720 unhinted traces")`,
+      ...paper('Sec. 2.1', [at(3, '(20 hinted and 8 unhinted traces each)'), at(3, 'as do 149 of the 5,720 unhinted traces')],
         '5,720'),
       value: 5720,
     },
     'p1.traces_all': {
-      ...paper('Sec. 3.1', `${TEX}/03_tasks.tex:17-18 (our sum of "the 14,300 hinted traces" and "the 5,720 unhinted traces"; the paper prints no total)`,
+      ...paper('Sec. 2.1 (our sum of its two counts; the paper prints no total)', [at(3, 'Of the 14,300 hinted traces'), at(3, 'the 5,720 unhinted traces')],
         '20,020'),
       value: 20020,
     },
     // What a continuation is, in the words of the row that counts them; slide 8 explains it
     // with its picture.
-    'p1.continued': paper('Sec. 1; Sec. 3.1', `${TEX}/01_intro.tex:20-21 ("A continuation is a fresh sample of the model's reasoning from a prefix to its end, and K is the number drawn per prefix"); ${TEX}/03_tasks.tex:24 ("each of the 1,226 drawn hinted traces was resampled again with K = 16 continuations")`,
+    'p1.continued': paper('Sec. 1; Sec. 2.1', [at(2, 'A continuation is a fresh sample of the model’s reasoning from a prefix to its end, and K is the number drawn per prefix.'), at(3, 'each of the 1,226 drawn hinted traces was resampled again with K = 16 continuations')],
       'finished again'),
-    // The nine readers are scored on one set of prefixes: the scored sample's, cut at r = 0.5.
-    'p1.readers_same': paper('Sec. 3.2; Table 2', `${TEX}/03_tasks.tex:31 ("All readers read the same prefixes at r = 0.25 and 0.5"); ${TEX}/04_readers.tex:11 ("The nine continuous-score readers on the main task at r = 0.5, averaged over seven models"); results/prompt_only_pooled/prompt_only_pooled.txt:4 ("counts 1226 traces")`,
-      'reads those same'),
     // The two frontier models among the readers, each by its full name with its version.
-    'p1.frontier_models': paper('Sec. 3.2', `${TEX}/03_tasks.tex:39 ("(6--9) Claude Opus 5.5 and GPT-6 Astra")`,
+    'p1.frontier_models': paper('Sec. 2.2', at(3, '(6–9) Claude Opus 5.5 and GPT-6 Astra'),
       'Claude Opus 5.5 and GPT-6 Astra'),
     // What the counts are for, in the paper's own verb.
-    'p1.measured': paper('Sec. 1', `${TEX}/01_intro.tex:8,12 ("Their numbers rest on scoring choices"; "We measure what these choices do on one task")`,
+    'p1.measured': paper('Sec. 1', at(2, 'We measure what these choices do on one task, with a second as a limited check'),
       'measure what each scoring choice does'),
+    // Slide 5, what each count lets us measure: the endings a monitor predicts, how far a
+    // prefix fixes them (what resampling estimates), and how well a reader ranks them.
+    'p1.predicts': paper('Sec. 1', at(1, 'it reads an unfinished trace, a prefix, and predicts where the trace will end'),
+      'the endings to predict'),
+    'p1.fixes': paper('Sec. 1', at(1, 'estimate by resampling how far a prefix fixes the outcome'),
+      'how far a prefix fixes the ending'),
+    'p1.ranks': paper('Table 1', at(4, 'Share of (positive, negative) pairs from the same cluster in which the positive scores higher'),
+      'how well each reader predicts it'),
+    // Slide 3, what a ceiling is, in the paper's words (slide 8 says it in the same ones), and
+    // how recent work gets one.
+    'p1.ceiling_gloss': paper('Sec. 4', [at(6, 'compare it with the best AUROC any reader of the prefix could reach. Resampling estimates it'), at(1, 'sample continuations from that prefix')],
+      'the best AUROC any reader of the prefix could reach'),
+    // Slide 3, whose K is which: recent work draws four continuations per prefix (Jia et
+    // al.); ours are the K of the paper's curve, 2 to 16 ('k.curve').
+    'p1.recent_k': {
+      ...paper('Sec. 1, What was known (of Jia et al. 2026)', at(2, 'they estimate it from four continuations'), '4'),
+      value: 4,
+    },
   });
   // A count as a word, for a sentence that opens on it or reads better with it.
   const COUNT_WORDS = Object.freeze(['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']);
@@ -114,6 +124,12 @@
   });
   const seen = EX.follower.lines.slice(0, EX.cut);
   const unseen = EX.follower.lines.slice(EX.cut);
+  // The slide's footer carries the first tag of the talk, a slide ahead of the legend of the
+  // tags (slide 2), so the footer says here what this one means, in that legend's words
+  // (the tag's short form, core/deck.js).
+  const TITLE_FIGURE = 'illustrative';
+  const TITLE_TAG = Deck.figureTags.find((tag) => tag.field === 'figure' && tag.value === TITLE_FIGURE);
+  if (!TITLE_TAG) throw Deck.fail(`p1-title: no footer tag for the figure kind "${TITLE_FIGURE}"`);
 
   Deck.register({
     id: 'p1-title',
@@ -121,7 +137,7 @@
     layout: 'bare',
     title: Deck.meta.title,
     cite: [],
-    figure: 'illustrative',
+    figure: TITLE_FIGURE,
     html: `
       <div class="p1-title">
         <div class="p1-title__course">${Deck.meta.course}</div>
@@ -133,6 +149,7 @@
       </div>`,
     setup: (ctx) => {
       const cut = kit.cutParts(ctx.q('[data-cut="title"]'));
+      ctx.el.querySelector('.dk-foot').insertAdjacentHTML('beforeend', `<span class="dk-tags__means">${TITLE_TAG.short}</span>`);
       const enter = ctx.step({ label: 'a trace is typed, cut halfway' });
       enter.show('.p1-title__course', { at: 200 });
       enter.show('.p1-title__name', { at: 350, dur: DUR.move });
@@ -171,15 +188,24 @@
     if (!/ it\?$/.test(text)) throw Deck.fail('p1-prefix: the earlier talk’s definition of monitorability no longer ends on "it?"');
     return text.replace(/ it\?$/, ' the reasoning?');
   })();
-  // The one tag of the talk that no footer carries: Part 3 sets it beside a result (slides 10
-  // to 12). The legend of the entrance shows it as those slides do, a chip, with the paper's
-  // meaning in a few words; the slide's setup refuses a word that no slide shows as a chip.
-  const EXPLORATORY = Object.freeze({ tag: 'exploratory', means: t('p1.exploratory') });
-  if (!t('scope.exploratory').includes(EXPLORATORY.tag)) throw Deck.fail(`p1-prefix: the legend’s "${EXPLORATORY.tag}" is not a word of scope.exploratory`);
-  // The two ends of a score, as the slide's last line says them. Not a measured number.
-  const SCORE_ENDS = Object.freeze({ lo: 0, hi: 1 });
+  // The tags of the talk that no footer carries: Part 3 sets them beside a result (slides 10
+  // to 12) to say how its analysis stands (motifs.standings, from the firmest down). The
+  // legend of the entrance shows each as those slides do, a chip, with the paper's meaning
+  // in a few words; the slide's setup refuses a tag that no slide shows as a chip.
+  const STANDINGS = Object.freeze(Deck.motifs.standings.map(({ tag, means }) => Object.freeze({ tag, means: t(means) })));
+  if (!STANDINGS.some(({ tag }) => t('scope.exploratory').includes(tag))) throw Deck.fail('p1-prefix: no tag of the legend is a word of scope.exploratory');
+  // The two ends of a score, as the slide's last line says them: a score is a probability,
+  // and slides 6 and 7 print one as a percentage. Not measured numbers.
+  const SCORE_ENDS = Object.freeze({ lo: '0%', hi: '100%' });
+  // What the score is the chance of: the ending this talk scores (the paper's Sec. 1: a trace
+  // follows the hint if it ends at the wrong answer the hint names). The hint itself arrives
+  // on slide 4.
+  const SCORE_OF = 'Its score: the chance the model follows a wrong hint.';
+  // What lies beyond the cut, before and after the monitor has given its score: the second
+  // sentence takes the place of the first when the bars beyond the cut fill.
+  const REST = Object.freeze({ open: 'The rest is not written yet.', written: 'The rest is written after the score.' });
   const PRE = Object.freeze({
-    todayY: 376,                                   // where the line for today stands under the bridge
+    todayY: 296,                                   // where the line for today stands under the bridge
     prompt: Object.freeze({ x: 0, w: 200 }),
     bar: Object.freeze({ x: 280, w: 216, gap: 16, cutGap: 40 }),
     answer: Object.freeze({ x: 1296, w: 144 }),
@@ -203,7 +229,7 @@
   const passes = (i, x0, x1, at, dur) => at + ((barX(i) + PRE.bar.w / 2 - PRE.lens / 2 - x0) / (x1 - x0)) * dur;
   // The beats of click 1, in ms: the prompt, the first bar, one bar, the lens over all bars.
   // `judged` is when the verdict lands: after the answer has been at rest for 0.8 s and the
-  // lens has crossed the whole trace. The second cue waits for it.
+  // lens has crossed the whole trace. The slide's cue waits for it.
   const PRE_AT = (() => {
     const prompt = 700;
     const write = 1100;
@@ -223,16 +249,17 @@
   const preHtml = () => `
     <div class="p1-pre">
       <div class="p1-pre__bridge">
-        <p class="p1-pre__from">Our special topic talk:</p>
-        <p class="p1-pre__tag">${t('p1.bridge_tag')}</p>
+        <p class="p1-pre__from">Our special topic talk recommended:</p>
         <p class="p1-pre__rec">“<span class="p1-pre__track">${REC.track}</span>${REC.rest}.”</p>
       </div>
       <p class="p1-pre__gloss"><b>Monitorability:</b> ${MONITORABILITY}</p>
-      <p class="p1-pre__today"><b>Today:</b> how a monitor gets its <em>score</em>, and three ways that score can mislead.</p>
+      <p class="p1-pre__today"><b>Today:</b> how a monitor gets its <em>score</em>, and what that score shows.</p>
       <div class="p1-pre__tags">
         <p class="p1-pre__tags-head">Tags</p>
         <ul class="dk-tags__list"></ul>
-        <p class="p1-pre__mark"><span class="dk-chip">${EXPLORATORY.tag}</span><span class="dk-tags__means">${EXPLORATORY.means}</span></p>
+        <div class="p1-pre__marks">${STANDINGS.map(({ tag, means }) => `
+          <p class="p1-pre__mark"><span class="dk-chip">${tag}</span><span class="dk-tags__means">${means}</span></p>`).join('')}
+        </div>
       </div>
       <div class="p1-pre__run">
         <p class="p1-pre__trace" ${place(barX(0), TRACE_W)}><b>Trace:</b> one run of a model’s reasoning, up to its answer.</p>
@@ -248,10 +275,10 @@
         ${nameHtml('monitor', PRE.verdict)}
         <p class="p1-pre__cut-label" ${place(CUT_X + PRE.bar.cutGap / 2)}>cut halfway: r = ${t('task.cut_r')}</p>
         <p class="p1-pre__prefix" ${place(0, CUT_X - PRE.bar.cutGap / 2)}><b>Prefix:</b> the reasoning up to a cut.</p>
-        <p class="p1-pre__rest" ${place(CUT_X + PRE.bar.cutGap / 2)}>The rest is not written yet.</p>
+        <p class="p1-pre__rest" ${place(CUT_X + PRE.bar.cutGap / 2)}>${REST.open}</p>
         <p class="p1-pre__monitor" ${place(0, CUT_X - PRE.bar.cutGap / 2)}><b>Prefix monitor:</b> reads the prefix and predicts the ending.</p>
         <div class="p1-pre__score" ${place(CUT_X + PRE.bar.cutGap / 2)}><span>${SCORE_ENDS.lo}</span>${kit.meter({ key: 'pre-score', label: '', tone: 'read' })}<span>${SCORE_ENDS.hi}</span></div>
-        <p class="p1-pre__between" ${place(CUT_X + PRE.bar.cutGap / 2)}>Its prediction is a score.</p>
+        <p class="p1-pre__between" ${place(CUT_X + PRE.bar.cutGap / 2)}>${SCORE_OF}</p>
       </div>
     </div>`;
 
@@ -261,11 +288,8 @@
     kicker: kicker(PART, 'Introduction'),
     title: 'To act in time, a monitor reads only the start of the reasoning: <em>a prefix</em>',
     cues: [
-      'Tracking monitorability needs a score',
+      // Which ending the monitor predicts is said under its score, at the last click (SCORE_OF).
       { text: 'A verdict after the answer comes too late', step: 1, at: PRE_AT.judged },
-      // Which ending: the one this talk scores (the paper's Sec. 1: a trace follows the hint if
-      // it ends at the wrong answer the hint names). The hint itself arrives on slide 4.
-      { text: 'The ending here: will the model follow a wrong hint?', step: 3 },
     ],
     cite: [{ src: 'paper', where: 'Sec. 1, 2' }, { src: 'talk1', where: 'closing slide' }, { src: 'korbak2025', where: '' }],
     figure: 'schematic',
@@ -291,20 +315,22 @@
       // The legend of the footer tags, said once where the first footer with room for it
       // stands: the tags every slide of the deck carries, each in a few words (Deck.tagLegend;
       // the sources slide has the full sentences). It is filled in here and not in the markup,
-      // because the slides of the other parts register after this file. Under them, in a row
-      // of its own and outside that list, the tag that stands beside a result.
+      // because the slides of the other parts register after this file. Under them, in rows
+      // of their own and outside that list, the tags that stand beside a result.
       ctx.q('.p1-pre__tags .dk-tags__list').innerHTML = Deck.tagLegend(Deck.slides, 'short');
-      const asChip = new RegExp(`class="dk-chip[^"]*">${EXPLORATORY.tag}<`);
-      if (!Deck.slides.some((slide) => slide.part !== PART && asChip.test(slide.html))) {
-        throw Deck.fail(`p1-prefix: the legend explains "${EXPLORATORY.tag}", and no slide of another part shows a chip with that word`);
-      }
+      STANDINGS.forEach(({ tag }) => {
+        const asChip = new RegExp(`class="dk-chip[^"]*">${tag}<`);
+        if (!Deck.slides.some((slide) => slide.part !== PART && asChip.test(slide.html))) {
+          throw Deck.fail(`p1-prefix: the legend explains "${tag}", and no slide of another part shows a chip with those words`);
+        }
+      });
 
       // Entrance: the earlier talk's third recommendation, its definition, and today's turn.
       const enter = ctx.step({ label: 'the bridge from the special topic talk' });
       enter.tween('.p1-pre__bridge', { opacity: [0, 1] }, { at: 200 });
       enter.show('.p1-pre__from', { at: 300, rise: 0 });
-      enter.show('.p1-pre__tag', { at: 600, rise: 0 });
       enter.show('.p1-pre__rec', { at: 700, dur: DUR.move });
+      enter.type('.p1-pre__rest', REST.open, { dur: 0 });
       enter.show('.p1-pre__gloss', { at: 1700 });
       enter.tween('.p1-pre__track', { '--p1-under': ['0%', '100%'] }, { at: 2900, dur: DUR.move, ease: 'inOut' });
       enter.tween('.p1-pre__today', { opacity: [0, 1], y: [PRE.todayY + 16, PRE.todayY] }, { at: 3100 });
@@ -365,7 +391,9 @@
       ahead.tween('[data-meter="pre-score"] .dk-meter__fill', { '--v': ['0%', `${Math.round(EX.follower.score * 100)}%`] }, { at: 1800, dur: DUR.move });
       ahead.show('.p1-pre__between', { at: 2200 });
       const later = 3800;
-      ahead.tween('.p1-pre__rest', { opacity: [1, 0] }, { at: later, dur: DUR.micro });
+      ahead.type('.p1-pre__rest', REST.written, { at: later, dur: 0 });
+      ahead.tween('.p1-pre__rest', { scale: [1, 1.06] }, { at: later, dur: DUR.micro });
+      ahead.tween('.p1-pre__rest', { scale: [1.06, 1] }, { at: later + DUR.micro, dur: DUR.enter });
       beyond.forEach((i, n) => {
         const at = later + n * 500;
         ahead.cls(bars[i], 'is-open', { at, on: false });
@@ -382,30 +410,38 @@
   });
 
   // ---------------------------------------------------------------- slide 3: motivation
-  // Six scores on one axis and a magnified stretch of it; under them a panel of three dials,
-  // the three scoring choices; then what the project is and what it is not.
+  // Six scores on one axis and a magnified stretch of it; then the ceiling that recent work
+  // holds such scores against; then the three questions of the talk; then what the project
+  // is and what it is not.
   // The six dots are the six readers that Part 3 keeps, at their within-question scores
-  // (Table 2); they are not named here, and the first line says that they are six of nine.
-  // When the first dial turns they are drawn again, in the magnified stretch, at their pooled
-  // scores, the same table's next column: the first choice, which Part 3 takes up. Rings
-  // stay where they stood, and a key in the strip names the two in plain words (ring: within
-  // a question; dot: across questions, the words in which slide 7 then explains "within
-  // question" and "pooled"). No number is printed for where they land, and
-  // nothing says which dot is which; the strip has a scale of its own (a line every 0.01, two
-  // of them numbered), so how far the dots moved can be read off it. On the whole scale six
-  // dots on one spot cannot be counted, so from that click on it shows two marks: an outline
-  // over the range the six stood in and a filled bar over the range they stand in pooled.
-  // Those two stay to the last step, where the strip has closed, and the key moves under
-  // them: the same six readers, a little to the right, at the scale's true size.
-  // Between the two states the dots travel as one group, all by the same amount (`shift`,
-  // the mean rise): each score moves by its own amount in the data, and drawn that way the
-  // dots would overtake one another, which a room reads as "the ranking changed". The paper
-  // could not tell a reordering from noise (its conclusion), so the slide shows that the
-  // levels move and does not show who passes whom.
+  // (Table 4); they are not named here, and the first line says that they are six of nine.
+  // On the whole scale six dots on one spot cannot be counted, so a strip under it shows
+  // that stretch enlarged, with a scale of its own (a line every 0.01, two of them
+  // numbered). At click 1 the strip closes: an outline as long as the six scores' range
+  // stays on the scale with the range beside it, and the ceiling lands a little to its
+  // right. The ceiling is the paper's resampling AUROC on these traces, against the label
+  // the six scores are against, from 2 continuations per prefix ('k.u2'); the slide says
+  // what resampling is and what a ceiling is in plain words ('p1.resampling_gloss',
+  // 'p1.ceiling_gloss'; a continuation is Part 2's word), and whose K is which: recent work
+  // draws 4 continuations ('p1.recent_k'), we draw up to 16 ('task.sample_k'), and the mark
+  // on the scale is our value at K = 2, which its label says and result 1 takes up (the
+  // value from 16 is not shown here: that it moves is result 1).
+  // The six are the monitors among the nine readers (slide 6: the readers that are not
+  // forced answers, which is how 'motifs.kept' is made and what tools/selftest.mjs checks of
+  // it), so the scale and the question call them monitors, as the title does;
+  // the title's "prefix monitors" is slide 2's word for the tool in general, and the
+  // definition of the ceiling keeps the paper's "any reader".
+  // Click 2 asks the three questions, numbered as Part 3 answers them, under two heads that
+  // count as the title does: the ceiling raises two, and the third is ours (what they mean
+  // for comparing readers). No mark turns or moves for them. Click 3 is the scope line in
+  // its frame.
+  // The first line says what a reader is, where the word first stands ('p1.reader_gloss';
+  // slide 6 takes it up), and names an AUROC ahead of Part 2, which explains it: here the
+  // two ends of the scale say what the number means.
   // The ends of the score's scale and what each means, as the axis says them. Not measured numbers.
   const SCALE = Object.freeze({ lo: 0.5, hi: 1, loSays: 'guessing', hiSays: 'perfect' });
   const STK = (() => {
-    const readers = KEPT.map((key) => Object.freeze({ key, within: v(`reader.${key}.within`), pooled: v(`reader.${key}.pooled`) }));
+    const readers = KEPT.map((key) => Object.freeze({ key, within: v(`reader.${key}.within`) }));
     const lo = Math.min(...readers.map((reader) => reader.within));
     const hi = Math.max(...readers.map((reader) => reader.within));
     if (readers.length !== v('readers.kept') || lo !== v('readers.within_min') || hi !== v('readers.within_max_kept')) {
@@ -413,22 +449,29 @@
     }
     const aside = v('readers.count') - readers.length;
     if (Deck.motifs.readers.length !== v('readers.count') || aside <= 0) throw Deck.fail('p1-stakes: readers.count is not the number of readers, or none is set aside');
-    // The stretch of the axis that the magnifier shows: the six scores before and after the
-    // first dial turns, with a margin.
+    // The ceiling of the slide lies above every one of the six scores, or the picture's
+    // "close under it" would be false.
+    const ceiling = v('k.u2');
+    if (!(ceiling > hi) || ceiling !== v('k.curve')[0][1]) throw Deck.fail('p1-stakes: the ceiling is no longer the resampling AUROC from 2 continuations, above the six readers');
+    // Whose K is which: the mark is our value at the smallest K of our curve, the curve
+    // ends at the K we drew, and recent work's K lies between the two.
+    const ks = v('k.curve').map(([k]) => k);
+    const most = ks[ks.length - 1];
+    if (ks[0] !== 2 || most !== v('task.sample_k') || !(v('p1.recent_k') > ks[0] && v('p1.recent_k') < most) || !/from four continuations/.test(Deck.fact('p1.recent_k').file)) {
+      throw Deck.fail('p1-stakes: the K of the ceiling’s mark, of recent work and of our data are no longer 2, 4 and up to 16');
+    }
+    // The stretch of the axis that the magnifier shows: the six scores, with a margin.
     const margin = 0.01;
-    const pooledLo = Math.min(...readers.map((reader) => reader.pooled));
-    const pooledHi = Math.max(...readers.map((reader) => reader.pooled));
-    const zoom = Object.freeze({ lo: lo - margin, hi: pooledHi + margin });
-    const mean = (field) => readers.reduce((sum, reader) => sum + reader[field], 0) / readers.length;
+    const zoom = Object.freeze({ lo: lo - margin, hi: hi + margin });
     // The strip's own scale: a line at every hundredth inside it, the first and the last numbered.
     const hundredths = util.range(Math.floor(zoom.hi * 100 + 1e-9) - Math.ceil(zoom.lo * 100 - 1e-9) + 1).map((n) => (Math.ceil(zoom.lo * 100 - 1e-9) + n) / 100);
     if (hundredths.length < 2) throw Deck.fail('p1-stakes: the magnified stretch holds fewer than two hundredths to number');
     return Object.freeze({
-      readers, lo, hi, pooledLo, pooledHi, zoom, shift: mean('pooled') - mean('within'), range: `${t('readers.within_min')} to ${t('readers.within_max_kept')}`,
+      readers, lo, hi, zoom, ceiling, samples: ks[0], most, range: `${t('readers.within_min')} to ${t('readers.within_max_kept')}`,
       ticks: Object.freeze(hundredths.map((value, i) => Object.freeze({ value, label: i === 0 || i === hundredths.length - 1 ? value.toFixed(2) : '' }))),
-      // Who the six are, in the first line's words: six of the nine, three set aside in Part 3 ('readers.forced_aside').
-      // The nine are readers, and not every one of them is a monitor (slide 6), so the line says "readers".
-      who: `${capital(inWords(readers.length))} of our ${inWords(v('readers.count'))} readers (${inWords(aside)} set aside: Part 3)`,
+      // Who the six are, in the first line's words: six of the nine (slide 12 says which three are set aside, and why).
+      // The nine are readers, and not every one of them is a monitor (slide 6): the line opens on what a reader is.
+      who: `${capital(inWords(readers.length))} of our ${inWords(v('readers.count'))}`,
     });
   })();
   // Geometry in stage pixels. AXIS: the whole scale. ZOOM: the magnified stretch (`line` is
@@ -437,13 +480,6 @@
   const ZOOM = Object.freeze({ w: 1728, pad: 96, line: 132, dot: 28, row: 30, grid: Object.freeze({ top: 84, bottom: 180 }) });
   const FAN = Object.freeze({ h: 44 });
   const SETTINGS_LIFT = 224;                       // how far the panel moves up at the last click
-  // The key of the two marks, each entry placed by the edge that faces the other, so that a
-  // wider font moves neither: in the strip's top right corner, then (`rest`) on the row under
-  // the scale, the ring's entry in front of the range it names and the dot's behind the bar.
-  const KEY = Object.freeze({
-    top: 160, ring: 1352, dot: 1384,
-    rest: Object.freeze({ top: 96, ring: 870, dot: 1136 }),
-  });
   const onAxis = (value) => AXIS.x + ((value - SCALE.lo) / (SCALE.hi - SCALE.lo)) * AXIS.w;
   const onZoom = (value) => ZOOM.pad + ((value - STK.zoom.lo) / (STK.zoom.hi - STK.zoom.lo)) * (ZOOM.w - 2 * ZOOM.pad);
   // Scores closer than a dot is wide stand in rows over and under the rail (0, -1, 1).
@@ -457,26 +493,24 @@
     });
     return Object.freeze(Object.fromEntries(placed.map((p) => [p.key, p.row])));
   })();
-  // The three dials: where each hand points, in degrees from the top; the first one turns.
-  const DIALS = Object.freeze([{ from: -64, to: 52 }, { from: 28 }, { from: -22 }]);
-  const DIAL = Object.freeze({ size: 96, inner: 41, outer: 47, sweep: 120, step: 20 });
-  const dialTicks = util.range((2 * DIAL.sweep) / DIAL.step + 1).map((n) => {
-    const a = ((-DIAL.sweep + n * DIAL.step) * Math.PI) / 180;
-    const point = (r) => [(DIAL.size / 2 + r * Math.sin(a)).toFixed(1), (DIAL.size / 2 - r * Math.cos(a)).toFixed(1)];
-    const [x1, y1] = point(DIAL.inner);
-    const [x2, y2] = point(DIAL.outer);
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
-  }).join('');
-  // One dial, with the number of its scoring choice. Slide 5 sets the same three dials
-  // beside its counts, so the dial is drawn in one place.
-  const dialHtml = (i) => `
-            <div class="p1-stk__dial">
-              <svg class="p1-stk__ticks" viewBox="0 0 ${DIAL.size} ${DIAL.size}" width="${DIAL.size}" height="${DIAL.size}">${dialTicks}</svg>
-              <div class="p1-stk__knob"><i class="p1-stk__hand"></i><span class="p1-stk__num">${i + 1}</span></div>
-            </div>`;
-  const choiceHtml = (choice, i) => `
-          <div class="p1-stk__choice" data-choice="${i}">${dialHtml(i)}
-            <p class="p1-stk__name">${choice.ask}</p>
+  // The panel's two groups, counted as the title counts them: the two questions that the
+  // ceiling raises, and the one we add, what they mean for comparing readers.
+  const RAISED = 2;
+  const GROUPS = Object.freeze([
+    Object.freeze({ key: 'raised', span: RAISED, text: `${capital(inWords(RAISED))} questions` }),
+    Object.freeze({ key: 'then', span: CHOICES.length - RAISED, text: 'Our third' }),
+  ]);
+  const groupOf = (i) => (i < RAISED ? GROUPS[0] : GROUPS[1]).key;
+  // The words of the three questions ('motifs.choices'). The two that the ceiling raises are
+  // about any monitor; ours is about the nine things we score, so it says "readers", as the
+  // head of slide 12 asks it.
+  const ASKS = Object.freeze(CHOICES.map((choice, i) => (i < RAISED ? choice.ask : choice.ask.replace(/\bmonitors\b/, 'readers'))));
+  if (ASKS.slice(RAISED).some((ask) => !/\breaders\b/.test(ask))) throw Deck.fail('p1-stakes: the question we add no longer asks about readers');
+  // One of the three questions: its number in a ring, then its words.
+  const choiceHtml = (_, i) => `
+          <div class="p1-stk__choice" data-choice="${i}" data-group="${groupOf(i)}">
+            <div class="p1-stk__knob"><span class="p1-stk__num">${i + 1}</span></div>
+            <p class="p1-stk__name">${ASKS[i]}</p>
           </div>`;
   const dotsHtml = (cls, place) => STK.readers.map((reader) => {
     const { x, y } = place(reader);
@@ -484,9 +518,15 @@
   }).join('');
   const axisPlace = (reader) => ({ x: onAxis(reader.within), y: AXIS.y });
   const zoomPlace = (reader) => ({ x: onZoom(reader.within), y: ZOOM.line + ZOOM_ROWS[reader.key] * ZOOM.row });
+  // The questions are the paper's two and what they mean for comparing monitors; the words
+  // of the questions and of the ceiling's gloss rest on these facts.
+  if (!/ceiling a ceiling\?$/.test(t('motive.ask_ceiling')) || !/alarm in time\?$/.test(t('motive.ask_time')) || !/comparing monitors$/.test(t('motive.ask_compare')) || !/ceiling built by resampling/.test(t('motive.ceiling'))) {
+    throw Deck.fail('p1-stakes: the facts of the two questions and of the ceiling no longer say what the slide asks');
+  }
+  if (CHOICES.length !== 3) throw Deck.fail('p1-stakes: the panel has room for three questions');
   const stakesHtml = () => `
     <div class="p1-stk">
-      <p class="p1-stk__lead">${STK.who}, one AUROC each (explained in Part 2):</p>
+      <p class="p1-stk__lead"><b>Reader:</b> ${t('p1.reader_gloss')}. ${STK.who}, one AUROC each (see Part 2).</p>
       <div class="p1-stk__axis">
         <i class="p1-stk__line" style="left:${AXIS.x}px;width:${AXIS.w}px;top:${AXIS.y}px"></i>
         ${util.range(AXIS.ticks).map((n) => `<i class="p1-stk__tick" style="left:${AXIS.x + (n * AXIS.w) / (AXIS.ticks - 1)}px;top:${AXIS.y}px"></i>`).join('')}
@@ -494,9 +534,10 @@
         <span class="p1-stk__end" style="left:${AXIS.x + AXIS.w}px;top:${AXIS.y}px">${SCALE.hi} = ${SCALE.hiSays}</span>
         <i class="p1-stk__window" style="left:${onAxis(STK.zoom.lo).toFixed(1)}px;width:${(onAxis(STK.zoom.hi) - onAxis(STK.zoom.lo)).toFixed(1)}px;top:${AXIS.y}px"></i>
         <i class="p1-stk__stood" style="left:${onAxis(STK.lo).toFixed(1)}px;width:${(onAxis(STK.hi) - onAxis(STK.lo)).toFixed(1)}px;top:${AXIS.y}px"></i>
-        <i class="p1-stk__moved" style="left:${onAxis(STK.pooledLo).toFixed(1)}px;width:${(onAxis(STK.pooledHi) - onAxis(STK.pooledLo)).toFixed(1)}px;top:${AXIS.y}px"></i>
         ${dotsHtml('p1-stk__dot', axisPlace)}
-        <span class="p1-stk__kept" style="right:${(ZOOM.w - onAxis(STK.hi)).toFixed(1)}px;top:${AXIS.y}px">${STK.range}</span>
+        <i class="p1-stk__ceiling" style="left:${onAxis(STK.ceiling).toFixed(1)}px;top:${AXIS.y}px"></i>
+        <span class="p1-stk__kept" style="right:${(ZOOM.w - onAxis(STK.hi)).toFixed(1)}px;top:${AXIS.y}px">${inWords(STK.readers.length)} monitors: ${STK.range}</span>
+        <span class="p1-stk__top" style="left:${(onAxis(STK.ceiling) + 20).toFixed(1)}px;top:${AXIS.y}px">ceiling, K = ${STK.samples}: ${t('k.u2')}</span>
       </div>
       <svg class="p1-stk__fan" viewBox="0 0 ${ZOOM.w} ${FAN.h}" width="${ZOOM.w}" height="${FAN.h}">
         <line x1="${onAxis(STK.zoom.lo).toFixed(1)}" y1="0" x2="1" y2="${FAN.h}"/>
@@ -508,20 +549,21 @@
         ${STK.ticks.map((tick) => `<i class="p1-stk__grid" style="left:${onZoom(tick.value).toFixed(1)}px;top:${ZOOM.grid.top}px;height:${ZOOM.grid.bottom - ZOOM.grid.top}px"></i>`).join('')}
         ${STK.ticks.filter((tick) => tick.label).map((tick) => `<span class="p1-stk__at" style="left:${onZoom(tick.value).toFixed(1)}px;top:${ZOOM.grid.bottom}px">${tick.label}</span>`).join('')}
         <i class="p1-stk__rail" style="top:${ZOOM.line}px"></i>
-        ${dotsHtml('p1-stk__ghost p1-stk__ghost--zoom', zoomPlace)}
         ${dotsHtml('p1-stk__dot p1-stk__dot--zoom', zoomPlace)}
       </div>
-      <span class="p1-stk__key" data-mark="ring" style="right:${ZOOM.w - KEY.ring}px;top:${KEY.top}px"><i></i>within a question</span>
-      <span class="p1-stk__key" data-mark="dot" style="left:${KEY.dot}px;top:${KEY.top}px"><i></i>across questions</span>
-      <p class="p1-stk__ask">Is any really better?</p>
+      <div class="p1-stk__ceil">
+        <p><b>Ceiling:</b> ${t('p1.ceiling_gloss')}.</p>
+        <p>Estimated by resampling: ${t('p1.resampling_gloss')}, K times (recent work: ${t('p1.recent_k')}; ours: up to ${STK.most}).</p>
+        <p class="p1-stk__ask">Have these monitors nearly reached the ceiling?</p>
+      </div>
       <div class="p1-stk__settings">
-        <div class="p1-stk__panel">${CHOICES.map(choiceHtml).join('')}
+        <div class="p1-stk__panel">${GROUPS.map((group) => `
+          <p class="p1-stk__group" data-group="${group.key}" style="grid-column:span ${group.span}">${group.text}</p>`).join('')}${CHOICES.map(choiceHtml).join('')}
         </div>
-        <p class="p1-stk__each">Part 3 shows: these choices move scores as much as the readers differ.</p>
       </div>
       <div class="p1-stk__aim">
         ${kit.scope({ size: 3, stacked: true })}
-        <p class="p1-stk__limits"><span>None of these mechanisms is new: we add their size, on one task.</span><span>Most of our analyses are exploratory.</span></p>
+        <p class="p1-stk__limits"><span>The ceiling is recent work’s. We give the conditions for it to hold, not a correction.</span><span>Most of our analyses are exploratory.</span></p>
       </div>
     </div>`;
 
@@ -529,24 +571,22 @@
     id: 'p1-stakes',
     part: PART,
     kicker: kicker(PART, 'Motivation'),
-    title: 'A monitor’s score depends on how it is scored, <em>so we measured by how much</em>',
-    cues: [
-      'Recent studies score prefix monitors with a single number',
-      // With the panel of dials, at the click that brings it: what the dials are.
-      { text: 'Three scoring choices sit behind that number', step: 1, at: 600 },
-    ],
-    cite: [{ src: 'paper', where: 'Sec. 1, 4, 7; Table 2' }],
+    // The title counts the questions as the panel does: two that the ceiling raises, under
+    // the head that counts them, and a third that is ours, under a head of its own (GROUPS).
+    // The slide needs no cue.
+    title: 'Recent work’s ceiling for prefix monitors <em>raises two questions, and we add a third</em>',
+    cues: [],
+    cite: [{ src: 'paper', where: 'Sec. 1, 4; Table 4' }, { src: 'jia2026', where: 'decision ceiling' }],
     figure: 'schematic',
     numbers: 'reported',
     html: stakesHtml(),
     setup: (ctx) => {
-      const dial = (i) => ctx.q(`[data-choice="${i}"] .p1-stk__dial`);
-      const hand = (i) => ctx.q(`[data-choice="${i}"] .p1-stk__hand`);
+      const knob = (i) => ctx.q(`[data-choice="${i}"] .p1-stk__knob`);
       const dot = (cls, reader) => ctx.q(`.${cls}[data-reader="${reader.key}"]`);
       const middle = onZoom((STK.lo + STK.hi) / 2);
 
       // Entrance: six dots land almost on one spot; the magnifier opens on them.
-      const enter = ctx.step({ label: 'six readers, six scores' });
+      const enter = ctx.step({ label: 'six monitors, six scores' });
       enter.show('.p1-stk__lead', { at: 200 });
       enter.tween('.p1-stk__line, .p1-stk__tick, .p1-stk__end', { opacity: [0, 1] }, { at: 500 });
       enter.tween('.p1-stk__axis > .p1-stk__dot', { opacity: [0, 1], y: [-44, 0] }, { at: 1100, stagger: 150 });
@@ -559,67 +599,46 @@
       });
       enter.tween('.p1-stk__span', { opacity: [0, 1] }, { at: opens + 1300 });
       enter.tween('.p1-stk__range', { opacity: [0, 1] }, { at: opens + 1400 });
-      enter.show('.p1-stk__ask', { at: opens + 2300 });
       enter.hold(DUR.micro);
 
-      // Click 1: the panel of dials; the first one turns and the six scores move. In the
-      // strip rings stay where they stood; the dots fade there and are drawn again at their
-      // pooled scores, arriving as one group that glides to the right (see STK), and the key
-      // names rings and dots. On the scale the six dots give way to one outline over their
-      // range, and a filled bar over their pooled range leaves it by the same glide.
-      const set = ctx.step({ label: 'the score has settings' });
-      set.tween('.p1-stk__ask', { opacity: [1, 0] }, { dur: DUR.micro });
-      set.show('.p1-stk__panel', { at: 600 });
-      DIALS.forEach((d, i) => set.tween(hand(i), { rotate: [d.from, d.from] }, { dur: 0 }));
-      const turns = 1700;
-      const turning = { at: turns, dur: 1400, ease: 'inOut' };
-      set.cls(dial(0), 'p1-is-set', { at: turns });
-      set.tween(hand(0), { rotate: [DIALS[0].from, DIALS[0].to] }, turning);
-      const redrawn = turns + DUR.micro;
-      const gliding = { at: redrawn, dur: turning.dur - DUR.micro, ease: 'inOut' };
-      set.tween('.p1-stk__ghost, .p1-stk__stood', { opacity: [0, 1] }, { at: turns, dur: DUR.micro });
-      set.tween('.p1-stk__axis > .p1-stk__dot', { opacity: [1, 0] }, { at: turns, dur: DUR.micro });
-      set.tween('.p1-stk__dot--zoom', { opacity: [1, 0] }, { at: turns, dur: DUR.micro });
-      set.tween('.p1-stk__dot--zoom', { opacity: [0, 1] }, { at: redrawn, dur: DUR.enter });
-      set.tween('.p1-stk__key', { opacity: [0, 1] }, { at: redrawn, dur: DUR.enter });
-      set.tween('.p1-stk__moved', { opacity: [0, 1] }, { at: redrawn, dur: DUR.enter });
-      set.tween('.p1-stk__moved', { x: [onAxis(STK.lo) - onAxis(STK.lo + STK.shift), 0] }, gliding);
-      STK.readers.forEach((reader) => {
-        const el = dot('p1-stk__dot--zoom', reader);
-        const row = -ZOOM_ROWS[reader.key] * ZOOM.row;       // the row it leaves in the strip
-        const to = onZoom(reader.pooled) - onZoom(reader.within);
-        const glide = onZoom(STK.lo + STK.shift) - onZoom(STK.lo);
-        set.tween(el, { x: [0, 0], y: [0, 0] }, { dur: 0 });
-        set.tween(el, { y: [row, row] }, { at: redrawn, dur: 0 });
-        set.tween(el, { x: [to - glide, to] }, gliding);
-      });
-      set.hold(DUR.enter);
+      // Click 1: the magnifier closes; on the scale the six dots give way to one outline
+      // over their range, with the range beside it, and the ceiling drops in a little to
+      // its right. Under the scale, what a ceiling is and how recent work gets one, then
+      // the reading it invites.
+      const top = ctx.step({ label: 'the ceiling' });
+      top.tween('.p1-stk__fan, .p1-stk__zoom, .p1-stk__window', { opacity: [1, 0] }, { dur: 300 });
+      top.tween('.p1-stk__axis > .p1-stk__dot', { opacity: [1, 0] }, { at: 200, dur: DUR.micro });
+      top.tween('.p1-stk__stood', { opacity: [0, 1] }, { at: 200, dur: DUR.micro });
+      top.tween('.p1-stk__kept', { opacity: [0, 1] }, { at: 500 });
+      top.tween('.p1-stk__ceiling', { opacity: [0, 1], y: [-48, 0] }, { at: 1100, dur: DUR.enter });
+      top.tween('.p1-stk__top', { opacity: [0, 1] }, { at: 1400 });
+      top.show('.p1-stk__ceil p:not(.p1-stk__ask)', { at: 1700, stagger: 900 });
+      top.show('.p1-stk__ask', { at: 4200 });
+      top.hold(DUR.micro);
 
-      // Click 2: the dials get their names, in the order and the words of Part 3's results.
-      const named = ctx.step({ label: 'three scoring choices' });
+      // Click 2: the three questions, one after the other, in the order and the words of
+      // Part 3's results; the ceiling beats once as the first one names it.
+      const asks = ctx.step({ label: 'two questions, and the third we add' });
+      asks.tween('.p1-stk__ask', { opacity: [1, 0] }, { dur: DUR.micro });
+      asks.show('.p1-stk__panel', { at: 300 });
+      GROUPS.forEach((group) => asks.show(`.p1-stk__group[data-group="${group.key}"]`, { at: 600 + (group.key === 'raised' ? 0 : RAISED) * 900, rise: 0 }));
       CHOICES.forEach((_, i) => {
-        const at = 300 + i * 900;
-        named.cls(dial(i), 'p1-is-named', { at });
-        named.tween(`[data-choice="${i}"] .p1-stk__num`, { opacity: [0, 1], scale: [1.6, 1] }, { at, dur: DUR.enter, ease: 'back' });
-        named.show(`[data-choice="${i}"] .p1-stk__name`, { at: at + 100 });
+        const at = 700 + i * 900;
+        asks.cls(knob(i), 'p1-is-named', { at });
+        asks.tween(`[data-choice="${i}"] .p1-stk__num`, { opacity: [0, 1], scale: [1.6, 1] }, { at, dur: DUR.enter, ease: 'back' });
+        asks.show(`[data-choice="${i}"] .p1-stk__name`, { at: at + 100 });
       });
-      named.show('.p1-stk__each', { at: 300 + CHOICES.length * 900 + 300 });
-      named.hold(DUR.micro);
+      asks.tween('.p1-stk__ceiling', { scale: [1, 1.6] }, { at: 800, dur: DUR.micro });
+      asks.tween('.p1-stk__ceiling', { scale: [1.6, 1] }, { at: 800 + DUR.micro, dur: DUR.enter });
+      asks.hold(DUR.micro);
 
-      // Click 3: the magnifier closes, the panel steps back and up, and the scope line arrives
-      // in its frame. The two marks on the scale stay, and the key of the strip moves to the
-      // row under them, one entry to each side of the range: what the first dial did is still
-      // on screen when the strip is not.
+      // Click 3: what stood under the scale leaves, the panel steps up, and the scope line
+      // arrives in its frame. The two marks on the scale stay.
       const aim = ctx.step({ label: 'what the project is, and what it is not' });
-      aim.tween('.p1-stk__fan, .p1-stk__zoom, .p1-stk__window', { opacity: [1, 0] }, { dur: 300 });
-      ['ring', 'dot'].forEach((mark) => {
-        aim.tween(`.p1-stk__key[data-mark="${mark}"]`, { x: [0, KEY.rest[mark] - KEY[mark]], y: [0, KEY.rest.top - KEY.top] }, { at: 200, dur: DUR.move, ease: 'inOut' });
-      });
+      aim.tween('.p1-stk__ceil', { opacity: [1, 0] }, { dur: 300 });
       aim.tween('.p1-stk__settings', { y: [0, -SETTINGS_LIFT] }, { at: 200, dur: DUR.move, ease: 'inOut' });
-      aim.tween('.p1-stk__ticks, .p1-stk__hand', { opacity: [1, 0.45] }, { at: 200 });
-      aim.tween('.p1-stk__kept', { opacity: [0, 1] }, { at: 600 });
-      aim.tween('.dk-scope', { opacity: [0, 1], scale: [0.96, 1] }, { at: 1700, dur: DUR.move });
-      aim.show('.p1-stk__limits span', { at: 2700, stagger: 600, rise: 0 });
+      aim.tween('.dk-scope', { opacity: [0, 1], scale: [0.96, 1] }, { at: 1500, dur: DUR.move });
+      aim.show('.p1-stk__limits span', { at: 2500, stagger: 600, rise: 0 });
       aim.hold(DUR.micro);
     },
   });
@@ -637,7 +656,12 @@
     const target = `(${EX.target})`;
     const at = hint.indexOf(target);
     if (at < 0 || hint.indexOf(target, at + 1) >= 0) throw Deck.fail('p1-data: the hint should name its option exactly once');
-    return Object.freeze({ before: `“${hint.slice(0, at)}`, target, after: `${hint.slice(at + target.length)}”` });
+    // The slide quotes the template's first sentence, the one that names the option, and
+    // marks the cut with an ellipsis.
+    const rest = hint.slice(at + target.length);
+    const stop = rest.indexOf('.') + 1;
+    if (stop <= 0 || stop >= rest.length) throw Deck.fail('p1-data: the hint template no longer goes on after the sentence that names its option');
+    return Object.freeze({ before: `“${hint.slice(0, at)}`, target, after: `${rest.slice(0, stop)} …”` });
   })();
   // The two traces of the worked example. `state` is the chip's class in core/kit.css: red
   // for a trace that follows the hint, green for one that resists, for the whole talk.
@@ -651,7 +675,7 @@
     const groups = Object.freeze([
       Object.freeze({ key: 'followed', fact: 'task.followed', tone: 'alarm', says: 'follow' }),
       Object.freeze({ key: 'resisted', fact: 'task.resisted', tone: 'ok', says: 'resist' }),
-      Object.freeze({ key: 'unparsed', fact: 'task.unparsed', tone: 'dim', says: `no answer parsed: ${t('p1.unparsed_out')}` }),
+      Object.freeze({ key: 'unparsed', fact: 'task.unparsed', tone: 'dim', says: 'no answer parsed' }),
     ]);
     if (groups.reduce((sum, group) => sum + v(group.fact), 0) !== total) throw Deck.fail('p1-data: followed, resisted and unparsed traces do not add up to task.hinted');
     const sample = Object.freeze([['alarm', v('task.sample_followed')], ['ok', v('task.sample_resisted')]]);
@@ -663,10 +687,9 @@
   // to scale, a row to the hundred, so that the share beside it (one decimal) is a whole
   // number of cells.
   const DATA = Object.freeze({
-    w: 1728, lift: 172, band: 384, barGap: 4, cps: 48, linePause: 250,
+    w: 1728, lift: 188, band: 384, barGap: 4, cps: 48, linePause: 250,
     grid: Object.freeze({ n: 1000, cols: 100, cell: 8, gap: 2, lead: 14, seed: 41, rowLag: 20 }),
     unlit: 0.5, beat: 1.03,                        // a cell's size before it lights up; how far the grid swells as the title lands
-    states: 3,
   });
   // Click 2, in ms: when the bar splits by outcome, and when the scored sample arrives under it.
   const SPLITS_AT = 4900;
@@ -682,12 +705,11 @@
     return Math.round(cells);
   })();
   const share = (value) => `${value.toFixed(1)}%`;
-  // What one cell of the grid stands for, as its label says it: the grid is drawn to scale
-  // and is not a count of traces (8,919 follow the hint; a label "1,000 traces that follow
-  // the hint" read as a number of the data). One cell of a thousand is 0.1%. "These traces"
-  // are the ones of the brace over the label, the bar's "8,919 follow", as in the line
-  // beside the grid ("of these traces do"); the longer "of the traces that follow" leaves
-  // the brace in Verdana.
+  // What the grid shows and what one cell of it stands for, as its label says it. The share
+  // beside the grid is the lowest of any model ("In every model, at least"), so the grid is
+  // that model's and not all 8,919 traces pooled: the label names it, "lowest model". The
+  // grid is drawn to scale and is not a count of traces: one cell of a thousand is 0.1%.
+  // The label is short because a longer one leaves the brace in Verdana.
   const CELL_SHARE = (() => {
     const text = `${100 / DATA.grid.n}%`;
     if (!/^\d+(\.\d)?%$/.test(text)) throw Deck.fail(`p1-data: one cell of ${DATA.grid.n} is not a share the label can print (${text})`);
@@ -695,19 +717,13 @@
   })();
   // The corpus is named on the slide as the paper names it in running text.
   const CORPUS = Deck.sources.merrill2026.short.replace('&', 'and');
-  const PAIRING = (() => {
-    const text = t('second.pairing');
-    if (!text.includes('honest') || !text.includes('deceptive')) throw Deck.fail('p1-data: second.pairing no longer names an honest and a deceptive trace');
-    return text.replace('honest', '<span class="c-ok">honest</span>').replace('deceptive', '<span class="c-alarm">deceptive</span>');
-  })();
 
-  // What the second task can and cannot say, in plain words: the paper's "limited check"
-  // ('second.limited') whose test "has almost no power to confirm or refute transfer" ('second.power').
+  // What the second task is, in one line that ends on the paper's words for it, "a limited
+  // check" ('second.limited'). What the check can and cannot say is the closing slide's
+  // (its limits take the words up again).
   const LIMITED = (() => {
-    if (!/limited check/.test(t('second.limited')) || !/confirm or refute transfer/.test(t('second.power'))) {
-      throw Deck.fail('p1-data: second.limited or second.power no longer says what the second task’s last line rewords');
-    }
-    return '<b>A limited check:</b> it can hardly confirm or refute that the results carry over.';
+    if (!/limited check/.test(t('second.limited'))) throw Deck.fail('p1-data: second.limited no longer calls the second task a limited check');
+    return 'as a limited check';
   })();
 
   const runHtml = ({ key, label, run, tone, means }) => `
@@ -735,10 +751,9 @@
           </div>
           <p class="p1-data__def"><b>The hint:</b> one wrong option, named in the prompt.</p>
         </div>
-        <p class="p1-data__runs">One prompt, many runs: ${t('p1.sampled')}, so traces differ.</p>
+        <p class="p1-data__runs">One prompt, many runs: ${t('p1.sampled')}.</p>
         <div class="p1-data__traces">${RUNS.map(runHtml).join('')}
         </div>
-        <p class="p1-data__why"><b>Why this task:</b> ${t('p1.outcome')}, so every prediction can be scored.</p>
       </div>
       <div class="p1-data__funnel">
         <div class="p1-data__pool">
@@ -747,7 +762,7 @@
           <div class="p1-data__tile">${number('models')}<p>open reasoning models</p></div>
         </div>
         <svg class="p1-data__down" viewBox="0 0 24 40" width="24" height="40"><path d="M12 2v34M3 26l9 10 9-10"/></svg>
-        <div class="p1-data__kept">${number('pairs')}<p>model-question pairs where the hint moves the answer, ${t('p1.influence_vs')}</p></div>
+        <div class="p1-data__kept">${number('pairs')}<p>model-question pairs where ${t('p1.influence')}</p></div>
         <div class="p1-data__each"><span class="p1-data__times">×</span>${number('hinted_each')}<p>hinted runs per pair:</p>${number('hinted')}</div>
         <div class="p1-data__band">
           <div class="p1-data__bar">${TRACES.groups.map((group) => `<i data-seg="${group.key}" data-tone="${group.tone}" style="flex-grow:${v(group.fact)}"></i>`).join('')}</div>
@@ -755,14 +770,14 @@
         </div>
         <div class="p1-data__sample">
           <span class="p1-data__sub" style="width:${((DATA.w * v('task.sample_traces')) / TRACES.total).toFixed(1)}px">${TRACES.sample.map(([tone, n]) => `<i data-tone="${tone}" style="flex-grow:${n}"></i>`).join('')}</span>
-          <p>The scored sample: ${t('task.resampled_models')} of ${t('task.models')} models (${t('p1.sample_models')}) × <b>${t('task.sample_questions')} questions</b><br>× up to <span class="c-alarm">${t('p1.sample_draw')} follow</span> + <span class="c-ok">${t('p1.sample_draw')} resist</span>: ${t('task.sample_traces')} traces</p>
+          <p>Our readers score a sample of these: <b>${t('task.sample_traces')} traces</b>, from ${t('task.resampled_models')} of the ${t('task.models')} models.</p>
         </div>
       </div>
       <div class="p1-data__wow">
         <i class="p1-data__of" style="width:${FOLLOWED_W.toFixed(1)}px"></i>
         <div class="p1-data__head" style="width:${FOLLOWED_W.toFixed(1)}px">
           <p class="p1-data__q">Does the reasoning restate the hint?</p>
-          <p class="p1-data__unit">each dot: ${CELL_SHARE} of these traces</p>
+          <p class="p1-data__unit">lowest model · each dot: ${CELL_SHARE}</p>
         </div>
         <div class="p1-data__grid" style="--cell:${DATA.grid.cell}px;--gap:${DATA.grid.gap}px;--p1-unlit:${DATA.unlit};left:${((FOLLOWED_W - GRID_W) / 2).toFixed(1)}px">${kit.grid({ key: 'restate', n: DATA.grid.n, cols: DATA.grid.cols, tone: 'read' })}${kit.lens({ key: 'restate' })}</div>
         <div class="p1-data__says" style="left:${Math.ceil(FOLLOWED_W) + 40}px">
@@ -770,14 +785,11 @@
           <p class="p1-data__share"></p>
           <p class="p1-data__tail">of these traces do.</p>
         </div>
-        <div class="p1-data__limit">${kit.says({ limit: ['<b>So the cue is on the page.</b> This task is close to predicting an answer under an open hint: it says nothing about <em>hidden</em> ones.'] }, { tone: 'hidden' })}</div>
+        <div class="p1-data__limit">${kit.says({ limit: ['<b>So the hint is on the page.</b> This task says nothing about <em>hidden</em> hints.'] }, { tone: 'hidden' })}</div>
       </div>
       <div class="p1-data__second">
-        <div class="p1-data__states">${util.range(DATA.states).map(() => '<span class="p1-data__state"><i data-tone="ok"></i><i data-tone="alarm"></i></span>').join('')}</div>
         <div class="p1-data__second-says">
-          <p><b>Second task:</b> a published deception corpus (${CORPUS}).</p>
-          <p>${t('second.states')} ${t('p1.second_state')}, each with ${PAIRING} trace.</p>
-          <p>${LIMITED}</p>
+          <p><b>Second task:</b> a published deception corpus (${CORPUS}), ${LIMITED}.</p>
         </div>
       </div>
     </div>`;
@@ -786,14 +798,12 @@
     id: 'p1-data',
     part: PART,
     kicker: kicker(PART, 'Dataset'),
-    title: `${t('task.hinted')} reasoning traces follow or resist a wrong hint, <em>and nearly all restate it</em>`,
-    // One cue: it stays to the last step, where the counts have folded away, and says which
-    // traces every later score is computed on ('p1.sample_scored'). Its count does not break
-    // from its unit (a no-break space): the funnel has another 20, of runs per pair.
-    cues: [
-      { text: `Monitors are ${t('p1.sample_scored')}: ${t('task.sample_questions')}\u00a0questions per model`, step: 2, at: SAMPLE_AT },
-    ],
-    cite: [{ src: 'paper', where: 'Sec. 1, 3, 8' }, { src: 'young2026lie', where: 'hint (quoted)' }, { src: 'gema2024', where: '' }, { src: 'merrill2026', named: true }],
+    // The comma belongs to the half that is held back (click 3), so that until then the
+    // title is a whole sentence and does not end on a comma.
+    title: `${t('task.hinted')} reasoning traces follow or resist a wrong hint<em>, and nearly all restate it</em>`,
+    // No cue: the funnel's last row names the scored sample, and slides 7 and 9 say that it
+    // holds 20 questions per model, where a score rests on them.
+    cite: [{ src: 'paper', where: 'Sec. 1, 2, 10' }, { src: 'young2026lie', where: 'hint (quoted)' }, { src: 'gema2024', where: '' }, { src: 'merrill2026', named: true }],
     figure: 'illustrative',
     numbers: 'reported',
     html: dataHtml(),
@@ -835,7 +845,6 @@
         kit.stamp(runs, ctx.q(`[data-flag="${key}"]`), state, lands);
         runs.show(`[data-run="${key}"] .p1-data__means`, { at: lands + 150, rise: 0 });
       });
-      runs.show('.p1-data__why', { at: paragraphAt[PARAGRAPHS] + RUNS.length * 600 + 300 });
       runs.hold(DUR.micro);
 
       // Click 2: the example folds away and the counts build from top to bottom.
@@ -903,29 +912,30 @@
       const second = ctx.step({ label: 'the second task' });
       second.tween('.p1-data__band', { opacity: [1, 0.6] }, { dur: DUR.enter });
       second.show('.p1-data__second', { at: 300 });
-      second.tween('.p1-data__state', { opacity: [0, 1], x: [-16, 0] }, { at: 600, stagger: 150 });
-      second.show('.p1-data__second-says p', { at: 800, stagger: 600, rise: 0 });
+      second.show('.p1-data__second-says p', { at: 800, rise: 0 });
       second.hold(DUR.micro);
     },
   });
 
   // ---------------------------------------------------------------- slide 5: what we ran
   // Three counts, a row and a step each, in the order of the work: the traces we generated,
-  // the continuations we resampled, the readers we scored. Beside each count a bar, and the
+  // the continuations we resampled, the readers we evaluated ("scored" would be the verb of
+  // what a reader does to a prefix). Beside each count a bar, and the
   // three bars share one scale (RAN.bar pixels for all the traces). The first is slide 4's
   // bar of the 14,300 hinted traces, in its colors, with the traces without the hint as an
   // outline at its end. The second has a block for each of the 16 continuations of a prefix,
   // the third a block for each of the nine readers; a block is the scored sample's 1,226
   // prefixes and so as wide in both rows: the readers read the prefixes that were resampled.
-  // The last click sets the three dials of slide 3 at the ends of the rows and turns each:
-  // a count is what lets one scoring choice be measured, and the title gets its second half.
+  // The last click says under each row what its count lets us measure, in words that need
+  // no term of Part 2 ('p1.predicts', 'p1.fixes', 'p1.ranks'). The three questions of slide
+  // 3 are not set against the rows one to one: the
+  // ceiling and the point of no return both come from continuations, and every question is
+  // about the traces.
   const RAN = Object.freeze({
-    head: 16, rows: Object.freeze([56, 264, 472]),   // where the head of the dials stands, and where each row starts under it
+    rows: Object.freeze([24, 232, 440]),            // where each row starts
     bar: 920, gap: 2,                                // the width of all the traces; the gap between two blocks
     perBlock: Object.freeze({ continuations: 90, readers: 140 }),   // ms from one block to the next
-    // Where each dial's hand points before and after it turns, in degrees from the top: the
-    // first as on slide 3 (DIALS), the others from where they stood there.
-    turns: Object.freeze([[DIALS[0].from, DIALS[0].to], [DIALS[1].from, -58], [DIALS[2].from, 74]]),
+    perFor: 700,                                     // the last click, in ms: from one row's line to the next
   });
   const RAN_ROWS = (() => {
     const all = v('p1.traces_all');
@@ -950,37 +960,37 @@
     const blocks = (count) => util.range(count).map((i) => seg(`block-${i}`, null, i * v('task.sample_traces'), v('task.sample_traces')));
     return Object.freeze([
       Object.freeze({
-        key: 'traces', verb: 'We generated', fact: 'p1.traces_all', noun: 'traces', tone: null,
+        key: 'traces', verb: 'We generated', fact: 'p1.traces_all', noun: 'traces', tone: null, measures: 'p1.predicts',
         segs: Object.freeze([...hinted, unhinted]),
         parts: Object.freeze([
           Object.freeze({ of: 'hinted', x: 0, text: `<b>${t('task.hinted')}</b> with the hint` }),
-          Object.freeze({ of: 'unhinted', x: unhinted.x, text: `<b>${t('p1.unhinted')}</b> without it` }),
+          // What the traces without the hint are for: the hint's effect is measured against them.
+          Object.freeze({ of: 'unhinted', x: unhinted.x, text: `<b>${t('p1.unhinted')}</b> without it (${t('p1.baseline')})` }),
         ]),
-        lines: Object.freeze([`from <b>${t('task.models')} open reasoning models</b>, ${t('task.developers')}`]),
+        // Whose traces they are is slide 4's (its 8 open reasoning models).
+        lines: Object.freeze([]),
       }),
       Object.freeze({
-        key: 'continuations', verb: 'We resampled', fact: 'task.continuations', noun: 'continuations', tone: 'hidden',
+        key: 'continuations', verb: 'We resampled', fact: 'task.continuations', noun: 'continuations', tone: 'hidden', measures: 'p1.fixes',
         segs: Object.freeze(blocks(v('task.sample_k'))),
         parts: Object.freeze([]),
         lines: Object.freeze([
-          `<b>${t('task.sample_traces')}</b> prefixes from ${t('task.resampled_models')} of the ${t('task.models')} models`,
+          `<b>${t('task.sample_traces')}</b> prefixes, one per sampled trace`,
           `each ${t('p1.continued')} <b>${t('task.sample_k')}</b> times`,
         ]),
       }),
       Object.freeze({
-        key: 'readers', verb: 'We scored', fact: 'readers.count', noun: 'readers', tone: 'read',
+        key: 'readers', verb: 'We evaluated', fact: 'readers.count', noun: 'readers', tone: 'read', measures: 'p1.ranks',
         segs: Object.freeze(blocks(v('readers.count'))),
         parts: Object.freeze([]),
-        // "Among them" comes first: under the count of readers, "them" are the readers.
-        lines: Object.freeze([
-          `among them <b>${t('p1.frontier_models')}</b>`,
-          `each ${t('p1.readers_same')} prefixes`,
-        ]),
+        // Under the count of readers, "them" are the readers. That every reader reads the
+        // same prefixes is slide 6's second cue.
+        lines: Object.freeze([`among them <b>${t('p1.frontier_models')}</b>`]),
       }),
     ]);
   })();
-  if (RAN_ROWS.length !== CHOICES.length || RAN.rows.length !== RAN_ROWS.length || RAN.turns.length !== RAN_ROWS.length) {
-    throw Deck.fail('p1-scale: one row, one place and one dial for each of the scoring choices');
+  if (RAN.rows.length !== RAN_ROWS.length || RAN_ROWS.some((row) => !t(row.measures))) {
+    throw Deck.fail('p1-scale: one place for each row, and for each row what its count lets us measure');
   }
   const toneAttr = (name) => (name ? ` data-tone="${name}"` : '');
   const ranRowHtml = (row, i) => `
@@ -991,13 +1001,11 @@
           <div class="p1-ran__bar">${row.segs.map((s) => `<i data-seg="${s.key}"${toneAttr(s.tone)} style="left:${s.x.toFixed(1)}px;width:${s.w.toFixed(1)}px"></i>`).join('')}</div>
           ${row.parts.length ? `<p class="p1-ran__parts">${row.parts.map((part) => `<span data-of="${part.of}" style="left:${part.x.toFixed(1)}px">${part.text}</span>`).join('')}</p>` : ''}
           ${row.lines.map((line) => `<p class="p1-ran__line">${line}</p>`).join('')}
-        </div>
-        <div class="p1-ran__dial">${dialHtml(i)}
+          <p class="p1-ran__for"><span>measures</span>${t(row.measures)}</p>
         </div>
       </div>`;
   const ranHtml = () => `
-    <div class="p1-ran">
-      <p class="p1-ran__head" style="top:${RAN.head}px">to measure scoring choice</p>${RAN_ROWS.map(ranRowHtml).join('')}
+    <div class="p1-ran">${RAN_ROWS.map(ranRowHtml).join('')}
     </div>`;
 
   Deck.register({
@@ -1007,16 +1015,13 @@
     // "On one task" bounds the claim, in the words of the sentence that p1.measured quotes
     // ("We measure what these choices do on one task"): enough to measure what a scoring
     // choice does, which is not enough to tell the readers apart (slide 12).
-    title: `On one task, we ran enough to ${t('p1.measured')}, <em>not to guess it</em>`,
+    title: `On one task, we ran enough to ${t('p1.measured')}`,
     cues: [],
-    cite: [{ src: 'paper', where: 'Sec. 1, 3; App. E' }],
+    cite: [{ src: 'paper', where: 'Sec. 1, 2; Table 4; Code and data' }],
     figure: 'schematic',
     numbers: 'reported',
     html: ranHtml(),
     setup: (ctx) => {
-      // The second half of the title is held back until the dials of the last click have turned.
-      const held = ctx.q('.dk-title em');
-      held.classList.add('p1-ran__held');
       const row = (key) => `[data-row="${key}"]`;
       // A row arrives: what we did, then the place of its count with what is counted.
       const arrive = (step, key, at) => {
@@ -1024,7 +1029,7 @@
         step.show(`${row(key)} .p1-ran__count`, { at: at + 150 });
       };
       // A bar fills block by block while its count runs up, at the pace of the blocks; then
-      // the two lines about it, one after the other.
+      // the lines about it, one after the other.
       const fill = (step, key, at) => {
         const blocks = ctx.qa(`${row(key)} .p1-ran__bar i`);
         const ms = blocks.length * RAN.perBlock[key];
@@ -1043,7 +1048,6 @@
       enter.tween('[data-seg="unhinted"]', { '--p1-grow': ['0%', '100%'] }, { at: more, dur: DUR.move, ease: 'inOut' });
       kit.countTo(enter, `${row('traces')} .p1-ran__n`, 'p1.traces_all', { from: v('task.hinted'), at: more, ease: 'inOut' });
       enter.show('[data-of="unhinted"]', { at: more + 300, rise: 0 });
-      enter.show(`${row('traces')} .p1-ran__line`, { at: more + 1100, rise: 0 });
       enter.hold(DUR.micro);
 
       // Click 1: the continuations, 16 blocks of the scored sample's prefixes.
@@ -1053,26 +1057,14 @@
       again.hold(DUR.micro);
 
       // Click 2: the readers, nine blocks of those same prefixes.
-      const read = ctx.step({ label: 'the readers we scored' });
+      const read = ctx.step({ label: 'the readers we evaluated' });
       arrive(read, 'readers', 0);
       fill(read, 'readers', 400);
       read.hold(DUR.micro);
 
-      // Click 3: a dial of slide 3 at the end of each row; each turns in its turn, and the
-      // title gets its second half as the last one comes to rest.
-      const measure = ctx.step({ label: 'each count measures one scoring choice' });
-      measure.show('.p1-ran__head', { at: 100, rise: 0 });
-      const turning = 900;
-      RAN_ROWS.forEach((r, i) => {
-        const at = 400 + i * 600;
-        const [from, to] = RAN.turns[i];
-        measure.tween(`${row(r.key)} .p1-ran__dial`, kit.POP, { at, dur: DUR.enter, ease: 'back' });
-        measure.cls(`${row(r.key)} .p1-stk__dial`, 'p1-is-set', { at: at + 300 });
-        measure.tween(`${row(r.key)} .p1-stk__hand`, { rotate: [from, to] }, { at: at + 300, dur: turning, ease: 'inOut' });
-      });
-      const landed = 400 + (RAN_ROWS.length - 1) * 600 + 300 + turning - DUR.enter;
-      measure.tween(held, { opacity: [0, 1] }, { at: landed, dur: DUR.move });
-      measure.tween(held, { '--p1-glow': [1, 0] }, { at: landed + DUR.enter, dur: DUR.reveal });
+      // Click 3: under each row, what its count lets us measure, one row after the other.
+      const measure = ctx.step({ label: 'what each count lets us measure' });
+      RAN_ROWS.forEach((r, i) => measure.show(`${row(r.key)} .p1-ran__for`, { at: 300 + i * RAN.perFor, rise: 0 }));
       measure.hold(DUR.enter);
     },
   });
