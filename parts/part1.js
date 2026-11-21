@@ -1013,9 +1013,10 @@
     part: PART,
     kicker: kicker(PART, 'Dataset'),
     // "On one task" bounds the claim, in the words of the sentence that p1.measured quotes
-    // ("We measure what these choices do on one task"): enough to measure what a scoring
-    // choice does, which is not enough to tell the readers apart (slide 12).
-    title: `On one task, we ran enough to ${t('p1.measured')}`,
+    // ("We measure what these choices do on one task"). The title does not say "we ran
+    // enough to": no number on the slide backs "enough", and it could be read against slide
+    // 13's "we had too few questions to tell our readers apart".
+    title: `On one task, we ${t('p1.measured')}`,
     cues: [],
     cite: [{ src: 'paper', where: 'Sec. 1, 2; Table 4; Code and data' }],
     figure: 'schematic',

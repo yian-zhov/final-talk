@@ -961,7 +961,7 @@
     // intervals (the pairs of all nine readers) would exclude zero if the readers were
     // equal; tested jointly, the intervals are wider and even one such difference is rare
     // ('p3.joint_level', 'p3.joint_chance').
-    joint: `One pair at a time, chance would resolve ${t('p3.chance_resolved')} of all ${t('test.pairs_all')} pairs (${READERS.length} readers). So we test <b>jointly</b>: wider intervals, so chance rarely resolves even one.`,
+    joint: `One pair at a time, chance would resolve ${t('p3.chance_resolved')} of all ${t('test.pairs_all')} pairs (${READERS.length} readers). So we test <b>jointly</b>: with wider intervals, chance rarely resolves even one.`,
     // 'test.resolved_held_who': the four arcs say which readers, the caption which models.
     held: `<b>Label 2:</b> ${v('test.resolved_held_max')} are resolved, each ${t('reader.qwen8.name')} below a ${FRONTIER_MODELS.join(' or ')} reader.`,
     // Why the control ('p3.cut_leaks', in slide 10's words: the cut "gives away" length;
