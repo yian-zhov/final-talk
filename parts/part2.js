@@ -21,14 +21,15 @@
   const percent = (n) => `${Math.round(n * 100)}%`;
 
   // ---------------------------------------------------------------- facts of this part
-  // Facts that only Part 2 needs, each with the page and the words of the paper's v2 draft
-  // it was read in (sources/paper-v2-draft.pdf; the form of `file` is that of
-  // shared/facts.js, and tools/selftest.mjs looks every quotation up on its page). A `text`
-  // is the paper's wording with its symbols left out; the slides say it in the deck's words
-  // and print only the numbers and the names.
-  const PDF = 'sources/paper-v2-draft.pdf';
-  const at = (page, quote) => `p.${page}: "${quote}"`;
-  const paper = (where, cites, rest) => Object.freeze({ src: 'paper', where, file: `${PDF}, ${[].concat(cites).join('; ')}`, ...rest });
+  // Facts that only Part 2 needs, each with the file, the lines and the words of the paper's
+  // v2 TeX it was read in (the snapshot sources/paper-v2-tex/; the form of `file` is that of
+  // shared/facts.js, `final-project/paper/tmlr/<file>:N-M: "words"`, and tools/selftest.mjs
+  // looks every quotation up in those lines). A `text` is the paper's wording with its
+  // symbols left out; the slides say it in the deck's words and print only the numbers and
+  // the names.
+  const TEX = 'final-project/paper/tmlr/';
+  const at = (place, quote) => `${TEX}${place}: "${quote}"`;
+  const paper = (where, cites, rest) => Object.freeze({ src: 'paper', where, file: [].concat(cites).join('; '), ...rest });
 
   // Slide 6: what a reader is, the two labels and what each asks, and the nine readers in
   // three kinds (where the prefix is cut is the shared fact 'task.cut_r'). The counts 3, 2
@@ -36,55 +37,55 @@
   // as the paper prints them. Who is made to answer in each forced reader, and what the two
   // prompts of the frontier readers ask (AP, IN), are facts of the same reading.
   Deck.addFacts({
-    'p2.reader_def': paper('Sec. 1', at(2, 'A reader maps a prefix to a continuous score or a binary verdict.'), { text: 'A reader maps a prefix to a continuous score or a binary verdict' }),
-    'p2.label_def': paper('Sec. 1', at(2, 'a trace follows the hint if it ends at that answer and resists it otherwise'), { text: 'a trace follows the hint if it ends at that answer and resists it otherwise' }),
-    'p2.two_labels': paper('Sec. 3', at(5, 'We use two labels, and they answer two different questions.'), { value: 2, text: 'We use two labels, and they answer two different questions.' }),
-    'p2.label_own': paper('Sec. 3', at(5, 'The first label is the trace’s own outcome: does this trace end at the hinted answer? A monitor scored against it predicts the fate of one run.'), {
+    'p2.reader_def': paper('Sec. 1', at('sections_v2/01_intro.tex:27', 'A \\emph{reader} maps a prefix to a continuous score or a binary verdict.'), { text: 'A reader maps a prefix to a continuous score or a binary verdict' }),
+    'p2.label_def': paper('Sec. 1', at('sections_v2/01_intro.tex:23-24', 'a trace \\emph{follows} the hint if it ends at that answer and \\emph{resists} it otherwise'), { text: 'a trace follows the hint if it ends at that answer and resists it otherwise' }),
+    'p2.two_labels': paper('Sec. 3', at('sections_v2/03_labels.tex:4', 'We use two labels, and they answer two different questions.'), { value: 2, text: 'We use two labels, and they answer two different questions.' }),
+    'p2.label_own': paper('Sec. 3', at('sections_v2/03_labels.tex:6-7', 'The first label is the trace\'s own outcome: does this trace end at the hinted answer? A monitor scored against it predicts the fate of one run.'), {
       text: 'The first label is the trace’s own outcome: does this trace end at the hinted answer? A monitor scored against it predicts the fate of one run.',
     }),
-    'p2.label_held': paper('Sec. 3', at(5, 'The second label is the outcome L of a held-out continuation drawn from the same prefix: has the model committed by this prefix?'), {
+    'p2.label_held': paper('Sec. 3', at('sections_v2/03_labels.tex:7-8', 'The second label is the outcome $L$ of a held-out continuation drawn from the same prefix: has the model committed by this prefix?'), {
       text: 'The second label is the outcome of a held-out continuation drawn from the same prefix: has the model committed by this prefix?',
     }),
-    'p2.label_held_asks': paper('Sec. 3', at(5, 'scored against it predicts what the model tends to do from here, not what this particular run did'), {
+    'p2.label_held_asks': paper('Sec. 3', at('sections_v2/03_labels.tex:8-9', 'scored against it predicts what the model tends to do from here, not what this particular run did'), {
       text: 'predicts what the model tends to do from here, not what this particular run did',
     }),
-    'p2.same_prefixes': paper('Sec. 2.2', at(3, 'All readers read the same prefixes'), { text: 'All readers read the same prefixes' }),
-    'p2.kind_forced': paper('Sec. 2.2, readers (1) to (3)', [at(3, '(1) the forced answer'), at(3, '(3) Qwen3-32B forced to answer on the subject’s prefix')], { value: 3, text: '3' }),
-    'p2.kind_open': paper('Sec. 2.2, readers (4, 5)', at(3, '(4, 5) the open monitors Qwen3-8B and Qwen3-32B'), { value: 2, text: '2' }),
-    'p2.kind_frontier': paper('Sec. 2.2, readers (6) to (9)', at(3, '(6–9) Claude Opus 5.5 and GPT-6 Astra'), { value: 4, text: '4' }),
-    'p2.open_names': paper('Sec. 2.2', at(3, 'the open monitors Qwen3-8B and Qwen3-32B'), { text: 'Qwen3-8B and Qwen3-32B' }),
-    'p2.frontier_names': paper('Sec. 2.2', at(3, '(6–9) Claude Opus 5.5 and GPT-6 Astra'), { text: 'Claude Opus 5.5 and GPT-6 Astra' }),
-    'p2.frontier_prompts': paper('Sec. 2.2', at(3, 'each asked for a number under two prompts'), { value: 2, text: 'two prompts' }),
-    'p2.forced_subject': paper('Sec. 2.2, reader (1)', at(3, 'the forced answer: the subject model gets its prompt, the prefix, its end-of-thinking marker and an answer stub, and the score is its probability of X over the four letters'), {
+    'p2.same_prefixes': paper('Sec. 2.2', at('sections_v2/02_setup.tex:36', 'All readers read the same prefixes'), { text: 'All readers read the same prefixes' }),
+    'p2.kind_forced': paper('Sec. 2.2, readers (1) to (3)', [at('sections_v2/02_setup.tex:37', '(1)~the \\emph{forced answer}'), at('sections_v2/02_setup.tex:40', '(3)~\\emph{Qwen3-32B forced} to answer on the subject\'s prefix')], { value: 3, text: '3' }),
+    'p2.kind_open': paper('Sec. 2.2, readers (4, 5)', at('sections_v2/02_setup.tex:41', '(4, 5)~the open monitors \\emph{Qwen3-8B} and \\emph{Qwen3-32B}'), { value: 2, text: '2' }),
+    'p2.kind_frontier': paper('Sec. 2.2, readers (6) to (9)', at('sections_v2/02_setup.tex:44', '(6--9)~\\emph{Claude Opus 5.5} and \\emph{GPT-6 Astra}'), { value: 4, text: '4' }),
+    'p2.open_names': paper('Sec. 2.2', at('sections_v2/02_setup.tex:41', 'the open monitors \\emph{Qwen3-8B} and \\emph{Qwen3-32B}'), { text: 'Qwen3-8B and Qwen3-32B' }),
+    'p2.frontier_names': paper('Sec. 2.2', at('sections_v2/02_setup.tex:44', '(6--9)~\\emph{Claude Opus 5.5} and \\emph{GPT-6 Astra}'), { text: 'Claude Opus 5.5 and GPT-6 Astra' }),
+    'p2.frontier_prompts': paper('Sec. 2.2', at('sections_v2/02_setup.tex:44-45', 'each asked for a number under two prompts'), { value: 2, text: 'two prompts' }),
+    'p2.forced_subject': paper('Sec. 2.2, reader (1)', at('sections_v2/02_setup.tex:37-38', 'the \\emph{forced answer}: the subject model gets its prompt, the prefix, its end-of-thinking marker and an answer stub, and the score is its probability of X over the four letters'), {
       text: 'the forced answer: the subject model gets its prompt, the prefix, its end-of-thinking marker and an answer stub, and the score is its probability of X over the four letters',
     }),
-    'p2.forced_nohint': paper('Sec. 2.2, reader (2)', at(3, 'answer with the hint removed from the prompt'), { text: 'the forced answer with the hint removed from the prompt' }),
-    'p2.forced_other': paper('Sec. 2.2, reader (3)', at(3, 'Qwen3-32B forced to answer on the subject’s prefix'), { text: 'Qwen3-32B forced to answer on the subject’s prefix' }),
-    'p2.prompt_ap': paper('Sec. 2.2', at(3, 'AP-num, a probability for each option under the answer-prediction prompt, scored by X’s'), {
+    'p2.forced_nohint': paper('Sec. 2.2, reader (2)', at('sections_v2/02_setup.tex:39', 'answer \\emph{with the hint removed} from the prompt'), { text: 'the forced answer with the hint removed from the prompt' }),
+    'p2.forced_other': paper('Sec. 2.2, reader (3)', at('sections_v2/02_setup.tex:40', '\\emph{Qwen3-32B forced} to answer on the subject\'s prefix'), { text: 'Qwen3-32B forced to answer on the subject’s prefix' }),
+    'p2.prompt_ap': paper('Sec. 2.2', at('sections_v2/02_setup.tex:45-46', '\\emph{AP-num}, a probability for each option under the answer-prediction prompt, scored by X\'s'), {
       text: 'AP-num, a probability for each option under the answer-prediction prompt, scored by X’s',
     }),
-    'p2.prompt_in': paper('Sec. 2.2', at(3, 'IN-num, the probability that the final answer will be the hint’s, under the influence prompt'), {
+    'p2.prompt_in': paper('Sec. 2.2', at('sections_v2/02_setup.tex:46', '\\emph{IN-num}, the probability that the final answer will be the hint\'s, under the influence prompt'), {
       text: 'IN-num, the probability that the final answer will be the hint’s, under the influence prompt',
     }),
     // The open monitors answer the same prompt as the frontier readers' AP.
-    'p2.open_prompt': paper('Sec. 2.2, readers (4, 5)', [at(3, 'with the answer-prediction prompt of Boppana et al.'), at(3, 'scored by the letter probability of X')], {
+    'p2.open_prompt': paper('Sec. 2.2, readers (4, 5)', [at('sections_v2/02_setup.tex:41-42', 'with the answer-prediction prompt of \\citet{boppana2026}'), at('sections_v2/02_setup.tex:42-43', 'scored by the letter probability of X')], {
       text: 'the open monitors with the answer-prediction prompt, scored by the letter probability of X',
     }),
   });
   // Slide 7: an AUROC as a share of pairs, within question or pooled.
   Deck.addFacts({
-    'p2.auroc_pairs': paper('Table 1', at(4, 'Share of (positive, negative) pairs from the same cluster in which the positive scores higher'), {
+    'p2.auroc_pairs': paper('Table 1', at('sections_v2/02_setup.tex:94-95', 'Share of (positive, negative) pairs from the same cluster in which the positive scores higher'), {
       text: 'Share of (positive, negative) pairs from the same cluster in which the positive scores higher',
     }),
-    'p2.pooled_pairs': paper('Table 1', at(4, 'Pooled: over all pairs.'), { text: 'Pooled: over all pairs.' }),
-    'p2.within_prompt': paper('Sec. 3', at(5, 'A within-prompt AUROC compares only traces of the same prompt; a pooled AUROC compares all pairs.'), {
+    'p2.pooled_pairs': paper('Table 1', at('sections_v2/02_setup.tex:95', 'Pooled: over all pairs.'), { text: 'Pooled: over all pairs.' }),
+    'p2.within_prompt': paper('Sec. 3', at('sections_v2/03_labels.tex:20-21', 'A \\emph{within-prompt} AUROC compares only traces of the same prompt; a pooled AUROC compares all pairs.'), {
       text: 'A within-prompt AUROC compares only traces of the same prompt; a pooled AUROC compares all pairs.',
     }),
-    'p2.within_meaning': paper('Sec. 3', at(5, 'within-question AUROC measures what a reader learns from the reasoning beyond the prompt'), {
+    'p2.within_meaning': paper('Sec. 3', at('sections_v2/03_labels.tex:23-24', 'within-question AUROC measures what a reader learns from the reasoning beyond the prompt'), {
       text: 'within-question AUROC measures what a reader learns from the reasoning beyond the prompt',
     }),
     // What a reader shown the prompt alone can and cannot do: the paper's example for pooling.
-    'p2.prompt_only': paper('Sec. 3', at(5, 'a reader that sees only the prompt, and never the reasoning, cannot rank two traces of the same question'), {
+    'p2.prompt_only': paper('Sec. 3', at('sections_v2/03_labels.tex:25-26', 'a reader that sees only the prompt, and never the reasoning, cannot rank two traces of the same question'), {
       text: 'a reader that sees only the prompt, and never the reasoning, cannot rank two traces of the same question',
     }),
   });
@@ -92,33 +93,33 @@
   // reads that AUROC (as a ceiling), the small K of the first resampling, and the label from
   // a held-out continuation (the share then comes from the other 15).
   Deck.addFacts({
-    'p2.continuation_def': paper('Sec. 1', at(2, 'A continuation is a fresh sample of the model’s reasoning from a prefix to its end, and K is the number drawn per prefix.'), {
+    'p2.continuation_def': paper('Sec. 1', at('sections_v2/01_intro.tex:28-29', 'A \\emph{continuation} is a fresh sample of the model\'s reasoning from a prefix to its end, and $K$ is the number drawn per prefix.'), {
       text: 'A continuation is a fresh sample of the model’s reasoning from a prefix to its end, and K is the number drawn per prefix.',
     }),
-    'p2.resampling_auroc': paper('Table 1', [at(4, 'the share of K continuations that reach the outcome'), at(4, 'its within-cluster AUROC')], {
+    'p2.resampling_auroc': paper('Table 1', [at('sections_v2/02_setup.tex:97', 'the share of $K$ continuations that reach the outcome'), at('sections_v2/02_setup.tex:97-98', 'its within-cluster AUROC')], {
       text: 'the share of K continuations that reach the outcome; its within-cluster AUROC, the resampling AUROC',
     }),
-    'p2.ceiling_use': paper('Sec. 4', at(6, 'To judge how much of what a prefix reveals a reader captures, compare it with the best AUROC any reader of the prefix could reach. Resampling estimates it'), {
+    'p2.ceiling_use': paper('Sec. 4', at('sections_v2/04_ceiling.tex:4-5', 'To judge how much of what a prefix reveals a reader captures, compare it with the best AUROC any reader of the prefix could reach. Resampling estimates it'), {
       text: 'To judge how much of what a prefix reveals a reader captures, compare it with the best AUROC any reader of the prefix could reach. Resampling estimates it',
     }),
-    'p2.ceiling_name': paper('Sec. 1', at(1, 'They call the resulting within-state AUROC a decision ceiling and read every monitor against it.'), {
+    'p2.ceiling_name': paper('Sec. 1', at('sections_v2/01_intro.tex:12-13', 'They call the resulting within-state AUROC a decision ceiling and read every monitor against it.'), {
       text: 'They call the resulting within-state AUROC a decision ceiling and read every monitor against it.',
     }),
-    'p2.noisy': paper('Sec. 4', at(6, 'is a noisy reading of the continuation probability'), { text: 'a noisy reading of the continuation probability' }),
-    'p2.k_small': paper('Sec. 2.1', at(3, 'trace was resampled with K = 2 continuations at r = 0.1, 0.25, 0.4, 0.55, 0.7 and 0.85'), { value: 2, text: '2' }),
-    'p2.heldout_label': paper('Sec. 4.3', at(7, 'the outcome L of one held-out continuation'), { text: 'the outcome of one held-out continuation' }),
-    'p2.heldout_others': paper('Sec. 4.3', at(7, 'the AUROC against L of the share of m of the other 15'), { value: 15, text: '15' }),
+    'p2.noisy': paper('Sec. 4', at('sections_v2/04_ceiling.tex:6', 'is a noisy reading of the continuation probability'), { text: 'a noisy reading of the continuation probability' }),
+    'p2.k_small': paper('Sec. 2.1', at('sections_v2/02_setup.tex:26-27', 'trace was resampled with $K = 2$ continuations at $r = 0.1, 0.25, 0.4, 0.55, 0.7$ and $0.85$'), { value: 2, text: '2' }),
+    'p2.heldout_label': paper('Sec. 4.3', at('sections_v2/04_ceiling.tex:100', 'the outcome $L$ of one held-out continuation'), { text: 'the outcome of one held-out continuation' }),
+    'p2.heldout_others': paper('Sec. 4.3', at('sections_v2/04_ceiling.tex:104', 'the AUROC against $L$ of the share of $m$ of the other 15'), { value: 15, text: '15' }),
     // The continuations start from a cut that is already fixed, where the readers read.
-    'p2.continuations_from_cut': paper('Sec. 2.1', at(3, 'each of the 1,226 drawn hinted traces was resampled again with K = 16 continuations from the exact cut its readers read at r = 0.5'), {
+    'p2.continuations_from_cut': paper('Sec. 2.1', at('sections_v2/02_setup.tex:29-30', 'each of the 1,226 drawn hinted traces was resampled again with $K = 16$ continuations from the exact cut its readers read at $r = 0.5$'), {
       text: 'each of the 1,226 drawn hinted traces was resampled again with K = 16 continuations from the exact cut its readers read at r = 0.5',
     }),
   });
   // Slide 9: what is resampled (whole questions, the paper's clusters).
   Deck.addFacts({
-    'p2.question_clusters': paper('Table 4, caption', at(11, 'nominal 95% question-cluster percentile interval'), { text: 'question-cluster percentile interval' }),
+    'p2.question_clusters': paper('Table 4, caption', at('sections_v2/06_readers.tex:12', 'nominal 95\\% question-cluster percentile interval'), { text: 'question-cluster percentile interval' }),
     // What "resolved" stands for in the paper's table of differences: an interval that
     // excludes zero.
-    'p2.excluding_zero': paper('Table 5; abstract', [at(11, 'Excluding 0, simultaneous'), at(1, 'simultaneous 95% intervals resolve no reader difference')], { text: 'Excluding 0' }),
+    'p2.excluding_zero': paper('Table 5; abstract', [at('sections_v2/06_readers.tex:65', 'Excluding 0, simultaneous'), at('sections_v2/00_abstract.tex:11', 'simultaneous 95\\% intervals resolve no reader difference')], { text: 'Excluding 0' }),
   });
 
   // ---------------------------------------------------------------- shared by the four slides
@@ -476,7 +477,7 @@
   // known and replicated ('pooled.known', 'pooled.we_score') and where it is shown
   // ('pooled.only_there'), and ends on the first recommendation; it fails to build if a fact
   // stops saying so, or if the pooled value is not above the within-question one.
-  if (!/is known$/.test(t('pooled.known')) || !/This point is known$/.test(t('pooled.we_score')) || !/selected for influence$/.test(t('pooled.only_there')) || !/never the reasoning/.test(t('p2.prompt_only'))) {
+  if (!/^it is known that pooling the AUROC across prompts/.test(t('pooled.known')) || !/This point is known$/.test(t('pooled.we_score')) || !/selected for influence$/.test(t('pooled.only_there')) || !/never the reasoning/.test(t('p2.prompt_only'))) {
     throw Deck.fail('part 2: the facts on pooling no longer say what the last click of the slide on AUROC rewords');
   }
   if (!(v('pooled.prompt_only') > v('pooled.prompt_only_within')) || Deck.motifs.recs[0].fact !== 'rec.1') throw Deck.fail('part 2: the prompt-only reader no longer scores higher pooled, or the first recommendation is no longer the one on pooling');

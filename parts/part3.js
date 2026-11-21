@@ -1,6 +1,6 @@
 // Part 3: What we found. Slides 10-13 (Results, Conclusion).
 // SPEC.md section 5 describes each slide; parts/sample.js shows the registration API.
-// The three results are the paper's three contributions (its v2 draft, Sec. 4 to 6): when a
+// The three results are the paper's three contributions (its v2, Sec. 4 to 6): when a
 // resampling ceiling is a ceiling (slide 10), whether alarms come in time (slide 11), what a
 // comparison of readers can resolve (slide 12). They share one frame (.p3-res): the result's
 // head (kit.resultHead), the picture, and under it the caption of the step (kit.says). On
@@ -25,12 +25,13 @@
   // paper's "Qwen3-32B forced" ('readers.forced_aside').
   const UNCHECKED = 'qwen32_forced';
 
-  // Facts that only Part 3 needs, each with the page and the words of the paper's v2 draft
-  // it was read in (sources/paper-v2-draft.pdf; the form of `file` is that of
-  // shared/facts.js, and tools/selftest.mjs looks every quotation up on its page).
-  const PDF = 'sources/paper-v2-draft.pdf';
-  const at = (page, quote) => `p.${page}: "${quote}"`;
-  const paper = (where, cites, rest) => Object.freeze({ src: 'paper', where, file: `${PDF}, ${[].concat(cites).join('; ')}`, ...rest });
+  // Facts that only Part 3 needs, each with the file, the lines and the words of the paper's
+  // v2 TeX it was read in (the snapshot sources/paper-v2-tex/; the form of `file` is that of
+  // shared/facts.js, `final-project/paper/tmlr/<file>:N-M: "words"`, and tools/selftest.mjs
+  // looks every quotation up in those lines).
+  const TEX = 'final-project/paper/tmlr/';
+  const at = (place, quote) => `${TEX}${place}: "${quote}"`;
+  const paper = (where, cites, rest) => Object.freeze({ src: 'paper', where, file: [].concat(cites).join('; '), ...rest });
   const three = (n) => n.toFixed(3);
   // Table 4 prints each reader's within-question AUROC with its nominal 95% interval. The
   // interval cites the reader's row of the table, as the reader's other facts do, and the
@@ -46,76 +47,84 @@
   })));
   Deck.addFacts({
     // Slide 10, assumption M in plain words: the paper's own second wording of it.
-    'p3.m_fresh': paper('Sec. 4', at(6, 'the bound needs the trace’s own remainder to behave like a fresh continuation'), {
+    'p3.m_fresh': paper('Sec. 4', at('sections_v2/04_ceiling.tex:15-16', 'the bound needs the trace\'s own remainder to behave like a fresh continuation'), {
       text: 'the trace’s own remainder behaves like a fresh continuation',
     }),
     // Slide 10, what "biased low" means: where the resampling AUROC from K continuations
     // lies against its limit.
-    'p3.biased_low': paper('Sec. 4', at(6, 'UK lies at or below its limit in expectation, less so as K grows'), {
+    'p3.biased_low': paper('Sec. 4', at('sections_v2/04_ceiling.tex:6', '$U_K$ lies at or below its limit in expectation, less so as $K$ grows'), {
       text: 'at or below its limit in expectation, less so as K grows',
+    }),
+    // Slide 10, a reader above a finite-K ceiling: the one cell of Jia et al.'s own Table 5
+    // that the paper names, in the paper's words. The paper gives the judge of that monitor
+    // no version ("a Claude judge"), so the fact has none and the slide does not name the
+    // judge. `value` is the monitor's AUROC in that cell, `ceiling` their ceiling there.
+    'p3.exceeds': paper('Sec. 4.1 (citing Jia et al. 2026, Sec. 5.4 and Table 5)', at('sections_v2/04_ceiling.tex:73-76', 'Their own lookahead monitor with a Claude judge comes out above their ceiling in one cell, Qwen3-14B on banking at 30\\% of the reasoning (0.81 against a ceiling of 0.78). Their Table~5 marks the paired 95\\% interval of the ceiling minus that monitor as lying below zero'), {
+      value: 0.81, ceiling: 0.78,
+      text: 'Their own lookahead monitor with a Claude judge comes out above their ceiling in one cell, Qwen3-14B on banking at 30% of the reasoning (0.81 against a ceiling of 0.78). Their Table 5 marks the paired 95% interval of the ceiling minus that monitor as lying below zero.',
     }),
     // Slide 11, where a monitor reads a trace: twelve positions, of which the ten up to
     // 0.8 are the looks of the false-alarm count ('p3.looks_who').
-    'p3.reads': paper('Sec. 5.2', at(9, 'alarms at the first read position (r = 0, 0.1, . . . , 1.0 and 0.25) at which its verdict names the hinted answer.'), {
+    'p3.reads': paper('Sec. 5.2', at('sections_v2/05_alarm.tex:40-41', 'alarms at the first read position ($r = 0, 0.1, \\ldots, 1.0$ and 0.25) at which its verdict names the hinted answer.'), {
       value: Object.freeze([0, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]), text: '12',
     }),
     // Slide 11, whose false alarms the two rates are, and over which reads (the paper's
     // "looks"). The paper's main text counts the five ("five continuous readers", of the
     // nine continuous-score readers of its Sec. 2.2) and does not name them, so the slide
     // counts them too and names none.
-    'p3.looks_who': paper('Sec. 5.2, P5', at(10, 'For five continuous readers, a threshold set to a per-look rate of 0.10 over ten looks (r = 0 to 0.8)'), {
+    'p3.looks_who': paper('Sec. 5.2, P5', at('sections_v2/05_alarm.tex:96', 'For five continuous readers, a threshold set to a per-look rate of 0.10 over ten looks ($r = 0$ to 0.8)'), {
       value: 5, from: 0, to: 0.8, text: '5',
     }),
     // Slide 11, the two outputs of an open monitor: its score, which ranks traces (the
     // AUROC of Table 4), and its verdict, which sets the alarm.
-    'p3.score_px': paper('Sec. 2.2', at(3, 'scored by the letter probability of X'), { text: 'the letter probability of X' }),
-    'p3.verdict': paper('Sec. 2.2', at(3, 'The six verdicts are the open monitors’ predicted letter'), { text: 'the open monitors’ predicted letter' }),
+    'p3.score_px': paper('Sec. 2.2', at('sections_v2/02_setup.tex:42-43', 'scored by the letter probability of X'), { text: 'the letter probability of X' }),
+    'p3.verdict': paper('Sec. 2.2', at('sections_v2/02_setup.tex:49-50', 'The six \\emph{verdicts} are the open monitors\' predicted letter'), { text: 'the open monitors’ predicted letter' }),
     // Slide 11, what the rule says of the second monitor: its count is one short, so no
     // statement holds for it (its frozen outcome: "the answer depends on the model").
-    'p3.qwen8_outcome': paper('Sec. 5.2', at(9, 'For Qwen3-8B the rule gives no single statement.'), { text: 'no single statement' }),
+    'p3.qwen8_outcome': paper('Sec. 5.2', at('sections_v2/05_alarm.tex:73', 'For Qwen3-8B the rule gives no single statement.'), { text: 'no single statement' }),
     // Slide 11, what the recommendation's "reference" is in this work: the point that an
     // alarm's timing is read against.
-    'p3.reference': paper('Sec. 5', at(9, 'Our reference is not an annotated onset but a point of no return estimated by resampling.'), {
+    'p3.reference': paper('Sec. 5', at('sections_v2/05_alarm.tex:8-9', 'Our reference is not an annotated onset but a point of no return estimated by resampling.'), {
       text: 'a point of no return estimated by resampling',
     }),
     // Slide 12, why a comparison is also run with pairs matched in prefix length: the cut
     // gives the length away (slide 10's words for it).
-    'p3.cut_leaks': paper('Sec. 1, What was known', at(2, 'a cut at a fraction of the final length leaks that length ... and our positions leak it too'), {
+    'p3.cut_leaks': paper('Sec. 1, What was known', at('sections_v2/01_intro.tex:59-60', 'a cut at a fraction of the final length leaks that length ... and our positions leak it too'), {
       text: 'a cut at a fraction of the final length leaks that length, and our positions leak it too',
     }),
     // Slide 11, how the check of the point of no return stands: the paper's tier X.
-    'p3.pnr_check_tier': paper('Sec. 5.1', at(9, 'The K = 16 continuations at r = 0.5 test this directly [X].'), { text: 'exploratory' }),
+    'p3.pnr_check_tier': paper('Sec. 5.1', at('sections_v2/05_alarm.tex:23', 'The $K = 16$ continuations at $r = 0.5$ test this directly \\tX.'), { text: 'exploratory' }),
     // Slide 12, what testing one pair at a time would do: if all nine readers had the same
     // true AUROC, 1.8 of the 36 unadjusted 95% intervals would still exclude zero (36 times
     // 0.05; 2.3 in the paper's simulation).
-    'p3.chance_resolved': paper('Table 5', at(11, 'if equal: nominal (simulated; P (≥ obs.)) 1.8 (2.3; 0.35)'), { value: 1.8, text: 'about 2' }),
+    'p3.chance_resolved': paper('Table 5', at('sections_v2/06_readers.tex:64', 'if equal: nominal (simulated; $P(\\ge \\text{obs.})$) & 1.8 (2.3; 0.35)'), { value: 1.8, text: 'about 2' }),
     // Slide 12, the counts with the three forced readers kept: the joint test (Bonferroni
     // over the 36 pairs) resolves one difference against the trace's own outcome, and the
     // calibrated one six to nine against a held-out continuation's, by bootstrap run.
-    'p3.resolved_all_own': paper('Sec. 6.1; Table 5', at(12, 'Bonferroni resolves one, the hint-removed forced answer above'), { value: 1, text: '1' }),
-    'p3.resolved_all_held': paper('Sec. 6.1', at(12, 'six to nine over independent runs'), { value: Object.freeze([6, 9]), text: '6 to 9' }),
+    'p3.resolved_all_own': paper('Sec. 6.1; Table 5', at('sections_v2/06_readers.tex:89', 'Bonferroni resolves one, the hint-removed forced answer above'), { value: 1, text: '1' }),
+    'p3.resolved_all_held': paper('Sec. 6.1', at('sections_v2/06_readers.tex:91', 'six to nine over independent runs'), { value: Object.freeze([6, 9]), text: '6 to 9' }),
     // Slide 12, what the held-out label's 4 is the largest of ("at most 4" in the paper and
     // in the text of 'test.resolved_held_max'): the joint test of the count (Bonferroni)
     // resolves 4; it is anti-conservative for this label, and a critical value calibrated
     // for it resolves 3 or 4, by bootstrap run.
-    'p3.resolved_held_stricter': paper('Sec. 6.1; Table 5', at(12, 'resolves 3 or 4, by bootstrap run'), { value: Object.freeze([3, 4]), text: '3 or 4' }),
+    'p3.resolved_held_stricter': paper('Sec. 6.1; Table 5', at('sections_v2/06_readers.tex:85-86', 'resolves 3 or 4, by bootstrap run'), { value: Object.freeze([3, 4]), text: '3 or 4' }),
     // Slide 12, the check that two of the forced readers fail: the forced answer is read
     // incrementally along a trace, and its letter probabilities may differ from a one-shot
     // recomputation by at most a tolerance fixed before the subject readings. The slide
     // says it without the terms: a preset check of their computation (the paper's "a
     // preset numerical check", and what that check compares).
-    'p3.forced_check': paper('Sec. 2.2', at(3, 'Computed incrementally along the trace, the forced answer fails on all eight models a numerical tolerance fixed before the subject readings'), {
+    'p3.forced_check': paper('Sec. 2.2', at('sections_v2/02_setup.tex:51-52', 'Computed incrementally along the trace, the forced answer fails on all eight models a numerical tolerance fixed before the subject readings'), {
       text: 'computed incrementally along the trace, the forced answer fails a numerical tolerance fixed before the subject readings',
     }),
-    'p3.forced_check_what': paper('Sec. 7.3', [at(14, 'Two of them fail a preset numerical check'), at(14, 'a check compares those letter probabilities with a one-shot recomputation and requires their largest absolute difference to be at most 5 × 10−3')], {
-      text: 'a preset numerical check: the letter probabilities read along the trace against a one-shot recomputation',
+    'p3.forced_check_what': paper('Sec. 7.3', [at('sections_v2/07_scope.tex:39', 'Two of them fail a preset numerical check'), at('sections_v2/07_scope.tex:41-43', 'A check compares those letter probabilities with a one-shot recomputation. It requires their largest absolute difference to be at most $5 \\times 10^{-3}$.')], {
+      text: 'Two of them fail a preset numerical check. A check compares those letter probabilities with a one-shot recomputation. It requires their largest absolute difference to be at most 5 × 10^-3.',
     }),
     // Slide 12, the level of the joint ("simultaneous") intervals.
-    'p3.joint_level': paper('abstract; Table 5', [at(1, 'simultaneous 95% intervals resolve no reader difference'), at(11, 'Simultaneous: Bonferroni (own outcome)')], { value: 95, text: '95%' }),
+    'p3.joint_level': paper('abstract; Table 5', [at('sections_v2/00_abstract.tex:11', 'simultaneous 95\\% intervals resolve no reader difference'), at('sections_v2/06_readers.tex:48-49', 'Simultaneous: Bonferroni (own outcome)')], { value: 95, text: '95%' }),
     // Slide 12, what a joint test keeps small: if all readers were equal, at least one
     // difference would be resolved in about one dataset in twenty (Table 5 prints the
     // simulated share, 0.03 to 0.06, for the trace's own outcome).
-    'p3.joint_chance': paper('Table 5', at(11, 'if equal: expected; P (≥ 1) 0.05–0.10; 0.03–0.06'), { value: Object.freeze([0.03, 0.06]), text: '0.03 to 0.06' }),
+    'p3.joint_chance': paper('Table 5', at('sections_v2/06_readers.tex:67', 'if equal: expected; $P(\\ge 1)$ & 0.05--0.10; 0.03--0.06'), { value: Object.freeze([0.03, 0.06]), text: '0.03 to 0.06' }),
   });
 
   const t = (key) => Deck.fact(key).text;
@@ -161,9 +170,9 @@
 
   // ---------------------------------------------------------------- slide 10: result 1, when the ceiling is a ceiling
   // The paper's first contribution, in its order, one picture at a time. The claim of recent
-  // work: the resampling AUROC is a ceiling, the best AUROC any reader of the prefix could
-  // reach (the words of slide 3). It needs assumption M, which the slide says in the paper's
-  // plainer words: the trace's own remainder behaves like a fresh continuation (entrance:
+  // work: the resampling AUROC is a ceiling (slides 3 and 8 have said what one is: the best
+  // AUROC any reader of the prefix could reach). It needs assumption M, which the slide says
+  // in the paper's plainer words: the trace's own remainder behaves like a fresh continuation (entrance:
   // the trace as it was written, a solid bar beyond the cut, over fresh continuations of
   // that prefix, dashed bars; the two strokes of slide 8's key).
   // Click 1: our cut, at half of the trace's final length, uses the future and breaks M, and
@@ -175,15 +184,21 @@
   // that means, by the name the sketch gives the bar: "its own remainder" runs shorter
   // ('m.shorter').
   // Click 2: even where M holds, a value from K continuations is biased low: the measured
-  // curve takes the sketch's place, still rising at K = 16.
+  // curve takes the sketch's place, still rising at K = 16 (its four values say so; the
+  // label that printed the last doubling's +0.011 gave its words to click 3's second line).
   // Click 3: the question of slide 3, answered on that chart. The six readers' AUROCs are a
   // band on it ('readers.within_min' to 'readers.within_max_kept': Table 4, within question,
   // against the trace's own ending, at r = 0.5, as the curve is): just under the curve at
   // K = 2, well under it at K = 16.
-  // The title gets its second half there, the paper's "a finite-K value is biased low and
-  // is not a bound". Then the recommendation (click 4), and under it why it asks for the
-  // label (a held-out continuation as the label makes M hold by construction, 'm.heldout')
-  // and the one term of it that is new.
+  // The title gets its second half there, the paper's "a finite-K estimate is biased low and
+  // is not a bound" ('k.not_bound'), and under the answer a second line gives the paper's
+  // instance of it ('k.exceed', 'p3.exceeds'): a reader can exceed a finite-K ceiling, and
+  // one cell of Jia et al.'s own Table 5 has a monitor above theirs, 0.81 against 0.78, with
+  // the paired 95% interval of the difference below zero. The line names neither the
+  // monitor's kind nor its judge: "lookahead" is a term the talk has not explained, and the
+  // paper gives the judge no version. Then the recommendation (click 4), and under it why
+  // it asks for the label (a held-out continuation as the label makes M hold by
+  // construction, 'm.heldout') and the one term of it that is new.
   // The bars of the first picture are a drawing: the own remainder is as long as the prefix
   // (a cut at half), and the continuations' lengths and endings are made up, so that of
   // those that end as the trace did half are shorter than its own remainder: what M
@@ -278,7 +293,6 @@
   const kcY = (value) => round3(KC.bottom - ((value - KC.lo) / (KC.hi - KC.lo)) * (KC.bottom - KC.top));
   const KC_POINTS = Object.freeze(v('k.curve').map(([k, value]) => Object.freeze({ k, value, x: kcX(k), y: kcY(value) })));
   if (KC_POINTS.map((p) => p.k).join() !== KC.xTicks.join() || KC_POINTS.some((p) => three(p.value) !== t(KC.named[p.k]))) throw new Error('the curve of slide 10 is no longer the four values the paper prints, each with its fact');
-  if (three(v('k.u16') - v('k.u8')) !== t('k.step_8_16')) throw new Error('the last doubling of slide 10’s curve no longer adds what its label prints');
   const kcPoint = (k) => KC_POINTS.find((p) => p.k === k);
   // The band of click 3: the six readers that are kept, from the lowest of their
   // within-question AUROCs to the highest (Table 4), on the curve's own axis. Every one of
@@ -302,10 +316,7 @@
       share: Object.freeze(Object.fromEntries(KC_POINTS.map((p, i) => [p.k, along[i] / total]))),
     });
   })();
-  const curveChart = () => {
-    const last = kcPoint(16);
-    const before = kcPoint(8);
-    return `
+  const curveChart = () => `
     <svg class="p3-svg p3-kc" viewBox="0 0 ${KC.width} ${KC.height}" width="${KC.width}" height="${KC.height}">
       <g class="p3-kc__frame">
         ${KC.yTicks.map((tick) => `
@@ -325,18 +336,16 @@
         <text class="p3-end" x="${kcX(16)}" y="${BAND.bottom + 32}">our six monitors: <tspan class="p3-num">${BAND.lo} to ${BAND.hi}</tspan></text>
       </g>
       <path class="p3-kc__line" pathLength="1" d="${KC_LINE.d}"/>
-      <text class="p3-kc__step p3-end" x="${last.x + 28}" y="${before.y + 60}">K = 8 to 16: still <tspan class="p3-num">+${t('k.step_8_16')}</tspan></text>
       ${KC_POINTS.map((p) => `<circle class="p3-kc__point p3-pop is-named" data-k="${p.k}" cx="${p.x}" cy="${p.y}" r="8"/>`).join('')}
       ${KC_POINTS.map((p) => (p.k === 2
     ? `<text class="p3-kc__value p3-num" data-value="${p.k}" x="${p.x - 16}" y="${p.y - 28}">${t(KC.named[p.k])}</text>`
     : `<text class="p3-kc__value p3-num p3-end" data-value="${p.k}" x="${p.x + 8}" y="${p.y - 18}">${t(KC.named[p.k])}</text>`)).join('')}
     </svg>`;
-  };
 
   const CEILING_NOTES = Object.freeze({
-    // 'ceiling.claim' and 'm.assumption', in the talk's words (the ceiling as slide 3
-    // defines it), and what is ours in this result ('scope.conditions').
-    claim: '<b>The claim:</b> the resampling AUROC is a ceiling, the best AUROC any reader of the prefix could reach. It needs <b>assumption M</b>. We give conditions, not a correction.',
+    // 'ceiling.claim' and 'm.assumption', in the talk's words, and what is ours in this
+    // result ('scope.conditions'). What a ceiling is has been said on slides 3 and 8.
+    claim: '<b>The claim:</b> the resampling AUROC is a ceiling. It needs <b>assumption M</b>. We give conditions, not a correction.',
     // 'm.future' in plain words: placed at a share of the final length, the cut tells how
     // long the trace will run (what that does to the trace's own remainder against a fresh
     // continuation is the side panel's, with the measured share). Then 'm.not_established',
@@ -348,32 +357,38 @@
     finite: '<b>Even under M:</b> from K continuations the resampling AUROC is <b>biased low</b>: on average at or below its limit (endless continuations).',
     // The question of slide 3, in its words, and what the chart shows of it: the band
     // against the two ends of the curve ('k.u2', 'k.u16'). No distance is printed that the
-    // paper does not print. Click 1 has said that this curve need not bound readers, so the
-    // answer opens on reading it as a ceiling all the same; that the answer depends on K
-    // is its two halves.
-    band: `<b>Have these monitors nearly reached the ceiling?</b> Even read as a ceiling: just under it at K = ${KC.xTicks[0]}, well under it at K = ${KC.xTicks[KC.xTicks.length - 1]}.`,
+    // paper does not print; that the answer depends on K is its two halves.
+    // The second line says that the curve is no bound all the same, with the title's second
+    // half, which arrives over it: 'k.exceed' ("so a reader can exceed it") and the paper's
+    // instance of it, the one cell of Jia et al.'s own Table 5 ('p3.exceeds'). It takes the
+    // place of the words that opened the answer before it ("Even read as a ceiling:").
+    band: [
+      `<b>Have these monitors nearly reached the ceiling?</b> Just under it at K = ${KC.xTicks[0]}, well under at K = ${KC.xTicks[KC.xTicks.length - 1]}.`,
+      `<b>A reader can exceed it:</b> Jia et al.’s own Table 5 has a monitor at ${two(v('p3.exceeds'))}, above its ceiling, ${two(Deck.fact('p3.exceeds').ceiling)} (paired 95% interval below zero).`,
+    ],
   });
   // Under the recommendation: why it asks for the label ('m.heldout': against label 2 of
   // slide 8, M holds by construction), and the one term of it that the talk has not used
   // (the limit has stood on click 2; a sensitivity analysis is new: 'k.assumption',
-  // 'k.limit_sensitivity').
-  const CEILING_LIMIT = 'Label 2 (a held-out continuation): M holds by construction. Sensitivity analysis: a what-if under an assumption the data cannot check.';
+  // 'k.limit_sensitivity'). Label 2 is slide 8's, a held-out continuation.
+  const CEILING_LIMIT = 'Label 2: M holds by construction. Sensitivity analysis: a what-if under an assumption the data cannot check.';
 
   Deck.register({
     id: 'p3-ceiling',
     part: PART,
     kicker: RESULTS,
     // The first half is the paper's conclusion ('close.conditions'), in the words of slide
-    // 13; the second its statement on a value from K continuations ('k.not_bound',
-    // 'k.exceed'). The slide shows no reader above a ceiling, so the title does not say that
-    // one is.
+    // 13; the second its statement on a value from K continuations, in the abstract's words
+    // ('k.not_bound': "biased low and is not a bound"). That a reader can exceed such a value
+    // ('k.exceed') is click 3's second line, with the paper's instance of it.
     // The comma belongs to the half that is held back (click 3), so that until then the
     // title is a whole sentence and does not end on a comma.
     title: 'A resampling ceiling holds only under conditions<em>, and a finite-K value is biased low, not a bound</em>',
     cues: [],
     // Jia et al. is cited for the claim the slide opens on: the paper quotes their reading
-    // that the ceiling bounds every monitor of the prefix ('ceiling.claim').
-    cite: [{ src: 'paper', where: 'Sec. 4; Fig. 2; Table 4' }, { src: 'jia2026', where: 'ceiling claim' }],
+    // that the ceiling bounds every monitor of the prefix ('ceiling.claim'); and for the cell
+    // of their Table 5 that click 3 names ('p3.exceeds'), as the paper reports it.
+    cite: [{ src: 'paper', where: 'Sec. 4; Fig. 2; Table 4' }, { src: 'jia2026', where: 'ceiling claim; Table 5' }],
     figure: ['data', 'schematic'],
     html: `
       <div class="p3-res p3-curve">
@@ -393,7 +408,7 @@
           </div>
           <div class="p3-curve__left">
             ${curveChart()}
-            <div class="p3-tags p3-curve__tags">${labelChip('own')}${kit.standing('measured curve')}</div>
+            <div class="p3-tags p3-curve__tags">${labelChip('own')}</div>
           </div>
         </div>
         ${captionHtml({ notes: CEILING_NOTES, rec: recOf(1), limit: CEILING_LIMIT })}
@@ -408,7 +423,13 @@
       if (!/M holds by construction and the ceiling bounds readers in expectation/.test(fact('m.heldout').text) || !/at or below its limit in expectation, less so as K grows/.test(fact('p3.biased_low').text)) throw new Error('the facts on the held-out label and the finite-K value no longer say what slide 10 rewords');
       if (!/conditions, not a correction/.test(fact('scope.conditions').text) || !/estimator of \[the limit\] rests on an assumption/.test(fact('k.assumption').text) || !/assumption the data cannot check/.test(fact('k.limit_sensitivity').text) || !/sensitivity analyses/.test(RECS[recOf(1) - 1].rec) || RECS[recOf(1) - 1].fact !== 'rec.2') throw new Error('the limit under slide 10’s recommendation no longer rests on its facts');
       // The title's two halves: the paper's conclusion, and its statement on a finite K.
-      if (!/only under conditions/.test(fact('close.conditions').text) || !/a finite-K value is biased low and is not a bound/.test(fact('k.exceed').text)) throw new Error('the paper no longer says what the title of slide 10 rewords');
+      if (!/only under conditions/.test(fact('close.conditions').text) || !/a finite-K estimate is biased low and is not a bound/.test(fact('k.not_bound').text)) throw new Error('the paper no longer says what the title of slide 10 rewords');
+      // Click 3's second line: a reader can exceed a finite-K value, and the cell of Jia et
+      // al.'s Table 5 in which one does. The two numbers are the ones the paper's sentence
+      // prints, the monitor's above the ceiling's, and the sentence says of the interval what
+      // the line says.
+      const cell = fact('p3.exceeds');
+      if (!/not a bound, so a reader can exceed it/.test(fact('k.exceed').text) || !(cell.value > cell.ceiling) || !cell.file.includes(`(${two(cell.value)} against a ceiling of ${two(cell.ceiling)})`) || !/comes out above their ceiling in one cell/.test(cell.text) || !/Their Table 5 marks the paired 95% interval of the ceiling minus that monitor as lying below zero/.test(cell.text)) throw new Error('the paper no longer reports a monitor of Jia et al. above its ceiling as slide 10 says it');
       const point = (k) => ctx.q(`.p3-kc__point[data-k="${k}"]`);
       const value = (k) => ctx.q(`.p3-kc__value[data-value="${k}"]`);
       const reached = (k) => KC.drawAt + KC_LINE.share[k] * KC.drawDur;
@@ -446,12 +467,12 @@
 
       // Click 2: the second condition. The sketch gives its place to the measured curve:
       // the resampling AUROC from two continuations, then drawn on to 16, the values at 4,
-      // 8 and 16 counting up as the line reaches them; the last doubling still adds 0.011.
+      // 8 and 16 counting up as the line reaches them.
       const rise = ctx.step({ label: 'even under M: biased low at a finite K' });
       note(rise, 'finite', { leaves: 'cut' });
       rise.tween('.p3-m', { opacity: [1, 0] }, { dur: dur.enter });
       rise.tween('.p3-kc__frame', { opacity: [0, 1] }, { at: 300 });
-      // The chart's two tags arrive with it (the head's tag has been up since the entrance).
+      // The chart's tag, its label, arrives with it (the head's tag has been up since the entrance).
       rise.tween('.p3-curve__tags', { opacity: [0, 1] }, { at: 500 });
       rise.tween(point(2), { opacity: [0, 1], scale: [2.4, 1] }, { at: KC.pointAt, dur: dur.enter });
       rise.show(value(2), { at: KC.pointAt + 200, rise: 0 });
@@ -463,18 +484,19 @@
         rise.tween(value(to), { opacity: [0, 1] }, { at: span.at, dur: dur.micro });
         kit.countTo(rise, value(to), KC.named[to], { ...span, from: kcPoint(from).value, format: three });
       });
-      rise.tween('.p3-kc__step', { opacity: [0, 1] }, { at: KC.drawAt + KC.drawDur + 300 });
       rise.hold(300);
 
       // Click 3: the question of slide 3. The six monitors' band is drawn across the chart
       // and named; what lies between the curve's two ends steps back, so that the band is
-      // read against K = 2 and K = 16. Then the title gets its second half.
-      const band = ctx.step({ label: 'the six monitors: nearly at the ceiling? it depends on K' });
+      // read against K = 2 and K = 16. Then the title gets its second half, and under the
+      // answer the line that says a reader can exceed such a value, with Jia et al.'s cell.
+      const band = ctx.step({ label: 'the six monitors: nearly at the ceiling? it depends on K, and a reader can exceed it' });
       note(band, 'band', { leaves: 'finite' });
       band.tween('.p3-kc__band rect', { opacity: [0, 1] }, { at: 400, dur: dur.move });
       band.tween('.p3-kc__band text', { opacity: [0, 1] }, { at: 900 });
-      band.tween([value(4), value(8), ctx.q('.p3-kc__step')], { opacity: [1, 0.4] }, { at: 1300 });
+      band.tween([value(4), value(8)], { opacity: [1, 0.4] }, { at: 1300 });
       revealTitle(ctx, band, 1900);
+      band.tween('[data-says-line="band:1"]', { opacity: [0, 1] }, { at: 1900 + dur.move + dur.micro, dur: dur.enter });
       band.hold(300);
 
       // Click 4: the recommendation; the chart steps back.
@@ -727,7 +749,7 @@
       if (!/^Ranking is also not timing/.test(fact('close.timing').text) || !/AUROC does not measure this/.test(fact('time.not_auroc').text)) throw new Error('the paper no longer says that ranking is not timing, which the title of slide 11 rewords');
       if (!fact('reader.qwen32.name').text.startsWith(fact('readers.name_qwen32').text) || fact('reader.qwen32.name').forced || !fact('reader.qwen8.name').text.startsWith(fact('readers.name_qwen8').text) || fact('reader.qwen8.name').forced) throw new Error('the AUROC that slide 11 prints is no longer that of the monitor whose alarms it shows, or the second monitor is no longer the small open one');
       // Its score ranks and its verdict alarms: the two outputs of an open monitor.
-      if (!/letter probability of X/.test(fact('p3.score_px').text) || !/predicted letter/.test(fact('p3.verdict').text) || !fact('reader.qwen32.within').file.includes('Qwen3-32B P (X)')) throw new Error('the score and the verdict of slide 11’s monitor are no longer the ones the paper lists');
+      if (!/letter probability of X/.test(fact('p3.score_px').text) || !/predicted letter/.test(fact('p3.verdict').text) || !fact('reader.qwen32.within').file.includes('Qwen3-32B $P(X)$')) throw new Error('the score and the verdict of slide 11’s monitor are no longer the ones the paper lists');
       // The data line of the entrance: the task's six cuts in the seven resampled models.
       if (fact('pnr.k').positions !== TL.cuts.length || MISS.length !== fact('task.resampled_models').value || !/20 seeded questions per model for the seven models/.test(fact('task.sample_questions').file)) throw new Error('the data line of slide 11 no longer says where its continuations come from');
       // The captions reword these facts.
@@ -1054,7 +1076,7 @@
       // And that with the three kept more differences are resolved, under either label.
       if (fact('p3.resolved_all_own').value <= fact('test.resolved_own').value || Math.min(...fact('p3.resolved_all_held').value) <= fact('test.resolved_held_max').value) throw new Error('with all nine readers, no more differences are resolved than without the three set aside');
       // The captions reword these facts.
-      if (!/change which differences are resolved about as much as the readers do/.test(fact('test.label_and_length').text) || fact('test.length_match').text !== `within ${fact('test.length_match').value}% in prefix length` || !/most observed differences are smaller/.test(fact('test.most_smaller').text) || !/not about equality/.test(fact('test.not_equality').text) || RECS[recOf(3) - 1].fact !== 'rec.4') throw new Error('the facts on the length control, the power and the recommendation no longer say what slide 12 rewords');
+      if (!/change which differences are resolved about as much as the readers do/.test(fact('test.label_and_length').text) || fact('test.length_match').text !== `within ${fact('test.length_match').value}% in prefix length` || !/^Most observed differences are smaller\.$/.test(fact('test.most_smaller').text) || !/not about equality/.test(fact('test.not_equality').text) || RECS[recOf(3) - 1].fact !== 'rec.4') throw new Error('the facts on the length control, the power and the recommendation no longer say what slide 12 rewords');
       if (!(fact('test.detectable_held').value < fact('test.detectable_own').value) || !(fact('test.questions_needed_held').value < NEED.needed) || !(NEED.had < fact('test.questions_needed_held').value)) throw new Error('the detectable differences and the questions needed on slide 12 are no longer smaller with the held-out label, and above the questions there were');
       const forced = ctx.qa('.p3-rd__row.is-forced');
       // A count lands: its label, then its number.

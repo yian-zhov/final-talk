@@ -9,12 +9,12 @@
   font: 600 var(--fs-0)/var(--lh-0) var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
   color: var(--c-read); margin-bottom: var(--sp-6);
 }
-.p1-title__name {
-  max-width: 1640px; font: 600 var(--fs-6)/var(--lh-6) var(--font-serif); letter-spacing: -.02em;
-  color: var(--c-text); text-wrap: balance;
-}
+/* The title is the paper's: a question, set large, and the rest of the title a size smaller
+   under it. Both are the one <h1>. */
+.p1-title__name { max-width: 1640px; font-family: var(--font-serif); font-weight: 600; letter-spacing: -.02em; color: var(--c-text); }
+.p1-title__ask { display: block; font-size: var(--fs-6); line-height: var(--lh-6); text-wrap: balance; }
+.p1-title__rest { display: block; margin-top: var(--sp-4); font-size: var(--fs-4); line-height: var(--lh-4); text-wrap: balance; }
 .p1-title__whole { white-space: nowrap; }
-.p1-title__sub { margin-top: var(--sp-6); font: 400 var(--fs-3)/var(--lh-3) var(--font-sans); color: var(--c-dim); }
 /* The cut trace (core/kit.js, cutTrace; its look is in core/kit.css): over it the line that
    says what it is. Its text starts where the title does, so a line stands flush in its outline. */
 .p1-title__says { margin-top: var(--sp-12); font: 400 var(--fs-0)/var(--lh-0) var(--font-sans); color: var(--c-dim); }

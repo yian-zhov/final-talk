@@ -1,10 +1,13 @@
 // Bibliography registry. A slide cites by key: cite: [{ src: 'paper', where: 'Table 2' }].
 // The footer prints `short, where`; the final Sources slide prints `authors. title. full ?? ref`.
-// Shared file. `paper` is this project's own paper, read in its v2 draft: the PDF
-// sources/paper-v2-draft.pdf (main text and references; sources/README.md has its digest),
-// whose section, table and figure numbers the cites use. shared/facts.js names the page and
-// the words behind every fact, and SPEC.md section 7.13 records the change of source. It
-// names no author: the authors' names stand on the title slide alone. `talk1` is the special
+// Shared file. `paper` is this project's own paper, read in its v2 TeX source: the snapshot
+// sources/paper-v2-tex/ (sources/README.md has its commit and digests), whose section, table
+// and figure numbers the cites use (in the main text they are those of the v2 draft PDF,
+// sources/paper-v2-draft.pdf). shared/facts.js names the file, the lines and the words
+// behind every fact, and SPEC.md sections 7.13 and 7.14 record the change to v2 and to its
+// TeX. Its `title` is the \title of main_v2.tex (line 41 of the snapshot, line breaks as
+// spaces), which is also the deck's title (shared/meta.js; tools/selftest.mjs compares the
+// three). It names no author: the authors' names stand on the title slide alone. `talk1` is the special
 // topic talk that this talk's second slide takes up (the deck of the sibling worktree,
 // special-topic/). Every other entry is a paper of that PDF's reference list (pages 17 to
 // 21: title, authors and arXiv id as printed there, compared on 2026-11-19); none of those
@@ -14,7 +17,7 @@ Deck.addSources({
   paper: {
     short: 'Our paper',
     authors: 'This project',
-    title: 'How Not to Score a Chain-of-Thought Prefix Monitor: Scoring Pitfalls Measured on a Hint-Following Task',
+    title: 'When Is a Resampling Ceiling a Ceiling? Bounds and Alarm Timing for Chain-of-Thought Prefix Monitors',
     ref: 'CS6120 final paper, 2026',
   },
   talk1: {

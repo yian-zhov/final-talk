@@ -1,7 +1,8 @@
 // Part 1: The problem and the data. Slides 1-5 (Introduction, Motivation, Dataset).
 // SPEC.md section 3 describes each slide; parts/sample.js shows the registration API.
-// All five slides are built. Slide 3 was rebuilt on 2026-11-19 for the paper's v2 draft (the
+// All five slides are built. Slide 3 was rebuilt on 2026-11-19 for the paper's v2 (the
 // ceiling and the three questions; SPEC.md section 7.13), and slide 5's last click with it.
+// The title slide carries the title of v2 since 2026-11-21 (SPEC.md section 7.14).
 // One word for one thing: a "prefix monitor" is the kind of tool (the title, slides 1 and 2);
 // the nine things we score are "readers", defined on slide 3 and again on slide 6.
 (() => {
@@ -15,82 +16,86 @@
   const v = (key) => Deck.fact(key).value;
 
   // The facts that only this part prints: plain words for what the paper says in its own
-  // terms, each with the page and the sentence of the v2 draft it stands on
-  // (sources/paper-v2-draft.pdf; the form of `file` is that of shared/facts.js, and
-  // tools/selftest.mjs looks every quotation up on its page).
-  const PDF = 'sources/paper-v2-draft.pdf';
-  const at = (page, quote) => `p.${page}: "${quote}"`;
-  const paper = (where, cites, text) => ({ text, src: 'paper', where, file: `${PDF}, ${[].concat(cites).join('; ')}` });
+  // terms, each with the file, the lines and the words of the paper's v2 TeX it stands on
+  // (the snapshot sources/paper-v2-tex/; the form of `file` is that of shared/facts.js,
+  // `final-project/paper/tmlr/<file>:N-M: "words"`, and tools/selftest.mjs looks every
+  // quotation up in those lines).
+  const TEX = 'final-project/paper/tmlr/';
+  const at = (place, quote) => `${TEX}${place}: "${quote}"`;
+  const paper = (where, cites, text) => ({ text, src: 'paper', where, file: [].concat(cites).join('; ') });
   Deck.addFacts({
-    'p1.cot_gloss': paper('Sec. 1', at(1, 'Monitoring the chain of thought (CoT) of reasoning models is proposed for safety because the text written before an answer may show how it came about'),
+    'p1.cot_gloss': paper('Sec. 1', at('sections_v2/01_intro.tex:4-5', 'Monitoring the chain of thought (CoT) of reasoning models is proposed for safety because the text written before an answer may show how it came about'),
       'the reasoning a model writes before it answers'),
-    'p1.sampled': paper('Sec. 2.1', at(3, 'T = 0.6, top-p 0.95'),
+    'p1.sampled': paper('Sec. 2.1', at('sections_v2/02_setup.tex:16', '$T = 0.6$, top-$p$ 0.95'),
       'sampling is random'),
-    'p1.benchmark_kind': paper('Sec. 2.1', [at(3, 'A four-option question'), at(3, '300 subject-stratified MMLU-Redux 2.0 items')],
+    'p1.benchmark_kind': paper('Sec. 2.1', [at('sections_v2/02_setup.tex:12', 'A four-option question'), at('sections_v2/02_setup.tex:15-16', '300 subject-stratified MMLU-Redux 2.0 items')],
       'multiple-choice questions'),
     // What "exploratory" says of an analysis (the paper's tier X), for the legend at the
-    // entrance of slide 2.
-    'p1.exploratory': paper('Sec. 2.4; Sec. 10', [at(4, 'X, exploratory'), at(4, 'followed every main-task result and are exploratory'), at(15, 'most analyses were specified after the results had been read')],
+    // entrance of slide 2. The paper's sentence on which analyses are exploratory now excepts
+    // the entries it marks RS (02_setup.tex:125-126); what the tag means is unchanged.
+    'p1.exploratory': paper('Sec. 2.4; Sec. 10', [at('sections_v2/02_setup.tex:115', 'X, exploratory'), at('sections_v2/02_setup.tex:125-126', 'followed every main-task result and, except for the entries marked \\tRS\\ in Table~\\ref{tab:status}, are exploratory.'), at('sections_v2/10_limitations.tex:4', '\\ref{sec:tiers}: most analyses were specified after the results had been read')],
       'defined after the results were read'),
     // The two other tags that stand beside a result (slide 11), for the same legend: the
     // paper's tiers F and RS, and what "pre-specified" means in it.
-    'p1.standing_fixed': paper('Sec. 2.4', at(4, 'F, fixed before any monitoring sample was read'),
+    'p1.standing_fixed': paper('Sec. 2.4', at('sections_v2/02_setup.tex:113-114', '\\ref{app:provenance}): F, fixed before any monitoring sample was read'),
       'before any sample was read'),
-    'p1.standing_prespecified': paper('Sec. 2.4', [at(4, 'registered on data already read'), at(4, 'written to version-controlled files before the analysis they govern')],
+    'p1.standing_prespecified': paper('Sec. 2.4', [at('sections_v2/02_setup.tex:115', 'registered on data already read'), at('sections_v2/02_setup.tex:128-129', 'written to version-controlled files before the analysis they govern')],
       'written before its analysis'),
     // Slide 3 defines a reader, the word for each of the nine things we score, in the words
     // of slide 6's title; how its AUROC is computed is left to Part 2.
-    'p1.reader_gloss': paper('Sec. 1', at(2, 'A reader maps a prefix to a continuous score or a binary verdict.'),
+    'p1.reader_gloss': paper('Sec. 1', at('sections_v2/01_intro.tex:27', 'A \\emph{reader} maps a prefix to a continuous score or a binary verdict.'),
       'anything that turns a prefix into a score'),
     // What resampling is, in the words slides 5 and 8 use for it.
-    'p1.resampling_gloss': paper('Sec. 1', at(2, 'A continuation is a fresh sample of the model’s reasoning from a prefix to its end, and K is the number drawn per prefix.'),
+    'p1.resampling_gloss': paper('Sec. 1', at('sections_v2/01_intro.tex:28-29', 'A \\emph{continuation} is a fresh sample of the model\'s reasoning from a prefix to its end, and $K$ is the number drawn per prefix.'),
       'the model finishes each prefix again'),
     // Slide 4, which model-question pairs are kept: against the same question without the
     // hint, the hint has to raise the share of the answer it names by a third of the traces.
-    'p1.influence': paper('Sec. 2.1', at(3, 'hinted share of X at least 0.33 above the unhinted share, which is at most 0.25'),
+    'p1.influence': paper('Sec. 2.1', at('sections_v2/02_setup.tex:20-21', 'hinted share of X at least 0.33 above the unhinted share, which is at most 0.25'),
       'adding the hint makes the hinted answer much more likely'),
     // What the traces without the hint are: the share the hint's effect is measured against.
-    'p1.baseline': paper('Sec. 2.1', at(3, 'hinted share of X at least 0.33 above the unhinted share'),
+    'p1.baseline': paper('Sec. 2.1', at('sections_v2/02_setup.tex:20', 'hinted share of X at least 0.33 above the unhinted share'),
       'baseline'),
     // Slide 5, what we ran. The traces without the hint, and all traces: the paper prints
     // the two counts and no total, so the total is our sum of them (the slide refuses to
     // draw if the three numbers disagree).
     'p1.unhinted': {
-      ...paper('Sec. 2.1', [at(3, '(20 hinted and 8 unhinted traces each)'), at(3, 'as do 149 of the 5,720 unhinted traces')],
+      ...paper('Sec. 2.1', [at('sections_v2/02_setup.tex:21', '(20 hinted and 8 unhinted traces each)'), at('sections_v2/02_setup.tex:23', 'as do 149 of the 5,720 unhinted traces')],
         '5,720'),
       value: 5720,
     },
     'p1.traces_all': {
-      ...paper('Sec. 2.1 (our sum of its two counts; the paper prints no total)', [at(3, 'Of the 14,300 hinted traces'), at(3, 'the 5,720 unhinted traces')],
+      ...paper('Sec. 2.1 (our sum of its two counts; the paper prints no total)', [at('sections_v2/02_setup.tex:21-22', 'Of the 14,300 hinted traces'), at('sections_v2/02_setup.tex:23', 'the 5,720 unhinted traces')],
         '20,020'),
       value: 20020,
     },
     // What a continuation is, in the words of the row that counts them; slide 8 explains it
     // with its picture.
-    'p1.continued': paper('Sec. 1; Sec. 2.1', [at(2, 'A continuation is a fresh sample of the model’s reasoning from a prefix to its end, and K is the number drawn per prefix.'), at(3, 'each of the 1,226 drawn hinted traces was resampled again with K = 16 continuations')],
+    'p1.continued': paper('Sec. 1; Sec. 2.1', [at('sections_v2/01_intro.tex:28-29', 'A \\emph{continuation} is a fresh sample of the model\'s reasoning from a prefix to its end, and $K$ is the number drawn per prefix.'), at('sections_v2/02_setup.tex:29', 'each of the 1,226 drawn hinted traces was resampled again with $K = 16$ continuations')],
       'finished again'),
     // The two frontier models among the readers, each by its full name with its version.
-    'p1.frontier_models': paper('Sec. 2.2', at(3, '(6–9) Claude Opus 5.5 and GPT-6 Astra'),
+    'p1.frontier_models': paper('Sec. 2.2', at('sections_v2/02_setup.tex:44', '(6--9)~\\emph{Claude Opus 5.5} and \\emph{GPT-6 Astra}'),
       'Claude Opus 5.5 and GPT-6 Astra'),
-    // What the counts are for, in the paper's own verb.
-    'p1.measured': paper('Sec. 1', at(2, 'We measure what these choices do on one task, with a second as a limited check'),
+    // What the counts are for. "On one task" is the paper's ("We study these questions on one
+    // task"); "measure what each scoring choice does" is the talk's wording for it, kept by
+    // ruling when the paper's sentence changed its verb (SPEC.md section 7.14).
+    'p1.measured': paper('Sec. 1', at('sections_v2/01_intro.tex:20', 'We study these questions on one task, with a second as a limited check'),
       'measure what each scoring choice does'),
     // Slide 5, what each count lets us measure: the endings a monitor predicts, how far a
     // prefix fixes them (what resampling estimates), and how well a reader ranks them.
-    'p1.predicts': paper('Sec. 1', at(1, 'it reads an unfinished trace, a prefix, and predicts where the trace will end'),
+    'p1.predicts': paper('Sec. 1', at('sections_v2/01_intro.tex:6-7', 'it reads an unfinished trace, a \\emph{prefix}, and predicts where the trace will end'),
       'the endings to predict'),
-    'p1.fixes': paper('Sec. 1', at(1, 'estimate by resampling how far a prefix fixes the outcome'),
+    'p1.fixes': paper('Sec. 1', at('sections_v2/01_intro.tex:7-8', 'estimate by resampling how far a prefix fixes the outcome'),
       'how far a prefix fixes the ending'),
-    'p1.ranks': paper('Table 1', at(4, 'Share of (positive, negative) pairs from the same cluster in which the positive scores higher'),
+    'p1.ranks': paper('Table 1', at('sections_v2/02_setup.tex:94-95', 'Share of (positive, negative) pairs from the same cluster in which the positive scores higher'),
       'how well each reader predicts it'),
     // Slide 3, what a ceiling is, in the paper's words (slide 8 says it in the same ones), and
     // how recent work gets one.
-    'p1.ceiling_gloss': paper('Sec. 4', [at(6, 'compare it with the best AUROC any reader of the prefix could reach. Resampling estimates it'), at(1, 'sample continuations from that prefix')],
+    'p1.ceiling_gloss': paper('Sec. 4', [at('sections_v2/04_ceiling.tex:4-5', 'compare it with the best AUROC any reader of the prefix could reach. Resampling estimates it'), at('sections_v2/01_intro.tex:11', 'sample continuations from that prefix')],
       'the best AUROC any reader of the prefix could reach'),
     // Slide 3, whose K is which: recent work draws four continuations per prefix (Jia et
     // al.); ours are the K of the paper's curve, 2 to 16 ('k.curve').
     'p1.recent_k': {
-      ...paper('Sec. 1, What was known (of Jia et al. 2026)', at(2, 'they estimate it from four continuations'), '4'),
+      ...paper('Sec. 1, What was known (of Jia et al. 2026)', at('sections_v2/01_intro.tex:64', 'They estimate it from four continuations'), '4'),
       value: 4,
     },
   });
@@ -122,6 +127,14 @@
     typeAt: 1700,
     cps: 40,
   });
+  // The paper's title is a question and, after it, what the paper gives to answer it. The
+  // slide sets the question large and the rest of the title under it, a size smaller: one
+  // title, in the paper's words and order (shared/meta.js).
+  const TITLE_PARTS = (() => {
+    const m = /^(.+\?) (.+)$/.exec(Deck.meta.title);
+    if (!m || !m[2].includes(TITLE.whole)) throw Deck.fail(`p1-title: the title is no longer a question followed by the rest of the title, which holds "${TITLE.whole}"`);
+    return Object.freeze({ ask: m[1], rest: m[2] });
+  })();
   const seen = EX.follower.lines.slice(0, EX.cut);
   const unseen = EX.follower.lines.slice(EX.cut);
   // The slide's footer carries the first tag of the talk, a slide ahead of the legend of the
@@ -141,8 +154,7 @@
     html: `
       <div class="p1-title">
         <div class="p1-title__course">${Deck.meta.course}</div>
-        <h1 class="p1-title__name">${Deck.meta.title.replace(TITLE.whole, `<span class="p1-title__whole">${TITLE.whole}</span>`)}</h1>
-        <p class="p1-title__sub">${Deck.meta.subtitle}</p>
+        <h1 class="p1-title__name"><span class="p1-title__ask">${TITLE_PARTS.ask}</span> <span class="p1-title__rest">${TITLE_PARTS.rest.replace(TITLE.whole, `<span class="p1-title__whole">${TITLE.whole}</span>`)}</span></h1>
         <p class="p1-title__says"><span class="p1-title__gloss">${TITLE.gloss}</span>${TITLE.says}</p>
         <div class="p1-title__trace">${kit.cutTrace({ key: 'title', seen, unseen: unseen.map(() => ''), cut: TITLE.cut, end: TITLE.end, size: 28 })}</div>
         <div class="p1-title__who">${authors()}</div>
@@ -153,7 +165,6 @@
       const enter = ctx.step({ label: 'a trace is typed, cut halfway' });
       enter.show('.p1-title__course', { at: 200 });
       enter.show('.p1-title__name', { at: 350, dur: DUR.move });
-      enter.show('.p1-title__sub', { at: 800 });
       enter.show('.p1-title__person', { at: 1100, stagger: 140 });
       enter.show('.p1-title__says', { at: TITLE.typeAt - DUR.micro, rise: 0 });
       // The prefix types in teal: what the monitor reads.

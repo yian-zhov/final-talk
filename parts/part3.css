@@ -80,8 +80,6 @@
 .p3-svg .p3-kc__line { fill: none; stroke: var(--c-hidden); stroke-width: 4; stroke-linejoin: round; stroke-dasharray: 1; }
 .p3-svg .p3-kc__point { fill: var(--c-hidden); }
 .p3-svg .p3-kc__value, .p3-svg .p3-kc__name { fill: var(--c-hidden); font-weight: 600; }
-.p3-svg .p3-kc__step { fill: var(--c-text); }
-.p3-svg .p3-kc__step tspan { font-weight: 600; }
 .p3-svg .p3-kc__band rect { fill: color-mix(in srgb, var(--c-read) 30%, transparent); stroke: var(--c-read); stroke-width: 2; }
 .p3-svg .p3-kc__band text { fill: var(--c-read); }
 .p3-svg .p3-kc__band tspan { font-weight: 600; }
@@ -159,8 +157,11 @@
 
 /* A caption's second line, in small print: on slide 12's entrance, what setting the three
    readers aside costs, under the sentence that says when and why; on slide 11, where the
-   continuations come from and what the monitor's AUROC is of. */
+   continuations come from and what the monitor's AUROC is of. Not on slide 10's click 3:
+   its second line is a statement of its own (a reader can exceed a finite-K ceiling, and
+   where one does), so it keeps the caption's size. */
 .p3-res .dk-says__block p + p { font-size: var(--fs-0); line-height: var(--lh-0); }
+.p3-curve .dk-says__block[data-says="band"] p + p { font-size: var(--fs-1); line-height: var(--lh-1); }
 
 /* The counts: what is counted, then a row for each label under its chip, and a third for
    the held-out label with pairs of traces matched in length; a row is the chip and the
